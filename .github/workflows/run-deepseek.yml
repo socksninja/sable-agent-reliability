@@ -8,11 +8,11 @@ on:
       provider:
         description: Provider
         required: true
-        default: huggingface
+        default: openrouter
         type: choice
         options:
-          - huggingface
           - openrouter
+          - huggingface
           - deepseek
       suite:
         description: Benchmark suite
@@ -51,7 +51,11 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: |
-          PROVIDER="${INPUT_PROVIDER:-huggingface}"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            PROVIDER="openrouter"
+          else
+            PROVIDER="${INPUT_PROVIDER:-openrouter}"
+          fi
           case "$PROVIDER" in
             huggingface)
               echo "SABLE_API_KEY=$HF_TOKEN" >> "$GITHUB_ENV"
@@ -61,7 +65,7 @@ jobs:
             openrouter)
               echo "SABLE_API_KEY=$OPENROUTER_API_KEY" >> "$GITHUB_ENV"
               echo "SABLE_BASE_URL=https://openrouter.ai/api/v1" >> "$GITHUB_ENV"
-              echo "SABLE_MODEL=openrouter/free" >> "$GITHUB_ENV"
+              echo "SABLE_MODEL=nvidia/nemotron-3-ultra-550b-a55b:free" >> "$GITHUB_ENV"
               ;;
             deepseek)
               echo "SABLE_API_KEY=$DEEPSEEK_API_KEY" >> "$GITHUB_ENV"
