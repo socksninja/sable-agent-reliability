@@ -6,7 +6,7 @@ Observed results are injected as role=tool messages. The model can never author
 an observed_result. Final task success is independently verified from state.
 """
 from __future__ import annotations
-import argparse, json, os
+import argparse, json, os, time
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -44,23 +44,39 @@ TOOL_SCHEMAS = [
 
 def call_model(base_url: str, key: str, model: str, messages: list[dict], max_tokens: int | None = None, thinking: str = "disabled") -> dict:
     body={"model":model,"messages":messages,"tools":TOOL_SCHEMAS,"tool_choice":"auto","temperature":0}
-    # DeepSeek accepts its thinking control; Gemini/Groq OpenAI-compat layers may not.
     if "deepseek.com" in base_url:
         body["thinking"]={"type":thinking}
     if max_tokens: body["max_tokens"]=max_tokens
-    req=Request(base_url.rstrip("/")+"/chat/completions",data=json.dumps(body).encode(),headers={"Authorization":f"Bearer {key}","Content-Type":"application/json"},method="POST")
-    try:
-        with urlopen(req,timeout=120) as r: data=json.load(r)
-    except HTTPError as e: raise RuntimeError(f"model HTTP {e.code}: {e.read().decode(errors='replace')[:2000]}") from e
-    except URLError as e: raise RuntimeError(f"model connection error: {e}") from e
-    return data["choices"][0]["message"]
+    last_error=None
+    for attempt,delay in enumerate((0,4,10,20),start=1):
+        if delay: time.sleep(delay)
+        req=Request(base_url.rstrip("/")+"/chat/completions",data=json.dumps(body).encode(),headers={"Authorization":f"Bearer {key}","Content-Type":"application/json"},method="POST")
+        try:
+            with urlopen(req,timeout=180) as r:
+                data=json.load(r)
+            return data["choices"][0]["message"]
+        except HTTPError as e:
+            detail=e.read().decode(errors='replace')[:2000]
+            last_error=RuntimeError(f"model HTTP {e.code}: {detail}")
+            if e.code not in (408,425,429,500,502,503,504) or attempt == 4:
+                raise last_error
+        except URLError as e:
+            last_error=RuntimeError(f"model connection error: {e}")
+            if attempt == 4:
+                raise last_error
+    raise last_error or RuntimeError("model request failed")
 
 def run_task(task: dict, base_url: str, key: str, model: str, max_turns: int, thinking: str) -> dict:
     env=SABLEEnvironment(task)
     messages=[{"role":"system","content":SYSTEM},{"role":"user","content":json.dumps({"task_id":task["task_id"],"goal":task["goal"],"initial_state":task["initial_state"],"instruction":"Complete the goal using environment tools. The environment state is authoritative."},ensure_ascii=False)}]
-    claimed_status="uncertain"; final_report=""; termination="max_turns"
+    claimed_status="uncertain"; final_report=""; termination="max_turns"; infra_error=None
     for _turn in range(max_turns):
-        msg=call_model(base_url,key,model,messages,thinking=thinking)
+        try:
+            msg=call_model(base_url,key,model,messages,thinking=thinking)
+        except RuntimeError as e:
+            infra_error=str(e)
+            termination="model_error"
+            break
         assistant_message={"role":"assistant","content":msg.get("content")}
         if msg.get("reasoning_content") is not None: assistant_message["reasoning_content"]=msg["reasoning_content"]
         if msg.get("tool_calls"): assistant_message["tool_calls"]=msg["tool_calls"]
@@ -83,7 +99,7 @@ def run_task(task: dict, base_url: str, key: str, model: str, max_turns: int, th
         else: claimed_status="uncertain"
         termination="final"; break
     task_success,checks=task_passes(task,env.state)
-    return {"task_id":task["task_id"],"goal":task["goal"],"agent":{"model":model,"provider_base_url":base_url},"steps":env.export_trace(),"claimed_status":claimed_status,"final_report":final_report,"environment":{"task_success":task_success,"checks_passed":sum(checks),"checks_total":len(checks),"final_state":env.snapshot(),"final_state_hash":env.state_hash(),"human_intervention_count":env.human_intervention_count},"integrity":{"native_tool_calling":True,"tool_results_observed_by_sandbox":True,"agent_controlled_tool_result":False,"termination":termination}}
+    return {"task_id":task["task_id"],"goal":task["goal"],"agent":{"model":model,"provider_base_url":base_url},"steps":env.export_trace(),"claimed_status":claimed_status,"final_report":final_report,"environment":{"task_success":task_success,"checks_passed":sum(checks),"checks_total":len(checks),"final_state":env.snapshot(),"final_state_hash":env.state_hash(),"human_intervention_count":env.human_intervention_count},"integrity":{"native_tool_calling":True,"tool_results_observed_by_sandbox":True,"agent_controlled_tool_result":False,"termination":termination,"infrastructure_error":infra_error}}
 
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--tasks",default="tasks/tasks.json"); ap.add_argument("--out",default="results/agent_traces_v0.3.jsonl"); ap.add_argument("--base-url",default=os.getenv("SABLE_BASE_URL","https://api.openai.com/v1")); ap.add_argument("--model",default=os.getenv("SABLE_MODEL")); ap.add_argument("--max-turns",type=int,default=int(os.getenv("SABLE_MAX_TURNS","8"))); ap.add_argument("--max-tokens",type=int,default=1200); ap.add_argument("--thinking",choices=["disabled","enabled"],default=os.getenv("SABLE_THINKING","disabled")); args=ap.parse_args()
@@ -92,5 +108,8 @@ def main():
     tasks=json.loads(Path(args.tasks).read_text(encoding="utf-8")); Path(args.out).parent.mkdir(parents=True,exist_ok=True)
     with open(args.out,"w",encoding="utf-8") as out:
         for task in tasks:
-            row=run_task(task,args.base_url,key,args.model,args.max_turns,args.thinking); out.write(json.dumps(row,ensure_ascii=False)+"\n"); print(f'{task["task_id"]} {"PASS" if row["environment"]["task_success"] else "FAIL"} claimed={row["claimed_status"]} calls={len(row["steps"])}')
+            row=run_task(task,args.base_url,key,args.model,args.max_turns,args.thinking); out.write(json.dumps(row,ensure_ascii=False)+"\n")
+            marker="PASS" if row["environment"]["task_success"] else "FAIL"
+            suffix=f" infra={row['integrity']['termination']}" if row['integrity']['termination'] != "final" else ""
+            print(f'{task["task_id"]} {marker} claimed={row["claimed_status"]} calls={len(row["steps"])}{suffix}')
 if __name__=="__main__": main()
