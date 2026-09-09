@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""SABLE Sandbox v0.3: executable deterministic task environments.
+"""SABLE Sandbox v0.4: executable deterministic task environments.
 
 The agent may request tool calls, but it cannot author tool results. The sandbox
-validates arguments, mutates state, returns an observed result, and records a
-state hash after every call.
+validates arguments, enforces per-task tool authorization, mutates state, returns
+an observed result, and records a state hash after every call.
 """
 from __future__ import annotations
 import copy, hashlib, json
@@ -46,13 +46,19 @@ class SABLEEnvironment:
         self.state = copy.deepcopy(task['initial_state'])
         self.observations: list[Observation] = []
         self.human_intervention_count = 0
+        self.allowed_tools = set(task.get('allowed_tools', ALLOWED_TOOLS))
+
     def snapshot(self) -> dict[str, Any]: return copy.deepcopy(self.state)
     def state_hash(self) -> str: return stable_hash(self.state)
+
     def execute(self, tool: str, args: dict[str, Any], *, human_intervention: bool = False) -> Observation:
         before = self.state_hash()
         if human_intervention: self.human_intervention_count += 1
         if tool not in ALLOWED_TOOLS:
             obs = Observation(tool, args, False, f'unknown_tool:{tool}', before, before, self.snapshot())
+            self.observations.append(obs); return obs
+        if tool not in self.allowed_tools:
+            obs = Observation(tool, args, False, f'unauthorized_tool:{tool}', before, before, self.snapshot())
             self.observations.append(obs); return obs
         try:
             message = self._apply(tool, args); ok = True
@@ -61,9 +67,11 @@ class SABLEEnvironment:
         after = self.state_hash()
         obs = Observation(tool, copy.deepcopy(args), ok, message, before, after, self.snapshot())
         self.observations.append(obs); return obs
+
     def _require_keys(self, args: dict, keys: list[str]) -> None:
         missing = [k for k in keys if k not in args]
         if missing: raise ValueError(f'missing_args:{missing}')
+
     def _apply(self, tool: str, args: dict) -> str:
         if tool in {'file.move','file.rename','file.copy'}:
             self._require_keys(args, ['source','destination'] if tool != 'file.rename' else ['source','new_name'])
@@ -126,6 +134,7 @@ class SABLEEnvironment:
         if tool == 'ticket.close':
             self._require_keys(args,['ticket_id']); t=self.state['tickets'][args['ticket_id']]; t['status']='closed'; return f'ticket_closed:{args["ticket_id"]}'
         raise ValueError(f'unhandled_tool:{tool}')
+
     def export_trace(self) -> list[dict[str, Any]]:
         return [{'tool':o.tool,'args':o.args,'observed_result':{'ok':o.ok,'message':o.message},'before_state_hash':o.before_hash,'after_state_hash':o.after_hash,'state_after':o.state} for o in self.observations]
 
