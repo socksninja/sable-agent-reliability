@@ -37,7 +37,7 @@ jobs:
         run: python3 tasks/generate_adversarial.py
 
       - name: Run OpenRouter SABLE
-        if: ${{ github.event_name == 'push' || inputs.provider == 'openrouter' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.provider == 'openrouter' }}
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
@@ -53,7 +53,7 @@ jobs:
           ./run_deepseek.sh --tasks tasks/tasks_v0_4_140.json --out results/deepseek_sable_v0.4.jsonl
 
       - name: Run Hugging Face SABLE
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.provider == 'huggingface' }}
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.provider == 'huggingface') }}
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
