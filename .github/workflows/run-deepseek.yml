@@ -32,6 +32,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Generate SABLE v0.4 benchmark
+        run: python3 tasks/generate_adversarial.py
+
       - name: Run OpenRouter SABLE
         if: ${{ github.event_name == 'push' || inputs.provider == 'openrouter' }}
         env:
@@ -46,12 +49,12 @@ jobs:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: |
           chmod +x ./run_deepseek.sh
-          ./run_deepseek.sh
+          ./run_deepseek.sh --tasks tasks/tasks_v0_4_140.json --out results/deepseek_sable_v0.4.jsonl
 
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: sable-results
+          name: sable-results-v0.4
           path: results/
           if-no-files-found: warn
