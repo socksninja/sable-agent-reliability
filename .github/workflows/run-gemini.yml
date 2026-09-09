@@ -1,0 +1,37 @@
+name: Run Gemini SABLE
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-gemini:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Gemini evaluation
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          chmod +x ./run_gemini.sh
+          ./run_gemini.sh
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gemini-sable-results
+          path: results/
+          if-no-files-found: warn
