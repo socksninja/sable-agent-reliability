@@ -8,9 +8,10 @@ on:
       provider:
         description: Provider
         required: true
-        default: openrouter
+        default: huggingface
         type: choice
         options:
+          - huggingface
           - openrouter
           - deepseek
 
@@ -50,6 +51,14 @@ jobs:
         run: |
           chmod +x ./run_deepseek.sh
           ./run_deepseek.sh --tasks tasks/tasks_v0_4_140.json --out results/deepseek_sable_v0.4.jsonl
+
+      - name: Run Hugging Face SABLE
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.provider == 'huggingface' }}
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          chmod +x ./run_huggingface.sh
+          ./run_huggingface.sh
 
       - name: Upload results
         if: always()
