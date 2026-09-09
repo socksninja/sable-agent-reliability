@@ -14,6 +14,14 @@ on:
           - huggingface
           - openrouter
           - deepseek
+      suite:
+        description: Benchmark suite
+        required: true
+        default: smoke_then_full
+        type: choice
+        options:
+          - smoke_only
+          - smoke_then_full
 
 jobs:
   run-sable:
@@ -36,34 +44,60 @@ jobs:
       - name: Generate SABLE v0.4 benchmark
         run: python3 tasks/generate_adversarial.py
 
-      - name: Run OpenRouter SABLE
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.provider == 'openrouter' }}
+      - name: Resolve provider configuration
         env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_PROVIDER: ${{ inputs.provider }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-        run: |
-          chmod +x ./run_openrouter.sh
-          ./run_openrouter.sh
-
-      - name: Run DeepSeek SABLE
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.provider == 'deepseek' }}
-        env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: |
-          chmod +x ./run_deepseek.sh
-          ./run_deepseek.sh --tasks tasks/tasks_v0_4_140.json --out results/deepseek_sable_v0.4.jsonl
+          PROVIDER="${INPUT_PROVIDER:-huggingface}"
+          case "$PROVIDER" in
+            huggingface)
+              echo "SABLE_API_KEY=$HF_TOKEN" >> "$GITHUB_ENV"
+              echo "SABLE_BASE_URL=https://router.huggingface.co/v1" >> "$GITHUB_ENV"
+              echo "SABLE_MODEL=deepseek-ai/DeepSeek-R1-0528" >> "$GITHUB_ENV"
+              ;;
+            openrouter)
+              echo "SABLE_API_KEY=$OPENROUTER_API_KEY" >> "$GITHUB_ENV"
+              echo "SABLE_BASE_URL=https://openrouter.ai/api/v1" >> "$GITHUB_ENV"
+              echo "SABLE_MODEL=openrouter/free" >> "$GITHUB_ENV"
+              ;;
+            deepseek)
+              echo "SABLE_API_KEY=$DEEPSEEK_API_KEY" >> "$GITHUB_ENV"
+              echo "SABLE_BASE_URL=https://api.deepseek.com" >> "$GITHUB_ENV"
+              echo "SABLE_MODEL=deepseek-v4-flash" >> "$GITHUB_ENV"
+              ;;
+            *) echo "Unsupported provider: $PROVIDER"; exit 1 ;;
+          esac
+          echo "SABLE_PROVIDER=$PROVIDER" >> "$GITHUB_ENV"
 
-      - name: Run Hugging Face SABLE
-        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.provider == 'huggingface') }}
+      - name: Run 10-task smoke test
         env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          SABLE_TASKS: tasks/tasks_smoke_10.json
+          SABLE_OUT: results/smoke_${{ github.run_id }}.jsonl
         run: |
-          chmod +x ./run_huggingface.sh
-          ./run_huggingface.sh
+          chmod +x ./run_sable.sh
+          ./run_sable.sh
+
+      - name: Evaluate smoke stability gate
+        env:
+          SMOKE_RESULTS: results/smoke_${{ github.run_id }}.jsonl
+        run: python3 smoke_gate.py --results "$SMOKE_RESULTS" --expected 10 --max-model-errors 1
+
+      - name: Run full 140-task benchmark
+        if: ${{ (github.event_name == 'push' || inputs.suite == 'smoke_then_full') }}
+        env:
+          SABLE_TASKS: tasks/tasks_v0_4_140.json
+          SABLE_OUT: results/${{ env.SABLE_PROVIDER }}_sable_v0.4.jsonl
+        run: |
+          ./run_sable.sh
 
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: sable-results-v0.4
+          name: sable-results-v0.4-${{ github.run_id }}
           path: results/
           if-no-files-found: warn
