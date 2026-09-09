@@ -43,7 +43,10 @@ TOOL_SCHEMAS = [
 ]
 
 def call_model(base_url: str, key: str, model: str, messages: list[dict], max_tokens: int | None = None, thinking: str = "disabled") -> dict:
-    body={"model":model,"messages":messages,"tools":TOOL_SCHEMAS,"tool_choice":"auto","temperature":0,"thinking":{"type":thinking}}
+    body={"model":model,"messages":messages,"tools":TOOL_SCHEMAS,"tool_choice":"auto","temperature":0}
+    # DeepSeek accepts its thinking control; Gemini/Groq OpenAI-compat layers may not.
+    if "deepseek.com" in base_url:
+        body["thinking"]={"type":thinking}
     if max_tokens: body["max_tokens"]=max_tokens
     req=Request(base_url.rstrip("/")+"/chat/completions",data=json.dumps(body).encode(),headers={"Authorization":f"Bearer {key}","Content-Type":"application/json"},method="POST")
     try:
