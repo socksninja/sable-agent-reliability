@@ -56,7 +56,7 @@ jobs:
             huggingface)
               echo "SABLE_API_KEY=$HF_TOKEN" >> "$GITHUB_ENV"
               echo "SABLE_BASE_URL=https://router.huggingface.co/v1" >> "$GITHUB_ENV"
-              echo "SABLE_MODEL=deepseek-ai/DeepSeek-R1-0528" >> "$GITHUB_ENV"
+              echo "SABLE_MODEL=Qwen/Qwen3.8-27B:ovhcloud" >> "$GITHUB_ENV"
               ;;
             openrouter)
               echo "SABLE_API_KEY=$OPENROUTER_API_KEY" >> "$GITHUB_ENV"
