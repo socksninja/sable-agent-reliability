@@ -1,0 +1,23 @@
+name: Capability Token v2.1
+on:
+  push:
+    branches: [main]
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+      - run: python -m pip install pytest
+      - run: pytest -q tests/test_capability_token_v21.py
+      - run: python - <<'PY'
+        from capability_token_v21 import issue, verify
+        d={'decision':'ALLOW','executable':True,'permission_tier':'LIMITED','trust_score_observed':82.0,'tool':'inventory.reserve','tool_class':'mutating'}
+        s={'task_id':'SABLE-T1','task_semantic_key':'inventory:reserve','policy_hash':'p','reputation_hash':'r','credential_hash':'c'}
+        t=issue(d,s,issued_at=1000,ttl_seconds=60,nonce='ci-nonce')
+        ok,reasons=verify(t,now=1010,expected={'tool':'inventory.reserve','task_id':'SABLE-T1','task_semantic_key':'inventory:reserve','policy_hash':'p','reputation_hash':'r','credential_hash':'c'})
+        assert ok, reasons
+        print('CAPABILITY_TOKEN_V21_PASS', t['token_hash'])
+        PY
