@@ -41,6 +41,8 @@ jobs:
         run: python3 tasks/generate_adversarial.py
       - name: Run model-independent v0.5 self-test
         run: python3 selftest_v05.py
+      - name: Run v0.6 evidence-layer self-test
+        run: python3 selftest_v06.py
       - name: Validate reliability scorer
         run: |
           python3 - <<'PY'
@@ -62,8 +64,8 @@ jobs:
       - name: Upload self-test
         uses: actions/upload-artifact@v7
         with:
-          name: sable-v05-selftest-${{ github.run_id }}
-          path: results/selftest_v05.json
+          name: sable-v06-selftest-${{ github.run_id }}
+          path: results/
 
   real-model:
     if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -129,6 +131,10 @@ jobs:
         env:
           RESULTS: results/smoke_${{ github.run_id }}.jsonl
         run: python3 reliability_score.py --results "$RESULTS" --out results/smoke_reliability_report.json
+      - name: Generate smoke evidence packs
+        env:
+          RESULTS: results/smoke_${{ github.run_id }}.jsonl
+        run: python3 evidence_v06.py --tasks tasks/tasks_smoke_10.json --results "$RESULTS" --out results/smoke_evidence_v06.jsonl
       - name: Run full 140-task benchmark
         if: ${{ inputs.suite == 'smoke_then_full' }}
         env:
@@ -145,10 +151,15 @@ jobs:
         env:
           RESULTS: results/full_${{ github.run_id }}.jsonl
         run: python3 reliability_score.py --results "$RESULTS" --out results/full_reliability_report.json
+      - name: Generate full evidence packs
+        if: ${{ inputs.suite == 'smoke_then_full' }}
+        env:
+          RESULTS: results/full_${{ github.run_id }}.jsonl
+        run: python3 evidence_v06.py --tasks tasks/tasks_v0_4_140.json --results "$RESULTS" --out results/full_evidence_v06.jsonl
       - name: Upload real-model results
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: sable-v05-results-${{ github.run_id }}
+          name: sable-v06-results-${{ github.run_id }}
           path: results/
           if-no-files-found: warn
