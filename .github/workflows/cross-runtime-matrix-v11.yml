@@ -1,0 +1,40 @@
+name: SABLE cross-runtime evidence matrix v1.1
+
+on:
+  push:
+    paths:
+      - 'cross_runtime_matrix_v11.py'
+      - 'results/third_party_langgraph_evidence.json'
+      - 'results/third_party_langgraph_permission.json'
+      - 'results/third_party_crewai_evidence.json'
+      - 'results/third_party_crewai_permission.json'
+      - 'results/third_party_openai_agents_evidence.json'
+      - 'results/third_party_openai_agents_permission.json'
+      - '.github/workflows/cross-runtime-matrix-v11.yml'
+  workflow_dispatch:
+
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate three-runtime invariants
+        run: |
+          python cross_runtime_matrix_v11.py \
+            --langgraph-evidence results/third_party_langgraph_evidence.json \
+            --langgraph-permission results/third_party_langgraph_permission.json \
+            --crewai-evidence results/third_party_crewai_evidence.json \
+            --crewai-permission results/third_party_crewai_permission.json \
+            --openai-agents-evidence results/third_party_openai_agents_evidence.json \
+            --openai-agents-permission results/third_party_openai_agents_permission.json \
+            --out results/cross_runtime_matrix_v11.json
+      - name: Upload matrix result
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-cross-runtime-matrix-v11
+          path: results/cross_runtime_matrix_v11.json
