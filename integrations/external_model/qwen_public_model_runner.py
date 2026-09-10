@@ -142,3 +142,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+# Trigger the path-scoped public-model E2E workflow without changing behavior.
