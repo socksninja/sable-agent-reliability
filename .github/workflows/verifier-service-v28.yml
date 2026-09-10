@@ -1,0 +1,47 @@
+name: SABLE Verifier Service v2.8
+
+on:
+  push:
+    paths:
+      - 'verifier_service_v28.py'
+      - 'submit_v27.py'
+      - 'verification_receipt_v26.py'
+      - 'tests/test_verifier_service_v28.py'
+      - 'schemas/verifier_service_v28.schema.json'
+      - 'requirements.txt'
+  workflow_dispatch:
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - name: Run verifier service tests
+        run: pytest -q tests/test_verifier_service_v28.py
+      - name: Run HTTP health and verification smoke test
+        run: |
+          python - <<'PY'
+          import json, threading, urllib.request
+          from verifier_service_v28 import HTTPServer, Handler
+          from submit_v27 import sha
+          trace={'schema_version':'sable.submission.v0.9','task_id':'HTTP-T1','goal':'smoke','agent':{'framework':'CrewAI','framework_version':'1.15.20','model':'m','provider_base_url':'local'},'steps':[{'tool':'inventory.reserve','args':{},'observed_result':{'ok':True}}],'environment':{'task_success':True},'integrity':{'native_tool_calling':True,'tool_results_observed_by_sandbox':True,'agent_controlled_tool_result':False,'termination':'final'}}
+          payload={'protocol_version':'sable.submission.v0.9','submission_id':'http-smoke','trace':trace,'integrity':{'source_trace_hash':sha(trace)}}
+          server=HTTPServer(('127.0.0.1',8788),Handler); threading.Thread(target=server.serve_forever,daemon=True).start()
+          health=json.loads(urllib.request.urlopen('http://127.0.0.1:8788/v1/health').read())
+          assert health['status']=='ok'
+          req=urllib.request.Request('http://127.0.0.1:8788/v1/verify',data=json.dumps(payload).encode(),headers={'Content-Type':'application/json'},method='POST')
+          r=json.loads(urllib.request.urlopen(req).read()); assert r['decision']=='VERIFIED' and r['verification_level']=='STRUCTURALLY_VALID'
+          server.shutdown(); print('VERIFIER_SERVICE_V28_SMOKE_PASS')
+          PY
+      - name: Verify response schema
+        run: |
+          python - <<'PY'
+          import json
+          s=json.load(open('schemas/verifier_service_v28.schema.json'))
+          assert s['properties']['verification_level']['enum'] == ['STRUCTURALLY_VALID','CRYPTOGRAPHICALLY_VERIFIED','REJECTED']
+          print('VERIFIER_SERVICE_V28_SCHEMA_PASS')
+          PY
