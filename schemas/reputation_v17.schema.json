@@ -1,0 +1,14 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "title":"SABLE Reputation v1.7",
+  "type":"object",
+  "required":["schema_version","observation_count","minimum_observations_for_stable_reputation","scoring_contract","profiles","reputation_hash"],
+  "properties":{
+    "schema_version":{"const":"sable.reputation.v1.7"},
+    "observation_count":{"type":"integer","minimum":0},
+    "minimum_observations_for_stable_reputation":{"const":10},
+    "scoring_contract":{"type":"object","required":["verified_success_weight","replay_integrity_weight","score_range","predictive_claim"]},
+    "profiles":{"type":"object"},
+    "reputation_hash":{"type":"string","pattern":"^[0-9a-f]{64}$"}
+  }
+}
