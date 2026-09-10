@@ -74,6 +74,44 @@ jobs:
           print(f"max_turns={pick('DISPATCH_MAX_TURNS','max_turns',8)}")
           print(f"thinking={pick('DISPATCH_THINKING','thinking','disabled')}")
           PY
+      - name: Write launch diagnostics
+        if: always()
+        env:
+          ENABLED: ${{ steps.config.outputs.enabled }}
+          BASE_URL: ${{ steps.config.outputs.base_url }}
+          MODEL: ${{ steps.config.outputs.model }}
+          REPEATS: ${{ steps.config.outputs.repeats }}
+          MAX_TURNS: ${{ steps.config.outputs.max_turns }}
+          THINKING: ${{ steps.config.outputs.thinking }}
+          WORKFLOW: ${{ github.workflow }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          SHA: ${{ github.sha }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          mkdir -p results
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          payload = {
+              'schema_version': 'sable.campaign_launch_diagnostics.v0.1',
+              'workflow': os.getenv('WORKFLOW'),
+              'run_id': int(os.getenv('RUN_ID', '0')),
+              'run_attempt': int(os.getenv('RUN_ATTEMPT', '0')),
+              'head_sha': os.getenv('SHA'),
+              'event': os.getenv('EVENT'),
+              'enabled': os.getenv('ENABLED') == 'true',
+              'base_url': os.getenv('BASE_URL'),
+              'model': os.getenv('MODEL'),
+              'repeats': int(os.getenv('REPEATS') or 0),
+              'max_turns': int(os.getenv('MAX_TURNS') or 0),
+              'thinking': os.getenv('THINKING'),
+              'api_key_present': bool(os.getenv('SABLE_API_KEY')),
+          }
+          Path('results/campaign_launch_diagnostics.json').write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8'
+          )
+          PY
       - name: Require resolved model
         if: steps.config.outputs.enabled == 'true'
         env:
@@ -84,7 +122,8 @@ jobs:
         env:
           SABLE_API_KEY: ${{ secrets.SABLE_API_KEY }}
         run: |
-          test -n "$SABLE_API_KEY"
+          mkdir -p results
+          set +e
           python campaign_orchestrator_v14.py \
             --api-key "$SABLE_API_KEY" \
             --base-url "${{ steps.config.outputs.base_url }}" \
@@ -93,9 +132,21 @@ jobs:
             --max-turns "${{ steps.config.outputs.max_turns }}" \
             --thinking "${{ steps.config.outputs.thinking }}" \
             --tasks tasks/tasks_v0_4_140.json \
-            --out results/external_model_campaign_v14.json
+            --out results/external_model_campaign_v14.json \
+            2>&1 | tee results/campaign_launcher.log
+          rc=${PIPESTATUS[0]}
+          python - <<PY
+          import json
+          from pathlib import Path
+          p = Path('results/campaign_launch_diagnostics.json')
+          data = json.loads(p.read_text()) if p.exists() else {}
+          data['campaign_exit_code'] = $rc
+          data['campaign_status'] = 'success' if $rc == 0 else 'failed'
+          p.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          exit "$rc"
       - name: Build observed failure taxonomy
-        if: steps.config.outputs.enabled == 'true'
+        if: steps.config.outputs.enabled == 'true' && success()
         run: |
           mapfile -t E < <(find results/campaigns -name '*_evidence.jsonl' | sort)
           mapfile -t P < <(find results/campaigns -name '*_permission.jsonl' | sort)
@@ -106,13 +157,13 @@ jobs:
             --permission "${P[@]}" \
             --out results/failure_taxonomy_v14.json
       - name: Build attack-family heatmap
-        if: steps.config.outputs.enabled == 'true'
+        if: steps.config.outputs.enabled == 'true' && success()
         run: |
           python scripts/build_campaign_family_heatmap_v01.py \
             --campaign results/external_model_campaign_v14.json \
             --out results/campaign_family_heatmap_v01.json
       - name: Enforce evidence integrity
-        if: steps.config.outputs.enabled == 'true'
+        if: steps.config.outputs.enabled == 'true' && success()
         run: |
           python - <<'PY'
           import json
@@ -127,12 +178,15 @@ jobs:
           print(f"FAMILY_ROWS={len(heatmap['families'])}")
           print("EVIDENCE_INTEGRITY=PASS")
           PY
-      - name: Upload complete campaign evidence
-        if: steps.config.outputs.enabled == 'true'
+      - name: Upload complete campaign evidence and diagnostics
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: sable-real-agent-140-campaign-v01
+          if-no-files-found: warn
           path: |
+            results/campaign_launch_diagnostics.json
+            results/campaign_launcher.log
             results/external_model_campaign_v14.json
             results/failure_taxonomy_v14.json
             results/campaign_family_heatmap_v01.json
