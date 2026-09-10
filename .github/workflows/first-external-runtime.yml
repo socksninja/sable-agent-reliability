@@ -1,0 +1,172 @@
+name: SABLE First External Runtime Record
+
+on:
+  push:
+    branches: [sable/first-external-runtime]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  external-runtime:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install external model runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'torch>=2.6,<3' 'transformers>=4.48,<5' 'safetensors>=0.5,<1'
+
+      - name: Run external Hugging Face model runtime
+        env:
+          SABLE_MODEL: HuggingFaceTB/SmolLM2-135M-Instruct
+        run: python3 integrations/external_hf/run_smol_runtime.py
+
+      - name: Show raw observation
+        run: cat external_results/raw_external_runtime.json
+
+      - name: Upload raw task-level evidence
+        id: evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-external-smollm-${{ github.run_id }}
+          path: external_results/raw_external_runtime.json
+          if-no-files-found: error
+
+      - name: Materialize SABLE Reliability Record
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.evidence.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.evidence.outputs.artifact-digest }}
+          ARTIFACT_NAME: sable-external-smollm-${{ github.run_id }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          raw = json.loads(Path('external_results/raw_external_runtime.json').read_text())
+          repo = os.environ['GITHUB_REPOSITORY']
+          run_id = int(os.environ['GITHUB_RUN_ID'])
+          token = os.environ['GH_TOKEN']
+          req = urllib.request.Request(
+              f'https://api.github.com/repos/{repo}/actions/runs/{run_id}/jobs?per_page=100',
+              headers={'Accept':'application/vnd.github+json','Authorization':f'Bearer {token}','User-Agent':'sable-record-generator/0.1'}
+          )
+          with urllib.request.urlopen(req, timeout=20) as r:
+              jobs = json.load(r)['jobs']
+          matches = [j for j in jobs if j.get('name') == 'external-runtime']
+          if len(matches) != 1:
+              raise SystemExit(f'expected exactly one external-runtime job, found {len(matches)}')
+          job_id = matches[0]['id']
+
+          task_results = []
+          for row in raw['tasks']:
+              task_results.append({
+                  'task_id': row['task_id'],
+                  'task_success': bool(row['task_success']),
+                  'tool_call_count': len(row['tool_calls']),
+                  'native_tool_call': bool(row['native_tool_call']),
+                  'observed_environment': row['observed_environment'],
+                  'agent_action_outcome': row['agent_action_outcome'],
+              })
+
+          n = len(task_results)
+          successes = sum(r['task_success'] for r in task_results)
+          native = sum(r['native_tool_call'] for r in task_results)
+          mutations = sum(r['tool_call_count'] for r in task_results)
+          record = {
+              'schema_version': 'sable.reliability_record.v0.1',
+              'record_id': f"SABLE-EXT-SMOLLM-{run_id}",
+              'generated_at': datetime.now(timezone.utc).isoformat(),
+              'benchmark': 'SABLE External Runtime Probe v0.1',
+              'model': raw['model_id'],
+              'runtime': raw['runtime'],
+              'n': n,
+              'native_tool_call_rate': native / n,
+              'task_success_rate': successes / n,
+              'task_successes': successes,
+              'model_errors': sum(bool(x['model_error']) for x in raw['tasks']),
+              'environment_mutations': mutations,
+              'task_results': task_results,
+              'provenance': {
+                  'source': 'GitHub Actions',
+                  'repository': repo,
+                  'run_id': run_id,
+                  'job_id': job_id,
+                  'commit': os.environ['GITHUB_SHA'],
+              },
+              'artifact': {
+                  'artifact_id': int(os.environ['ARTIFACT_ID']),
+                  'name': os.environ['ARTIFACT_NAME'],
+                  'sha256': os.environ['ARTIFACT_DIGEST'].replace('sha256:', ''),
+              },
+              'claim_scope': 'Observed SABLE result only; not a production-safety claim.',
+          }
+          Path('submissions').mkdir(exist_ok=True)
+          Path('submissions/first_external_smolllm.json').write_text(json.dumps(record, indent=2, ensure_ascii=False) + '\n')
+          Path('external_results/sable_reliability_record.json').write_text(json.dumps(record, indent=2, ensure_ascii=False) + '\n')
+          print(json.dumps(record, indent=2, ensure_ascii=False))
+          PY
+
+      - name: Validate external Reliability Record
+        run: python3 scripts/validate_reliability_submission_v01.py submissions/first_external_smolllm.json
+
+      - name: Verify evidence reachability
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/admit_external_reliability_record_v01.py submissions/first_external_smolllm.json
+
+      - name: Generate admission report
+        id: admission
+        run: |
+          set +e
+          python3 scripts/admit_external_submissions_v01.py > external_results/admission_report.json
+          status=$?
+          cat external_results/admission_report.json
+          exit $status
+
+      - name: Publish admission artifacts and summary
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('external_results/admission_report.json')
+          if p.exists():
+              r = json.loads(p.read_text())
+              print('## SABLE External Admission')
+              print(f"- Structure: {r['results'][0]['structural_status']}")
+              print(f"- Evidence: {r['results'][0]['evidence_status']}")
+              print(f"- Promotion: {r['results'][0]['promotion_status']}")
+              print(f"- Record: {r['results'][0].get('record_id')}")
+              with Path(os.environ['GITHUB_STEP_SUMMARY']).open('a') as out:
+                  out.write(f"## SABLE External Admission\n")
+                  out.write(f"- Structure: `{r['results'][0]['structural_status']}`\n")
+                  out.write(f"- Evidence: `{r['results'][0]['evidence_status']}`\n")
+                  out.write(f"- Promotion: `{r['results'][0]['promotion_status']}`\n")
+                  out.write(f"- Record: `{r['results'][0].get('record_id')}`\n")
+          PY
+          cat external_results/sable_reliability_record.json >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload admission report and Reliability Record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-external-admission-${{ github.run_id }}
+          path: |
+            external_results/admission_report.json
+            external_results/sable_reliability_record.json
+            external_results/raw_external_runtime.json
+          if-no-files-found: error
