@@ -5,16 +5,19 @@ from __future__ import annotations
 import hashlib
 import importlib.metadata
 import json
+import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TypedDict
 
-from langgraph.graph import END, START, StateGraph
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
+from langgraph.graph import END, START, StateGraph
 from sandbox import SABLEEnvironment
 
-ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "external_results"
 TASKS = json.loads((ROOT / "tasks" / "tasks.json").read_text(encoding="utf-8"))
 TASK = next(t for t in TASKS if t["task_id"] == "SABLE-09")
