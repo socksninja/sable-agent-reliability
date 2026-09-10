@@ -1,13 +1,5 @@
 #!/usr/bin/env python3
-"""Run a real OpenAI Agents SDK runtime and emit a SABLE v0.9 submission.
-
-The Agents SDK Runner manages the agent loop and function-tool execution. The
-model is accessed through an OpenAI-compatible OpenRouter endpoint so the test
-can reuse the existing repository provider secret without requiring a second
-OpenAI API key. SDK tracing export is disabled; the SDK-created trace ID remains
-part of the provenance record. The SABLE environment produces the authoritative
-tool result and state transition.
-"""
+"""Run a real OpenAI Agents SDK runtime and emit a SABLE v0.9 submission."""
 from __future__ import annotations
 
 import datetime as dt
@@ -44,14 +36,15 @@ def main() -> None:
     if not api_key:
         raise RuntimeError("OPENROUTER_API_KEY is required for the live runtime test")
 
-    model_name = os.environ.get("OPENROUTER_MODEL", "nvidia/nemotron-3-ultra-550b-a55b-a55b:free")
+    model_name = os.environ.get("OPENROUTER_MODEL", "openrouter/free")
     env = SABLEEnvironment(TASK)
-
-    # The SDK's own exporter defaults to OpenAI tracing credentials. Disable
-    # export so the runtime test only needs the existing OpenRouter provider key.
     set_tracing_disabled(True)
 
-    client = AsyncOpenAI(api_key=api_key, base_url="https://openrouter.ai/api/v1")
+    client = AsyncOpenAI(
+        api_key=api_key,
+        base_url="https://openrouter.ai/api/v1",
+        default_headers={"HTTP-Referer": "https://github.com/socksninja/sable-agent-reliability"},
+    )
     model = OpenAIChatCompletionsModel(model=model_name, openai_client=client)
 
     @function_tool
