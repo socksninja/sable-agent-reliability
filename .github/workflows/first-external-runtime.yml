@@ -123,6 +123,45 @@ jobs:
           print(json.dumps(record, indent=2, ensure_ascii=False))
           PY
 
+      - name: Validate generated Reliability Record
+        run: python3 scripts/validate_reliability_submission_v01.py submissions/first_external_smollm.json
+
+      - name: Package Reliability Record for admission
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-external-record-${{ github.run_id }}
+          path: |
+            external_results/raw_external_runtime.json
+            external_results/sable_reliability_record.json
+          if-no-files-found: error
+
+  admission:
+    needs: external-runtime
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Download generated Reliability Record
+        uses: actions/download-artifact@v4
+        with:
+          name: sable-external-record-${{ github.run_id }}
+          path: external_results
+
+      - name: Prepare submission
+        run: |
+          mkdir -p submissions
+          cp external_results/sable_reliability_record.json submissions/first_external_smollm.json
+
       - name: Validate external Reliability Record
         run: python3 scripts/validate_reliability_submission_v01.py submissions/first_external_smollm.json
 
@@ -132,7 +171,6 @@ jobs:
         run: python3 scripts/admit_external_reliability_record_v01.py submissions/first_external_smollm.json
 
       - name: Generate admission report
-        id: admission
         run: |
           set +e
           python3 scripts/admit_external_submissions_v01.py > external_results/admission_report.json
@@ -140,7 +178,7 @@ jobs:
           cat external_results/admission_report.json
           exit $status
 
-      - name: Publish admission artifacts and summary
+      - name: Publish admission summary
         if: always()
         run: |
           python3 - <<'PY'
@@ -149,23 +187,23 @@ jobs:
           p = Path('external_results/admission_report.json')
           if p.exists():
               r = json.loads(p.read_text())
+              row = r['results'][0]
               print('## SABLE External Admission')
-              print(f"- Structure: {r['results'][0]['structural_status']}")
-              print(f"- Evidence: {r['results'][0]['evidence_status']}")
-              print(f"- Promotion: {r['results'][0]['promotion_status']}")
-              print(f"- Record: {r['results'][0].get('record_id')}")
+              print(f"- Structure: {row['structural_status']}")
+              print(f"- Evidence: {row['evidence_status']}")
+              print(f"- Promotion: {row['promotion_status']}")
+              print(f"- Record: {row.get('record_id')}")
               with Path(os.environ['GITHUB_STEP_SUMMARY']).open('a') as out:
                   out.write("## SABLE External Admission\n")
-                  out.write(f"- Structure: `{r['results'][0]['structural_status']}`\n")
-                  out.write(f"- Evidence: `{r['results'][0]['evidence_status']}`\n")
-                  out.write(f"- Promotion: `{r['results'][0]['promotion_status']}`\n")
-                  out.write(f"- Record: `{r['results'][0].get('record_id')}`\n")
+                  out.write(f"- Structure: `{row['structural_status']}`\n")
+                  out.write(f"- Evidence: `{row['evidence_status']}`\n")
+                  out.write(f"- Promotion: `{row['promotion_status']}`\n")
+                  out.write(f"- Record: `{row.get('record_id')}`\n")
           record = Path('external_results/sable_reliability_record.json')
           if record.exists():
-              record_content = record.read_text()
               with Path(os.environ['GITHUB_STEP_SUMMARY']).open('a') as out:
                   out.write("\n## Reliability Record\n```json\n")
-                  out.write(record_content)
+                  out.write(record.read_text())
                   out.write("```\n")
           PY
 
