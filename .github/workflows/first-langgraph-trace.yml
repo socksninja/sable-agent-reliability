@@ -1,0 +1,66 @@
+name: SABLE First LangGraph Trace
+
+on:
+  push:
+    branches: [sable/langgraph-first-trace-v15]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  langgraph-trace:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install LangGraph
+        run: python -m pip install -r integrations/langgraph/requirements.txt
+
+      - name: Run live LangGraph application
+        run: python3 integrations/langgraph/run_first_trace.py
+
+      - name: Validate v0.9 submission
+        run: |
+          python3 trace_submit_v09.py \
+            --input external_results/langgraph_first_submission_v09.jsonl \
+            --output external_results/langgraph_sable_v05.jsonl
+
+      - name: Evaluate normalized trace with SABLE
+        run: |
+          python3 sable_v05.py \
+            --tasks tasks/tasks.json \
+            --results external_results/langgraph_sable_v05.jsonl \
+            --report external_results/langgraph_sable_report.json \
+            --replay
+
+      - name: Enforce replay integrity
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('external_results/langgraph_sable_report.json').read_text(encoding='utf-8'))
+          rate = report.get('replay_match_rate')
+          if rate != 1.0:
+              raise SystemExit(f'replay_integrity_failed: replay_match_rate={rate!r}')
+          print('REPLAY_INTEGRITY=1.0')
+          PY
+
+      - name: Upload LangGraph evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-langgraph-trace-${{ github.run_id }}
+          path: |
+            external_results/langgraph_first_runtime_trace.json
+            external_results/langgraph_first_submission_v09.jsonl
+            external_results/langgraph_sable_v05.jsonl
+            external_results/langgraph_sable_report.json
+          if-no-files-found: error
