@@ -1,0 +1,110 @@
+name: SABLE configured 140-task campaign
+
+on:
+  push:
+    paths:
+      - '.github/campaign_launch.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  campaign:
+    if: github.event_name == 'workflow_dispatch' || true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Read launch manifest
+        id: config
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          cfg = json.loads(Path('.github/campaign_launch.json').read_text())
+          if not cfg.get('enabled', False):
+              raise SystemExit('CAMPAIGN_DISABLED')
+          source = cfg.get('model_source', '')
+          if source != 'repository_variable:SABLE_MODEL':
+              raise SystemExit(f'UNSUPPORTED_MODEL_SOURCE:{source}')
+          print(f"repeats={int(cfg.get('repeats', 1))}")
+          print(f"max_turns={int(cfg.get('max_turns', 8))}")
+          print(f"thinking={cfg.get('thinking', 'disabled')}")
+          print(f"base_url={cfg.get('base_url', 'https://api.openai.com/v1')}")
+          PY
+      - name: Materialize reproducible 140-task benchmark
+        run: python tasks/generate_adversarial.py
+      - name: Validate benchmark contract
+        run: python scripts/validate_adversarial_coverage_v01.py
+      - name: Verify model configuration exists
+        env:
+          SABLE_MODEL: ${{ vars.SABLE_MODEL }}
+          SABLE_API_KEY: ${{ secrets.SABLE_API_KEY }}
+        run: |
+          test -n "$SABLE_MODEL"
+          test -n "$SABLE_API_KEY"
+      - name: Run configured 140-task campaign
+        env:
+          SABLE_API_KEY: ${{ secrets.SABLE_API_KEY }}
+        run: |
+          python campaign_orchestrator_v14.py \
+            --api-key "$SABLE_API_KEY" \
+            --base-url "$(python - <<'PY'
+          import json
+          print(json.load(open('.github/campaign_launch.json'))['base_url'])
+          PY
+          )" \
+            --model "${{ vars.SABLE_MODEL }}" \
+            --repeats "$(python - <<'PY'
+          import json
+          print(json.load(open('.github/campaign_launch.json'))['repeats'])
+          PY
+          )" \
+            --max-turns "$(python - <<'PY'
+          import json
+          print(json.load(open('.github/campaign_launch.json'))['max_turns'])
+          PY
+          )" \
+            --thinking "$(python - <<'PY'
+          import json
+          print(json.load(open('.github/campaign_launch.json'))['thinking'])
+          PY
+          )" \
+            --tasks tasks/tasks_v0_4_140.json \
+            --out results/external_model_campaign_v14.json
+      - name: Build observed failure taxonomy
+        run: |
+          mapfile -t E < <(find results/campaigns -name '*_evidence.jsonl' | sort)
+          mapfile -t P < <(find results/campaigns -name '*_permission.jsonl' | sort)
+          test "${#E[@]}" -gt 0
+          test "${#E[@]}" -eq "${#P[@]}"
+          python failure_taxonomy_v14.py --evidence "${E[@]}" --permission "${P[@]}" --out results/failure_taxonomy_v14.json
+      - name: Build attack-family heatmap
+        run: python scripts/build_campaign_family_heatmap_v01.py --campaign results/external_model_campaign_v14.json --out results/campaign_family_heatmap_v01.json
+      - name: Enforce evidence integrity
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          campaign = json.loads(Path('results/external_model_campaign_v14.json').read_text())
+          heatmap = json.loads(Path('results/campaign_family_heatmap_v01.json').read_text())
+          assert campaign['observation_count'] == 140 * campaign['repetition_count']
+          assert campaign['all_replay_matches'] is True
+          assert heatmap['observation_count'] == campaign['observation_count']
+          assert len(heatmap['families']) == 10
+          print(f"OBSERVATIONS={campaign['observation_count']}")
+          print("EVIDENCE_INTEGRITY=PASS")
+          PY
+      - name: Upload complete campaign evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-configured-140-campaign-v01
+          path: |
+            results/external_model_campaign_v14.json
+            results/failure_taxonomy_v14.json
+            results/campaign_family_heatmap_v01.json
+            results/campaign_family_heatmap_v01.md
+            results/campaigns/**
