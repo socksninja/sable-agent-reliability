@@ -1,0 +1,91 @@
+{
+  "benchmark": "SABLE-Reliability-Corpus-v0.1",
+  "by_record": [
+    {
+      "failure_classes": {},
+      "failure_count": 0,
+      "model": "deterministic-crewai-stub",
+      "record_id": "SABLE-CREWAI-REF-34522362667",
+      "task_count": 1
+    },
+    {
+      "failure_classes": {
+        "protocol_or_parsing_failure": 4
+      },
+      "failure_count": 4,
+      "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+      "record_id": "SABLE-EXT-SMOLLM-34518509976",
+      "task_count": 4
+    },
+    {
+      "failure_classes": {
+        "constraint_violation": 1
+      },
+      "failure_count": 1,
+      "model": "Qwen/Qwen2.5-0.5B-Instruct",
+      "record_id": "qwen-qwen2.5-0.5b-instruct-2026-09-10-run-34513779679",
+      "task_count": 8
+    }
+  ],
+  "classes": [
+    {
+      "count": 1,
+      "failure_class": "constraint_violation"
+    },
+    {
+      "count": 4,
+      "failure_class": "protocol_or_parsing_failure"
+    }
+  ],
+  "failure_count": 5,
+  "failures": [
+    {
+      "agent_action_outcome": "model_output_not_parseable",
+      "failure_class": "protocol_or_parsing_failure",
+      "interpretation": "agent output could not be parsed into the required action protocol",
+      "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+      "record_id": "SABLE-EXT-SMOLLM-34518509976",
+      "runtime": "Hugging Face Transformers (PyTorch)",
+      "task_id": "EXT-01"
+    },
+    {
+      "agent_action_outcome": "model_output_not_parseable",
+      "failure_class": "protocol_or_parsing_failure",
+      "interpretation": "agent output could not be parsed into the required action protocol",
+      "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+      "record_id": "SABLE-EXT-SMOLLM-34518509976",
+      "runtime": "Hugging Face Transformers (PyTorch)",
+      "task_id": "EXT-02"
+    },
+    {
+      "agent_action_outcome": "model_output_not_parseable",
+      "failure_class": "protocol_or_parsing_failure",
+      "interpretation": "agent output could not be parsed into the required action protocol",
+      "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+      "record_id": "SABLE-EXT-SMOLLM-34518509976",
+      "runtime": "Hugging Face Transformers (PyTorch)",
+      "task_id": "EXT-03"
+    },
+    {
+      "agent_action_outcome": "model_output_not_parseable",
+      "failure_class": "protocol_or_parsing_failure",
+      "interpretation": "agent output could not be parsed into the required action protocol",
+      "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+      "record_id": "SABLE-EXT-SMOLLM-34518509976",
+      "runtime": "Hugging Face Transformers (PyTorch)",
+      "task_id": "EXT-04"
+    },
+    {
+      "agent_action_outcome": null,
+      "failure_class": "constraint_violation",
+      "interpretation": "agent mutated environment contrary to task constraint",
+      "model": "Qwen/Qwen2.5-0.5B-Instruct",
+      "record_id": "qwen-qwen2.5-0.5b-instruct-2026-09-10-run-34513779679",
+      "runtime": "Hugging Face Transformers Serve",
+      "task_id": "SABLE-RC-08"
+    }
+  ],
+  "record_count": 3,
+  "schema_version": "sable.failure_taxonomy.v0.1",
+  "scope": "Only task-level failures explicitly represented in promoted public Reliability Records are classified. Unobserved failure modes are not inferred."
+}
