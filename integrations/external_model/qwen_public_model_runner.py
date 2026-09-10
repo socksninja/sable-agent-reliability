@@ -95,17 +95,19 @@ def main() -> None:
 
     if tool:
         tool_name, tool_args = tool
-        sandbox_tool = {"inventory_reserve": "inventory.reserve"}.get(tool_name, tool_name)
-        if sandbox_tool not in ALLOWED_TOOLS:
-            observed = {"ok": False, "message": f"unknown_tool:{sandbox_tool}"}
+        if tool_name == "inventory_reserve":
+            tool_name = "inventory.reserve"
+        if tool_name not in ALLOWED_TOOLS:
+            observed = {"ok": False, "message": f"unknown_tool:{tool_name}"}
         else:
-            obs = env.execute(sandbox_tool, tool_args)
+            before_state_hash = env.state_hash()
+            obs = env.execute(tool_name, tool_args)
             observed = {"ok": obs.ok, "message": obs.message, "state": obs.state, "after_state_hash": obs.after_hash}
             steps.append({
-                "tool": sandbox_tool,
+                "tool": tool_name,
                 "args": tool_args,
                 "observed_result": observed,
-                "before_state_hash": env.initial_state_hash,
+                "before_state_hash": before_state_hash,
                 "after_state_hash": env.state_hash(),
                 "state_after": env.snapshot(),
             })
