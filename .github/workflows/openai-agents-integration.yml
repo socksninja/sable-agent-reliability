@@ -3,6 +3,8 @@ name: SABLE OpenAI Agents SDK Integration
 on:
   push:
     branches: [sable/openai-agents-sdk]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
