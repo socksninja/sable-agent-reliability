@@ -7,9 +7,24 @@ from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RECORDS = sorted((ROOT / "records").glob("*.json"))
+RECORDS = ROOT / "records"
 OUT_JSON = ROOT / "records" / "RELIABILITY_MATRIX_V0.1.json"
 OUT_MD = ROOT / "docs" / "RELIABILITY_MATRIX_V0.1.md"
+NON_RECORD_PREFIXES = ("RELIABILITY_MATRIX_", "FAILURE_TAXONOMY_", "ADVERSARIAL_FAMILY_COVERAGE_")
+
+
+def load_record(path: Path) -> dict | None:
+    if not path.name.endswith(".json") or path.name.startswith(NON_RECORD_PREFIXES):
+        return None
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if record.get("schema_version") != "sable.reliability_record.v0.1":
+        return None
+    if record.get("promotion", {}).get("status") != "PROMOTED":
+        return None
+    return record
 
 
 def classify(result: dict) -> str | None:
@@ -46,12 +61,12 @@ def normalized_results(record: dict) -> list[dict]:
 
 
 def main() -> None:
-    paths = [p for p in RECORDS.glob("*.json") if p.name not in {"RELIABILITY_MATRIX_V0.1.json", "FAILURE_TAXONOMY_V0.1.json"}]
-    if not paths:
-        raise SystemExit("NO_RELIABILITY_RECORDS")
+    paths = sorted(RECORDS.glob("*.json"))
     rows = []
     for path in paths:
-        r = json.loads(path.read_text(encoding="utf-8"))
+        r = load_record(path)
+        if r is None:
+            continue
         counts = Counter(c for c in (classify(x) for x in normalized_results(r)) if c)
         rows.append({
             "record_id": r["record_id"],
@@ -68,6 +83,8 @@ def main() -> None:
             "failure_signature": dict(sorted(counts.items())),
             "evidence_scope": r.get("claim_scope") or r.get("interpretation", "") or "unspecified",
         })
+    if not rows:
+        raise SystemExit("NO_PROMOTED_RELIABILITY_RECORDS")
     rows.sort(key=lambda r: (r["model"], r["record_id"]))
     matrix = {"schema_version": "sable.reliability_matrix.v0.1", "benchmark": "SABLE-Reliability-Corpus-v0.1", "record_count": len(rows), "records": rows}
     OUT_JSON.write_text(json.dumps(matrix, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
