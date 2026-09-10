@@ -1,0 +1,55 @@
+name: SABLE execution distribution
+
+on:
+  push:
+    paths:
+      - 'execution_distribution_v12.py'
+      - 'schemas/execution_record_v12.schema.json'
+      - 'results/*evidence.json'
+      - 'results/*permission.json'
+      - '.github/workflows/execution-distribution.yml'
+  workflow_dispatch:
+
+jobs:
+  distribution:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Require evidence-backed records
+        run: |
+          test -f results/third_party_langgraph_evidence.json
+          test -f results/third_party_langgraph_permission.json
+          test -f results/third_party_crewai_evidence.json
+          test -f results/third_party_crewai_permission.json
+      - name: Aggregate verified execution distribution
+        run: |
+          python execution_distribution_v12.py \
+            --record results/third_party_langgraph_evidence.json results/third_party_langgraph_permission.json \
+            --record results/third_party_crewai_evidence.json results/third_party_crewai_permission.json \
+            --out results/execution_distribution_v12.json
+      - name: Enforce no false statistical certainty
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('results/execution_distribution_v12.json').read_text())
+          assert r['observation_count'] >= 2
+          assert r['sample_quality'] == 'observations_only'
+          assert r['all_replay_matches'] is True
+          print(json.dumps({
+              'observation_count': r['observation_count'],
+              'sample_quality': r['sample_quality'],
+              'counts': r['counts'],
+              'verified_task_success_rate': r['verified_task_success_rate'],
+          }, indent=2))
+          PY
+      - name: Upload distribution artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-execution-distribution-v12
+          path: results/execution_distribution_v12.json
