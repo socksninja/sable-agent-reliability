@@ -1,0 +1,48 @@
+{
+  "schema_version": "sable.reliability_record.v0.1",
+  "record_id": "SABLE-LANGGRAPH-34520607245",
+  "generated_at": "2026-09-10T19:28:42.383369+00:00",
+  "benchmark": "SABLE Cross-Runtime Probe v0.1",
+  "model": "deterministic-reference-agent",
+  "runtime": {
+    "server": "LangGraph 1.2.11",
+    "transport": "state_graph_tool_node_to_sable_sandbox"
+  },
+  "n": 1,
+  "native_tool_call_rate": 0.0,
+  "task_success_rate": 1.0,
+  "task_successes": 1,
+  "model_errors": 0,
+  "environment_mutations": 1,
+  "task_results": [
+    {
+      "task_id": "SABLE-09",
+      "task_success": true,
+      "tool_call_count": 1,
+      "native_tool_call": false,
+      "observed_environment": {
+        "task_success": true,
+        "checks_passed": 2,
+        "checks_total": 2,
+        "final_state_hash": "937e31b6d17219f92b26fb3c88acae6bf72108396cbd13c291624afa3fbee354"
+      },
+      "agent_action_outcome": "reserved"
+    }
+  ],
+  "provenance": {
+    "source": "GitHub Actions",
+    "repository": "socksninja/sable-agent-reliability",
+    "run_id": 34520607245,
+    "job_id": 103016889382,
+    "commit": "a9a54899387665cb54daa7219bccf17aa0c8d2ba",
+    "runtime_trace_id": "langgraph-e69b5b969b744304853f5a069da65742",
+    "source_trace_hash": "7b0cf9643e39c73d6b9f0c46484ca71a5091b8eb6bb0f1509c10dc7933638b74",
+    "replay_match_rate": 1.0
+  },
+  "artifact": {
+    "artifact_id": 10169474305,
+    "name": "sable-langgraph-trace-34520607245",
+    "sha256": "154bc6a6da01e23a5bd69c5be29662d9c246b0a61a2eac0b8a6b18e95c24a03b"
+  },
+  "claim_scope": "Observed SABLE framework/runtime result only; deterministic reference agent. Not independent model provenance and not a production-safety claim."
+}
