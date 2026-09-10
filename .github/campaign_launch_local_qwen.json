@@ -1,0 +1,10 @@
+{
+  "enabled": true,
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "base_url": "http://127.0.0.1:8000/v1",
+  "repeats": 1,
+  "max_turns": 8,
+  "thinking": "disabled",
+  "execution_mode": "local_public_model",
+  "launch_revision": 1
+}
