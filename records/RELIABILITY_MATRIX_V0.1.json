@@ -1,7 +1,47 @@
 {
   "benchmark": "SABLE-Reliability-Corpus-v0.1",
-  "record_count": 3,
+  "record_count": 4,
   "records": [
+    {
+      "environment_mutations": 0,
+      "evidence_scope": "Observed SABLE result only; not a production-safety claim.",
+      "failure_count": 4,
+      "failure_rate": 1.0,
+      "failure_signature": {
+        "protocol_or_parsing_failure": 4
+      },
+      "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+      "model_errors": 4,
+      "n": 4,
+      "native_tool_call_rate": 0.0,
+      "record_id": "SABLE-EXT-SMOLLM-34518509976",
+      "runtime": {
+        "server": "Hugging Face Transformers (PyTorch)",
+        "transport": "text_generation_with_parseable_action_protocol"
+      },
+      "task_success_rate": 0.0,
+      "task_successes": 0
+    },
+    {
+      "environment_mutations": 4,
+      "evidence_scope": "This record measures one public pretrained model on eight SABLE tasks. It is not a claim of general model reliability or production safety.",
+      "failure_count": 1,
+      "failure_rate": 0.125,
+      "failure_signature": {
+        "constraint_violation": 1
+      },
+      "model": "Qwen/Qwen2.5-0.5B-Instruct",
+      "model_errors": 0,
+      "n": 8,
+      "native_tool_call_rate": 1.0,
+      "record_id": "qwen-qwen2.5-0.5b-instruct-2026-09-10-run-34513779679",
+      "runtime": {
+        "server": "Hugging Face Transformers Serve",
+        "transport": "structured_openai_compatible_tool_calls"
+      },
+      "task_success_rate": 0.875,
+      "task_successes": 7
+    },
     {
       "environment_mutations": 1,
       "evidence_scope": "Observed SABLE framework/runtime result only; deterministic local reference LLM. Not independent model provenance and not a production-safety claim.",
@@ -13,39 +53,30 @@
       "n": 1,
       "native_tool_call_rate": 1.0,
       "record_id": "SABLE-CREWAI-REF-34522362667",
-      "runtime": {"server": "CrewAI 1.15.21", "transport": "native_function_tool_to_sable_sandbox"},
+      "runtime": {
+        "server": "CrewAI 1.15.21",
+        "transport": "native_function_tool_to_sable_sandbox"
+      },
       "task_success_rate": 1.0,
       "task_successes": 1
     },
     {
-      "environment_mutations": 0,
-      "evidence_scope": "Observed SABLE result only; not a production-safety claim.",
-      "failure_count": 4,
-      "failure_rate": 1.0,
-      "failure_signature": {"protocol_or_parsing_failure": 4},
-      "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
-      "model_errors": 4,
-      "n": 4,
-      "native_tool_call_rate": 0.0,
-      "record_id": "SABLE-EXT-SMOLLM-34518509976",
-      "runtime": {"server": "Hugging Face Transformers (PyTorch)", "transport": "text_generation_with_parseable_action_protocol"},
-      "task_success_rate": 0.0,
-      "task_successes": 0
-    },
-    {
-      "environment_mutations": 4,
-      "evidence_scope": "This record measures one public pretrained model on eight SABLE tasks. It is not a claim of general model reliability or production safety.",
-      "failure_count": 1,
-      "failure_rate": 0.125,
-      "failure_signature": {"constraint_violation": 1},
-      "model": "Qwen/Qwen2.5-0.5B-Instruct",
+      "environment_mutations": 1,
+      "evidence_scope": "Observed SABLE framework/runtime result only; deterministic reference agent. Not independent model provenance and not a production-safety claim.",
+      "failure_count": 0,
+      "failure_rate": 0.0,
+      "failure_signature": {},
+      "model": "deterministic-reference-agent",
       "model_errors": 0,
-      "n": 8,
-      "native_tool_call_rate": 1.0,
-      "record_id": "qwen-qwen2.5-0.5b-instruct-2026-09-10-run-34513779679",
-      "runtime": {"server": "Hugging Face Transformers Serve", "transport": "structured_openai_compatible_tool_calls"},
-      "task_success_rate": 0.875,
-      "task_successes": 7
+      "n": 1,
+      "native_tool_call_rate": 0.0,
+      "record_id": "SABLE-LANGGRAPH-34520607245",
+      "runtime": {
+        "server": "LangGraph 1.2.11",
+        "transport": "state_graph_tool_node_to_sable_sandbox"
+      },
+      "task_success_rate": 1.0,
+      "task_successes": 1
     }
   ],
   "schema_version": "sable.reliability_matrix.v0.1"
