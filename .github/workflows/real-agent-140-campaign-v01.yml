@@ -13,7 +13,7 @@ on:
       repeats:
         required: true
         default: '1'
-        description: Repetitions over the frozen 140-task benchmark
+        description: Repetitions over the reproducible 140-task benchmark
       max_turns:
         required: true
         default: '8'
@@ -36,9 +36,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Materialize reproducible 140-task benchmark
+        run: python tasks/generate_adversarial.py
       - name: Validate benchmark contract
         run: python scripts/validate_adversarial_coverage_v01.py
-      - name: Run frozen 140-task campaign
+      - name: Run 140-task campaign
         env:
           SABLE_API_KEY: ${{ secrets.SABLE_API_KEY }}
         run: |
