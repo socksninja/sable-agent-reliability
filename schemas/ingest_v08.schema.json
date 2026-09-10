@@ -1,0 +1,23 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://github.com/socksninja/sable-agent-reliability/blob/main/schemas/ingest_v08.schema.json",
+  "title":"SABLE External Trace Ingest v0.8",
+  "type":"object",
+  "required":["schema_version","task_id","goal","agent","steps","claimed_status","environment","integrity","ingestion"],
+  "properties":{
+    "schema_version":{"const":"sable.v0.5"},
+    "task_id":{"type":"string","minLength":1},
+    "goal":{"type":"string"},
+    "agent":{"type":"object"},
+    "steps":{"type":"array","items":{"type":"object","required":["tool","args","observed_result","before_state_hash","after_state_hash"]}},
+    "claimed_status":{"enum":["success","failure","uncertain"]},
+    "final_report":{"type":"string"},
+    "environment":{"type":"object","required":["task_success","checks_passed","checks_total","final_state_hash"]},
+    "integrity":{"type":"object","required":["native_tool_calling","tool_results_observed_by_sandbox","agent_controlled_tool_result","termination"]},
+    "ingestion":{"type":"object","required":["schema_version","source_schema","trace_hash"],"properties":{
+      "schema_version":{"const":"sable.ingest.v0.8"},
+      "source_schema":{"type":"string"},
+      "trace_hash":{"type":"string","minLength":64,"maxLength":64}
+    }}
+  }
+}
