@@ -1,9 +1,9 @@
 {
   "enabled": true,
-  "base_url": "https://api.openai.com/v1",
-  "model_source": "repository_variable:SABLE_MODEL",
+  "base_url": "https://api.deepseek.com",
+  "model": "deepseek-v4-flash",
   "repeats": 1,
   "max_turns": 8,
   "thinking": "disabled",
-  "launch_revision": 3
+  "launch_revision": 4
 }
