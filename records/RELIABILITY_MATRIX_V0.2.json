@@ -5,50 +5,8 @@
   "generated_from": "records/* promoted sable.reliability_record.v0.1",
   "generation_note": "Derived matrix is reproducible by scripts/build_reliability_matrix_v02.py; framework probes using deterministic reference LLM remain explicitly scoped and are not independent model evidence.",
   "records": [
-    {
-      "record_id": "SABLE-CREWAI-REF-34522362667",
-      "model": "deterministic-crewai-stub",
-      "runtime": {"server": "CrewAI 1.15.21", "transport": "native_function_tool_to_sable_sandbox"},
-      "n": 1,
-      "task_successes": 1,
-      "task_success_rate": 1.0,
-      "native_tool_call_rate": 1.0,
-      "model_errors": 0,
-      "environment_mutations": 1,
-      "failure_count": 0,
-      "failure_rate": 0.0,
-      "failure_signature": {},
-      "evidence_scope": "Observed SABLE framework/runtime result only; deterministic local reference LLM. Not independent model provenance and not a production-safety claim."
-    },
-    {
-      "record_id": "SABLE-EXT-SMOLLM-34518509976",
-      "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
-      "runtime": {"server": "Hugging Face Transformers (PyTorch)", "transport": "text_generation_with_parseable_action_protocol"},
-      "n": 4,
-      "task_successes": 0,
-      "task_success_rate": 0.0,
-      "native_tool_call_rate": 0.0,
-      "model_errors": 4,
-      "environment_mutations": 0,
-      "failure_count": 4,
-      "failure_rate": 1.0,
-      "failure_signature": {"protocol_or_parsing_failure": 4},
-      "evidence_scope": "Observed SABLE result only; not a production-safety claim."
-    },
-    {
-      "record_id": "qwen-qwen2.5-0.5b-instruct-2026-09-10-run-34513779679",
-      "model": "Qwen/Qwen2.5-0.5B-Instruct",
-      "runtime": {"server": "Hugging Face Transformers Serve", "transport": "structured_openai_compatible_tool_calls"},
-      "n": 8,
-      "task_successes": 7,
-      "task_success_rate": 0.875,
-      "native_tool_call_rate": 1.0,
-      "model_errors": 0,
-      "environment_mutations": 4,
-      "failure_count": 1,
-      "failure_rate": 0.125,
-      "failure_signature": {"constraint_violation": 1},
-      "evidence_scope": "This record measures one public pretrained model on eight SABLE tasks. It is not a claim of general model reliability or production safety."
-    }
+    {"record_id":"SABLE-CREWAI-REF-34522362667","model":"deterministic-crewai-stub","runtime":{"server":"CrewAI 1.15.21","transport":"native_function_tool_to_sable_sandbox"},"n":1,"task_successes":1,"task_success_rate":1.0,"native_tool_call_rate":1.0,"model_errors":0,"environment_mutations":1,"failure_count":0,"failure_rate":0.0,"failure_signature":{},"evidence_scope":"Observed SABLE framework/runtime result only; deterministic local reference LLM. Not independent model provenance and not a production-safety claim."},
+    {"record_id":"SABLE-EXT-SMOLLM-34518509976","model":"HuggingFaceTB/SmolLM2-135M-Instruct","runtime":{"server":"Hugging Face Transformers (PyTorch)","transport":"text_generation_with_parseable_action_protocol"},"n":4,"task_successes":0,"task_success_rate":0.0,"native_tool_call_rate":0.0,"model_errors":4,"environment_mutations":0,"failure_count":4,"failure_rate":1.0,"failure_signature":{"protocol_or_parsing_failure":4},"evidence_scope":"Observed SABLE result only; not a production-safety claim."},
+    {"record_id":"qwen-qwen2.5-0.5b-instruct-2026-09-10-run-34513779679","model":"Qwen/Qwen2.5-0.5B-Instruct","runtime":{"server":"Hugging Face Transformers Serve","transport":"structured_openai_compatible_tool_calls"},"n":8,"task_successes":7,"task_success_rate":0.875,"native_tool_call_rate":1.0,"model_errors":0,"environment_mutations":4,"failure_count":1,"failure_rate":0.125,"failure_signature":{"constraint_violation":1},"evidence_scope":"This record measures one public pretrained model on eight SABLE tasks. It is not a claim of general model reliability or production safety."}
   ]
 }
