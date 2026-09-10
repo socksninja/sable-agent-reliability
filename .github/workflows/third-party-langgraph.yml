@@ -51,7 +51,7 @@ jobs:
         run: |
           python evidence_v06.py \
             --tasks integrations/langgraph/task.json \
-            --traces results/third_party_langgraph_sable_v05.jsonl \
+            --results results/third_party_langgraph_sable_v05.jsonl \
             --out results/third_party_langgraph_evidence.json
 
       - name: Decide execution permission
@@ -74,6 +74,7 @@ jobs:
           assert submission['integrity']['source_trace_hash']
           assert normalized['submission']['source_trace_hash'] == submission['integrity']['source_trace_hash']
           assert evaluation['summary']['task_success_rate'] == 1.0
+          assert evidence['evidence_hash']
           assert permission['verified'] is True
           assert permission['decision'] == 'ALLOW'
           print(json.dumps({
