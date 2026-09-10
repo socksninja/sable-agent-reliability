@@ -1,0 +1,80 @@
+name: SABLE Public Model Qwen E2E
+
+on:
+  push:
+    paths:
+      - 'integrations/external_model/qwen_public_model_runner.py'
+      - 'integrations/external_model/task.json'
+      - 'sandbox.py'
+      - 'trace_submit_v09.py'
+      - 'evaluator.py'
+      - 'evidence_v06.py'
+      - 'permission_v01.py'
+      - 'verification_receipt_v24.py'
+      - 'verification_receipt_v26.py'
+  workflow_dispatch:
+
+jobs:
+  public-model-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install model runtime
+        run: python -m pip install --upgrade pip && pip install 'torch>=2.3' 'transformers>=4.49' 'safetensors>=0.4' 'huggingface_hub>=0.27' 'cryptography>=43.0'
+      - name: Run public Qwen model through SABLE Sandbox
+        run: python integrations/external_model/qwen_public_model_runner.py --out results/public_model_qwen_trace.json
+      - name: Ingest, evaluate and authorize
+        run: |
+          python trace_submit_v09.py --input results/public_model_qwen_submission.jsonl --output results/public_model_qwen_sable_v05.jsonl
+          python evaluator.py --tasks integrations/external_model/task.json --traces results/public_model_qwen_sable_v05.jsonl --out results/public_model_qwen_evaluation.json
+          python evidence_v06.py --tasks integrations/external_model/task.json --results results/public_model_qwen_sable_v05.jsonl --out results/public_model_qwen_evidence.jsonl
+          python permission_v01.py --input results/public_model_qwen_sable_v05.jsonl --output results/public_model_qwen_permission.jsonl
+      - name: Build and independently verify signed receipt
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+          from verification_receipt_v24 import build_receipt
+          from verification_receipt_v26 import sign_receipt, verify_self_contained
+          ev = json.loads(Path('results/public_model_qwen_evidence.jsonl').read_text().splitlines()[0])
+          pm = json.loads(Path('results/public_model_qwen_permission.jsonl').read_text().splitlines()[0])
+          assert ev['outcome']['task_success'] is True
+          assert ev['replay']['replay_match'] is True
+          assert ev['execution']['tool_calls'] >= 1
+          assert pm['decision'] == 'ALLOW' and pm['verified'] is True
+          signed = sign_receipt(build_receipt(ev, pm), Ed25519PrivateKey.generate(), key_id='sable-public-qwen-e2e')
+          ok, reasons = verify_self_contained(signed)
+          assert ok, reasons
+          Path('results/public_model_qwen_signed_receipt_v26.json').write_text(json.dumps(signed, ensure_ascii=False, sort_keys=True, indent=2) + '\n')
+          print('PUBLIC_MODEL_SIGNED_RECEIPT_PASS', signed['receipt_hash'])
+          PY
+      - name: Prepare submission for trace_submit
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          raw=json.loads(Path('results/public_model_qwen_trace.json').read_text())
+          trace={k:raw[k] for k in ['task_id','goal','agent','steps','claimed_status','final_report','environment','integrity']}
+          trace['schema_version']='sable.submission.v0.9'
+          submission={
+            'protocol_version':'sable.submission.v0.9',
+            'submission_id':'public-model-qwen-e2e',
+            'source':{'agent_name':raw['agent']['name'],'agent_version':'1.0.0','framework':raw['agent']['framework'],'framework_version':raw['agent']['framework_version'],'adapter':'qwen_public_model_runner.py','evidence_class':'public_pretrained_model_execution'},
+            'trace':trace,
+            'provenance':{'captured_at':'github-actions','collector':'SABLE public Qwen model E2E','runtime_trace_id':'public-model-qwen-e2e','capture_method':'qwen_public_model_runner.py','redaction_policy':'synthetic task data only'},
+            'integrity':{'source_trace_hash':__import__('hashlib').sha256(json.dumps(trace,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest(),'hash_algorithm':'sha256','canonicalization':'json-sort-keys-utf8'}
+          }
+          Path('results/public_model_qwen_submission.jsonl').write_text(json.dumps(submission,ensure_ascii=False,sort_keys=True)+'\n')
+          PY
+      - name: Upload public model bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-public-model-qwen-e2e
+          path: results/public_model_qwen_*
