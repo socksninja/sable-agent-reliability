@@ -24,6 +24,9 @@ on:
         options:
           - disabled
           - enabled
+  push:
+    paths:
+      - '.github/campaign_launch.json'
 
 permissions:
   contents: read
@@ -40,6 +43,33 @@ jobs:
         run: python tasks/generate_adversarial.py
       - name: Validate benchmark contract
         run: python scripts/validate_adversarial_coverage_v01.py
+      - name: Resolve campaign configuration
+        id: config
+        env:
+          DISPATCH_BASE_URL: ${{ inputs.base_url }}
+          DISPATCH_MODEL: ${{ inputs.model }}
+          DISPATCH_REPEATS: ${{ inputs.repeats }}
+          DISPATCH_MAX_TURNS: ${{ inputs.max_turns }}
+          DISPATCH_THINKING: ${{ inputs.thinking }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          from pathlib import Path
+          p = Path('.github/campaign_launch.json')
+          cfg = json.loads(p.read_text()) if p.exists() else {}
+          def pick(env_name, key, default=None):
+              value = os.environ.get(env_name, '')
+              return value if value else cfg.get(key, default)
+          print(f"base_url={pick('DISPATCH_BASE_URL','base_url','https://api.openai.com/v1')}")
+          print(f"model={pick('DISPATCH_MODEL','model') or ''}")
+          print(f"repeats={pick('DISPATCH_REPEATS','repeats',1)}")
+          print(f"max_turns={pick('DISPATCH_MAX_TURNS','max_turns',8)}")
+          print(f"thinking={pick('DISPATCH_THINKING','thinking','disabled')}")
+          PY
+      - name: Require resolved model
+        env:
+          MODEL: ${{ steps.config.outputs.model }}
+        run: test -n "$MODEL"
       - name: Run 140-task campaign
         env:
           SABLE_API_KEY: ${{ secrets.SABLE_API_KEY }}
@@ -47,11 +77,11 @@ jobs:
           test -n "$SABLE_API_KEY"
           python campaign_orchestrator_v14.py \
             --api-key "$SABLE_API_KEY" \
-            --base-url "${{ inputs.base_url }}" \
-            --model "${{ inputs.model }}" \
-            --repeats "${{ inputs.repeats }}" \
-            --max-turns "${{ inputs.max_turns }}" \
-            --thinking "${{ inputs.thinking }}" \
+            --base-url "${{ steps.config.outputs.base_url }}" \
+            --model "${{ steps.config.outputs.model }}" \
+            --repeats "${{ steps.config.outputs.repeats }}" \
+            --max-turns "${{ steps.config.outputs.max_turns }}" \
+            --thinking "${{ steps.config.outputs.thinking }}" \
             --tasks tasks/tasks_v0_4_140.json \
             --out results/external_model_campaign_v14.json
       - name: Build observed failure taxonomy
