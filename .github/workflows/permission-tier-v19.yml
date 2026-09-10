@@ -1,0 +1,27 @@
+name: SABLE permission tier v1.9
+
+on:
+  push:
+    paths:
+      - 'permission_tier_v19.py'
+      - 'schemas/permission_tier_v19.schema.json'
+      - 'tests/test_permission_tier_v19.py'
+      - '.github/workflows/permission-tier-v19.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pytest
+      - name: Self-test
+        run: python -m pytest -q tests/test_permission_tier_v19.py
+      - name: Validate engine contract
+        run: python permission_tier_v19.py --help >/dev/null
