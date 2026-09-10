@@ -41,6 +41,24 @@ jobs:
         run: python3 tasks/generate_adversarial.py
       - name: Run model-independent v0.5 self-test
         run: python3 selftest_v05.py
+      - name: Validate reliability scorer
+        run: |
+          python3 - <<'PY'
+          import json
+          from reliability_score import build_report
+          row = {
+              "task_id": "SELF-SCORE",
+              "family": "selftest",
+              "environment": {"task_success": True, "final_state_hash": "x"},
+              "integrity": {"termination": "final"},
+              "steps": [],
+              "claimed_status": "success",
+          }
+          report = build_report([row])
+          assert report["reliability_score"] == 100.0, report
+          assert report["pass_rate"] == 1.0, report
+          print(json.dumps(report, indent=2))
+          PY
       - name: Upload self-test
         uses: actions/upload-artifact@v7
         with:
@@ -107,6 +125,10 @@ jobs:
         env:
           RESULTS: results/smoke_${{ github.run_id }}.jsonl
         run: python3 sable_v05.py --tasks tasks/tasks_smoke_10.json --results "$RESULTS" --report results/smoke_v05_report.json --replay
+      - name: Score smoke reliability
+        env:
+          RESULTS: results/smoke_${{ github.run_id }}.jsonl
+        run: python3 reliability_score.py --results "$RESULTS" --out results/smoke_reliability_report.json
       - name: Run full 140-task benchmark
         if: ${{ inputs.suite == 'smoke_then_full' }}
         env:
@@ -118,6 +140,11 @@ jobs:
         env:
           RESULTS: results/full_${{ github.run_id }}.jsonl
         run: python3 sable_v05.py --tasks tasks/tasks_v0_4_140.json --results "$RESULTS" --report results/full_v05_report.json --replay
+      - name: Score full reliability
+        if: ${{ inputs.suite == 'smoke_then_full' }}
+        env:
+          RESULTS: results/full_${{ github.run_id }}.jsonl
+        run: python3 reliability_score.py --results "$RESULTS" --out results/full_reliability_report.json
       - name: Upload real-model results
         if: always()
         uses: actions/upload-artifact@v7
