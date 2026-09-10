@@ -1,0 +1,64 @@
+name: SABLE Verification Receipt v2.4
+
+on:
+  push:
+    paths:
+      - 'verification_receipt_v24.py'
+      - 'tests/test_verification_receipt_v24.py'
+      - 'schemas/verification_receipt_v24.schema.json'
+      - 'results/third_party_*_evidence.json'
+      - 'results/third_party_*_permission.json'
+      - '.github/workflows/verification-receipt-v24.yml'
+  workflow_dispatch:
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run receipt tests
+        run: pytest -q tests/test_verification_receipt_v24.py
+      - name: Verify schema contract
+        run: |
+          python - <<'PY'
+          import json
+          s=json.load(open('schemas/verification_receipt_v24.schema.json'))
+          assert s['properties']['schema_version']['const']=='sable.verification_receipt.v2.4'
+          assert s['properties']['receipt_hash']['pattern']=='^[0-9a-f]{64}$'
+          print('V24_SCHEMA_PASS')
+          PY
+      - name: Build receipts from existing verified evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p results/receipts_v24
+          found=0
+          for e in results/third_party_*_evidence.json; do
+            [ -f "$e" ] || continue
+            stem=$(basename "$e" _evidence.json)
+            p="results/${stem}_permission.json"
+            [ -f "$p" ] || continue
+            found=1
+            python verification_receipt_v24.py \
+              --evidence "$e" \
+              --permission "$p" \
+              --out "results/receipts_v24/${stem}_receipt_v24.json"
+          done
+          test "$found" = 1
+      - name: Verify every generated receipt independently
+        run: |
+          python - <<'PY'
+          import json, glob
+          from verification_receipt_v24 import verify_receipt
+          files=glob.glob('results/receipts_v24/*_receipt_v24.json')
+          assert files
+          for f in files:
+              r=json.load(open(f))
+              ok,reasons=verify_receipt(r)
+              assert ok, (f,reasons)
+          print('V24_RECEIPTS_PASS', len(files))
