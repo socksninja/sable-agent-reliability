@@ -13,15 +13,18 @@ import datetime as dt
 import hashlib
 import importlib.metadata
 import json
+import sys
 import uuid
 from pathlib import Path
 from typing import TypedDict
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 
 from langgraph.graph import END, START, StateGraph
 
 from sandbox import SABLEEnvironment, stable_hash, task_passes
 
-ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "results" / "third_party_langgraph_raw_v09.jsonl"
 SUBMISSION = ROOT / "results" / "third_party_langgraph_submission_v09.jsonl"
 
@@ -56,7 +59,6 @@ class AgentState(TypedDict, total=False):
 
 
 def planner(state: AgentState) -> AgentState:
-    # The graph node is intentionally deterministic so no external model key is needed.
     return {
         "plan": {
             "tool": "inventory.reserve",
@@ -83,8 +85,8 @@ def finalize(state: AgentState) -> AgentState:
 def main() -> None:
     framework_version = importlib.metadata.version("langgraph")
     env = SABLEEnvironment(TASK)
-
     runtime_trace_id = f"langgraph-{uuid.uuid4()}"
+
     graph = StateGraph(AgentState)
     graph.add_node("planner", planner)
     graph.add_node("executor", executor)
@@ -98,7 +100,6 @@ def main() -> None:
     run = app.invoke({"task": {**copy.deepcopy(TASK), "_env": env}})
     passed, checks = task_passes(TASK, env.state)
 
-    # The collector records what the runtime actually produced, not what the policy expected.
     trace = {
         "schema_version": "sable.submission.v0.9",
         "task_id": TASK["task_id"],
