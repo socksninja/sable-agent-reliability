@@ -64,17 +64,17 @@ def main() -> None:
         tools=[reserve_inventory],
     )
 
-    workflow_trace_id = f"trace_{uuid.uuid4().hex}"
     started_at = dt.datetime.now(dt.timezone.utc).isoformat()
+    requested_trace_id = f"trace_{uuid.uuid4().hex}"
 
     with trace(
         "SABLE third-party runtime integration",
-        trace_id=workflow_trace_id,
+        trace_id=requested_trace_id,
         metadata={"sable_task_id": TASK["task_id"], "integration": "openai-agents-sdk"},
         disabled=True,
     ) as runtime_trace:
         result = Runner.run_sync(agent, TASK["goal"])
-        runtime_trace_id = runtime_trace.trace_id
+        runtime_trace_id = getattr(runtime_trace, "trace_id", requested_trace_id)
 
     passed, checks = task_passes(TASK, env.state)
     if not env.observations:
