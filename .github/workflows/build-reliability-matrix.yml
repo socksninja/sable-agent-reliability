@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'records/**'
+      - 'scripts/validate_reliability_records.py'
       - 'scripts/build_reliability_matrix.py'
       - 'scripts/build_failure_taxonomy.py'
       - '.github/workflows/build-reliability-matrix.yml'
@@ -25,6 +26,20 @@ jobs:
         run: python scripts/build_reliability_matrix.py
       - name: Build deterministic Failure Taxonomy
         run: python scripts/build_failure_taxonomy.py
+      - name: Check generated profile consistency
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          matrix = json.loads(Path('records/RELIABILITY_MATRIX_V0.1.json').read_text())
+          assert matrix['record_count'] == len(matrix['records'])
+          for row in matrix['records']:
+              assert 0 <= row['failure_rate'] <= 1
+              assert row['failure_count'] == sum(row['failure_signature'].values())
+              assert abs(row['failure_rate'] - row['failure_count'] / row['n']) < 1e-9
+          print(f"PROFILE_ROWS={len(matrix['records'])}")
+          print("PROFILE_CONSISTENCY=PASS")
+          PY
       - name: Upload Reliability Matrix and Failure Taxonomy
         uses: actions/upload-artifact@v4
         with:
