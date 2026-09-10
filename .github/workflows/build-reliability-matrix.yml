@@ -58,7 +58,17 @@ jobs:
           print("PROFILE_CONSISTENCY=PASS")
           PY
       - name: Assert v0.2 is reproducible
-        run: git diff --exit-code -- records/RELIABILITY_MATRIX_V0.2.json
+        run: |
+          python scripts/build_reliability_matrix_v02.py --output /tmp/RELIABILITY_MATRIX_V0.2.generated.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          tracked = json.loads(Path('records/RELIABILITY_MATRIX_V0.2.json').read_text())
+          generated = json.loads(Path('/tmp/RELIABILITY_MATRIX_V0.2.generated.json').read_text())
+          assert tracked == generated, 'tracked v0.2 matrix differs semantically from generator output'
+          print(f"SEMANTIC_RECORD_COUNT={tracked['record_count']}")
+          print("V0.2_REPRODUCIBLE=PASS")
+          PY
       - name: Upload Reliability Matrix, Taxonomy, and Coverage
         uses: actions/upload-artifact@v4
         with:
