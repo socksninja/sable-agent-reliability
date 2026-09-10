@@ -51,26 +51,36 @@ jobs:
           DISPATCH_REPEATS: ${{ inputs.repeats }}
           DISPATCH_MAX_TURNS: ${{ inputs.max_turns }}
           DISPATCH_THINKING: ${{ inputs.thinking }}
+          REPOSITORY_MODEL: ${{ vars.SABLE_MODEL }}
         run: |
           python - <<'PY' >> "$GITHUB_OUTPUT"
           import json, os
           from pathlib import Path
           p = Path('.github/campaign_launch.json')
           cfg = json.loads(p.read_text()) if p.exists() else {}
+
           def pick(env_name, key, default=None):
               value = os.environ.get(env_name, '')
               return value if value else cfg.get(key, default)
+
+          model = pick('DISPATCH_MODEL', 'model')
+          if not model and cfg.get('model_source') == 'repository_variable:SABLE_MODEL':
+              model = os.environ.get('REPOSITORY_MODEL', '')
+
+          print(f"enabled={'true' if cfg.get('enabled', True) else 'false'}")
           print(f"base_url={pick('DISPATCH_BASE_URL','base_url','https://api.openai.com/v1')}")
-          print(f"model={pick('DISPATCH_MODEL','model') or ''}")
+          print(f"model={model}")
           print(f"repeats={pick('DISPATCH_REPEATS','repeats',1)}")
           print(f"max_turns={pick('DISPATCH_MAX_TURNS','max_turns',8)}")
           print(f"thinking={pick('DISPATCH_THINKING','thinking','disabled')}")
           PY
       - name: Require resolved model
+        if: steps.config.outputs.enabled == 'true'
         env:
           MODEL: ${{ steps.config.outputs.model }}
         run: test -n "$MODEL"
       - name: Run 140-task campaign
+        if: steps.config.outputs.enabled == 'true'
         env:
           SABLE_API_KEY: ${{ secrets.SABLE_API_KEY }}
         run: |
@@ -85,6 +95,7 @@ jobs:
             --tasks tasks/tasks_v0_4_140.json \
             --out results/external_model_campaign_v14.json
       - name: Build observed failure taxonomy
+        if: steps.config.outputs.enabled == 'true'
         run: |
           mapfile -t E < <(find results/campaigns -name '*_evidence.jsonl' | sort)
           mapfile -t P < <(find results/campaigns -name '*_permission.jsonl' | sort)
@@ -95,11 +106,13 @@ jobs:
             --permission "${P[@]}" \
             --out results/failure_taxonomy_v14.json
       - name: Build attack-family heatmap
+        if: steps.config.outputs.enabled == 'true'
         run: |
           python scripts/build_campaign_family_heatmap_v01.py \
             --campaign results/external_model_campaign_v14.json \
             --out results/campaign_family_heatmap_v01.json
       - name: Enforce evidence integrity
+        if: steps.config.outputs.enabled == 'true'
         run: |
           python - <<'PY'
           import json
@@ -115,6 +128,7 @@ jobs:
           print("EVIDENCE_INTEGRITY=PASS")
           PY
       - name: Upload complete campaign evidence
+        if: steps.config.outputs.enabled == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: sable-real-agent-140-campaign-v01
