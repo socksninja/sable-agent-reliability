@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: sable-local-qwen-140
+  group: sable-local-qwen-140-v03
   cancel-in-progress: true
 
 env:
