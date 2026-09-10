@@ -1,0 +1,33 @@
+name: SABLE Verification Receipt v2.5
+
+on:
+  push:
+    paths:
+      - 'verification_receipt_v25.py'
+      - 'tests/test_verification_receipt_v25.py'
+      - 'schemas/verification_receipt_v25.schema.json'
+      - 'verification_receipt_v24.py'
+      - 'requirements.txt'
+  workflow_dispatch:
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - name: Run signed receipt tests
+        run: pytest -q tests/test_verification_receipt_v25.py
+      - name: Verify schema and independent signature contract
+        run: |
+          python - <<'PY'
+          import json
+          s=json.load(open('schemas/verification_receipt_v25.schema.json'))
+          assert s['properties']['signing']['properties']['alg']['const']=='Ed25519'
+          src=open('verification_receipt_v25.py').read()
+          assert 'sign_receipt' in src and 'verify_signed_receipt' in src
+          print('VERIFICATION_RECEIPT_V25_SCHEMA_PASS')
+          PY
