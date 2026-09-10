@@ -1,0 +1,26 @@
+{
+  "summary": {
+    "benchmark": "SABLE",
+    "n": 1,
+    "task_success_rate": 1.0,
+    "silent_failure_rate_among_all": 0.0,
+    "silent_failure_rate_among_failed": 0.0,
+    "failure_detection_rate_among_failed": 0.0,
+    "recovery_rate": 0.0,
+    "human_intervention_rate": 0.0
+  },
+  "rows": [
+    {
+      "task_id": "SABLE-LANGGRAPH-01",
+      "family": "third_party_runtime",
+      "task_success": true,
+      "silent_failure": false,
+      "failure_detected": false,
+      "recovery": false,
+      "human_intervention": false,
+      "checks_passed": 2,
+      "checks_total": 2,
+      "final_report": "reserved:3:SKU-A"
+    }
+  ]
+}
