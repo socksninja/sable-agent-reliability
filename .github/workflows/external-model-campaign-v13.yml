@@ -1,0 +1,94 @@
+name: SABLE repeated external-model campaign v1.3
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'OpenAI-compatible base URL without /chat/completions'
+        required: true
+        default: 'https://api.openai.com/v1'
+      model:
+        description: 'Model identifier to evaluate'
+        required: true
+      repeats:
+        description: 'Independent repetitions (minimum 2, 5 recommended)'
+        required: true
+        default: '5'
+      max_turns:
+        description: 'Maximum agent turns per repetition'
+        required: true
+        default: '8'
+      thinking:
+        description: 'Thinking mode for compatible providers'
+        required: true
+        default: 'disabled'
+
+permissions:
+  contents: write
+
+jobs:
+  campaign:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run repeated external-model campaign
+        env:
+          SABLE_API_KEY: ${{ secrets.SABLE_API_KEY }}
+        run: |
+          test -n "$SABLE_API_KEY"
+          python campaign_orchestrator_v13.py \
+            --api-key "$SABLE_API_KEY" \
+            --base-url "${{ inputs.base_url }}" \
+            --model "${{ inputs.model }}" \
+            --repeats "${{ inputs.repeats }}" \
+            --max-turns "${{ inputs.max_turns }}" \
+            --thinking "${{ inputs.thinking }}" \
+            --out results/external_model_campaign_v13.json
+      - name: Enforce campaign integrity
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('results/external_model_campaign_v13.json').read_text())
+          assert r['repetition_count'] >= 2
+          assert r['all_replay_matches'] is True
+          assert r['sample_quality'] in {'observations_only','rate_estimate'}
+          assert sum(r['counts'].values()) == r['repetition_count']
+          print(json.dumps({
+              'campaign_id': r['campaign_id'],
+              'model': r['model'],
+              'repetition_count': r['repetition_count'],
+              'sample_quality': r['sample_quality'],
+              'counts': r['counts'],
+              'verified_task_success_rate': r['verified_task_success_rate'],
+              'infrastructure_failure_rate': r['infrastructure_failure_rate'],
+              'all_replay_matches': r['all_replay_matches'],
+          }, indent=2))
+          PY
+      - name: Upload auditable campaign bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-external-model-campaign-v13
+          path: results/external_model_campaigns/**
+          if-no-files-found: warn
+      - name: Upload campaign summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-external-model-campaign-summary-v13
+          path: results/external_model_campaign_v13.json
+      - name: Publish campaign manifest
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/external_model_campaign_v13.json results/campaigns/
+          if git diff --cached --quiet; then
+            echo 'No campaign manifest changes.'
+            exit 0
+          fi
+          git commit -m 'evidence: publish repeated external model campaign'
+          git push
