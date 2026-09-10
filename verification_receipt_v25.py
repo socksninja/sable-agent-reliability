@@ -19,10 +19,15 @@ def public_key_b64(key: Ed25519PublicKey) -> str:
 def sign_receipt(receipt: dict, private_key: Ed25519PrivateKey, key_id: str = "sable-receipt-dev") -> dict:
     if receipt.get("schema_version") != "sable.verification_receipt.v2.4":
         raise ValueError("expected_v24_receipt")
-    body = {k: receipt[k] for k in receipt if k not in {"receipt_hash", "signature", "signing"}}
-    signed = {**body, "receipt_hash": canon_hash(body), "signing": {"alg": "Ed25519", "key_id": key_id}}
-    payload = {k: signed[k] for k in signed if k not in {"signature"}}
-    signed["signature"] = base64.b64encode(private_key.sign(canon_bytes(payload))).decode()
+    body = {k: receipt[k] for k in receipt if k not in {"receipt_hash", "signature", "signing", "public_key"}}
+    key_b64 = public_key_b64(private_key.public_key())
+    signed = {
+        **body,
+        "receipt_hash": canon_hash(body),
+        "signing": {"alg": "Ed25519", "key_id": key_id},
+        "public_key": key_b64,
+    }
+    signed["signature"] = base64.b64encode(private_key.sign(canon_bytes(signed))).decode()
     return signed
 
 def verify_signed_receipt(receipt: dict, public_key: Ed25519PublicKey) -> tuple[bool, list[str]]:
@@ -32,9 +37,11 @@ def verify_signed_receipt(receipt: dict, public_key: Ed25519PublicKey) -> tuple[
     signing = receipt.get("signing", {})
     if signing.get("alg") != "Ed25519":
         reasons.append("signing_algorithm_mismatch")
-    body = {k: receipt[k] for k in receipt if k not in {"receipt_hash", "signature", "signing"}}
+    body = {k: receipt[k] for k in receipt if k not in {"receipt_hash", "signature", "signing", "public_key"}}
     if receipt.get("receipt_hash") != canon_hash(body):
         reasons.append("receipt_integrity_mismatch")
+    if receipt.get("public_key") != public_key_b64(public_key):
+        reasons.append("public_key_mismatch")
     payload = {k: receipt[k] for k in receipt if k != "signature"}
     try:
         public_key.verify(base64.b64decode(receipt["signature"]), canon_bytes(payload))
@@ -56,7 +63,6 @@ def main() -> None:
     args=ap.parse_args(); receipt=json.loads(open(args.receipt, encoding="utf-8").read())
     private=Ed25519PrivateKey.generate(); signed=sign_receipt(receipt, private); ok,reasons=verify_signed_receipt(signed, private.public_key())
     if not ok: raise SystemExit("receipt_signature_invalid:"+"|".join(reasons))
-    signed["public_key"] = public_key_b64(private.public_key())
     open(args.out,"w",encoding="utf-8").write(json.dumps(signed,ensure_ascii=False,sort_keys=True,indent=2)+"\n")
     print(json.dumps({"schema_version":VERSION,"status":"PASS","receipt_hash":signed["receipt_hash"],"public_key":signed["public_key"]},indent=2))
 
