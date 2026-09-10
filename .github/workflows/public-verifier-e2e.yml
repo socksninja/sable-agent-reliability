@@ -1,0 +1,85 @@
+name: SABLE Public Verifier E2E
+
+on:
+  push:
+    paths:
+      - 'verification_receipt_v24.py'
+      - 'verification_receipt_v26.py'
+      - 'results/third_party_langgraph_evidence.json'
+      - 'results/third_party_langgraph_permission.json'
+      - 'examples/public_verifier_client.py'
+      - '.github/workflows/public-verifier-e2e.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install crypto dependency
+        run: python -m pip install 'cryptography>=43.0.0'
+      - name: Build a fresh self-contained signed receipt
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+          from verification_receipt_v24 import build_receipt
+          from verification_receipt_v26 import sign_receipt, verify_self_contained
+          evidence=json.loads(Path('results/third_party_langgraph_evidence.json').read_text())
+          permission=json.loads(Path('results/third_party_langgraph_permission.json').read_text())
+          assert evidence['outcome']['task_success'] is True
+          assert evidence['replay']['replay_match'] is True
+          assert permission['decision']=='ALLOW' and permission['verified'] is True
+          r24=build_receipt(evidence,permission)
+          signed=sign_receipt(r24,Ed25519PrivateKey.generate(),key_id='sable-public-e2e')
+          ok,reasons=verify_self_contained(signed)
+          assert ok, reasons
+          Path('public_e2e_receipt.json').write_text(json.dumps(signed,sort_keys=True)+'\n')
+          print('RECEIPT_HASH',signed['receipt_hash'])
+          print('LOCAL_SELF_CONTAINED_VERIFY_PASS')
+          PY
+      - name: POST signed receipt to public verifier
+        run: python examples/public_verifier_client.py public_e2e_receipt.json > public_e2e_response.json
+      - name: Assert cryptographic verification result
+        run: |
+          python - <<'PY'
+          import json
+          r=json.load(open('public_e2e_response.json'))
+          assert r['schema_version']=='sable.verifier_service.v2.8', r
+          assert r['verified'] is True, r
+          assert r['decision']=='VERIFIED', r
+          assert r['verification_level']=='CRYPTOGRAPHICALLY_VERIFIED', r
+          assert r['execution_proof'] is True, r
+          print(json.dumps(r,indent=2))
+          print('PUBLIC_VERIFIER_CRYPTOGRAPHIC_E2E_PASS')
+          PY
+      - name: Tamper receipt and prove public rejection
+        run: |
+          python - <<'PY'
+          import json
+          r=json.load(open('public_e2e_receipt.json'))
+          r['evidence']['after_state_hash']='tampered'
+          json.dump(r,open('tampered_receipt.json','w'),sort_keys=True)
+          PY
+          set +e
+          python examples/public_verifier_client.py tampered_receipt.json > tampered_response.json
+          code=$?
+          set -e
+          test "$code" -eq 166
+          python - <<'PY'
+          import json
+          r=json.load(open('tampered_response.json'))
+          assert r['verified'] is False, r
+          assert r['verification_level']=='REJECTED', r
+          assert 'receipt_integrity_mismatch' in r['reasons']
+          assert 'signature_invalid' in r['reasons']
+          print(json.dumps(r,indent=2))
+          print('PUBLIC_VERIFIER_TAMPER_DENY_PASS')
+          PY
