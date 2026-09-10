@@ -5,7 +5,6 @@ on:
     paths:
       - 'submissions/**/*.json'
       - 'scripts/validate_reliability_submission_v01.py'
-      - 'scripts/validate_external_submissions.py'
       - 'scripts/admit_external_reliability_record_v01.py'
       - 'scripts/admit_external_submissions_v01.py'
       - 'schemas/reliability_record_submission_v01.schema.json'
@@ -25,10 +24,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Validate submission structure
-        run: python scripts/validate_external_submissions.py
-
-      - name: Verify cited GitHub evidence and build audit report
+      - name: Verify submissions and build audit report
         id: admission
         continue-on-error: true
         env:
