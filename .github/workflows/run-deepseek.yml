@@ -54,6 +54,17 @@ jobs:
           python3 trace_submit_v09.py \
             --input examples/submissions/third_party_reference_v09.jsonl \
             --output results/reference_submission_v05.jsonl
+      - name: Run real LangGraph framework integration
+        run: |
+          python3 integrations/langgraph/run_real_trace_v09.py
+          python3 trace_submit_v09.py \
+            --input results/third_party_langgraph_submission_v09.jsonl \
+            --output results/third_party_langgraph_sable_v05.jsonl
+          python3 sable_v05.py \
+            --tasks integrations/langgraph/task.json \
+            --results results/third_party_langgraph_sable_v05.jsonl \
+            --report results/third_party_langgraph_report.json \
+            --replay
       - name: Validate reliability scorer
         run: |
           python3 - <<'PY'
