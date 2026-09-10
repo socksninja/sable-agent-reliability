@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/socksninja/sable-agent-reliability/blob/main/schemas/submission_v09.schema.json",
+  "title": "SABLE Agent Trace Submission v0.9",
+  "type": "object",
+  "required": ["protocol_version", "submission_id", "source", "trace", "provenance", "integrity"],
+  "properties": {
+    "protocol_version": {"const": "sable.submission.v0.9"},
+    "submission_id": {"type": "string", "minLength": 1},
+    "source": {
+      "type": "object",
+      "required": ["agent_name", "agent_version", "framework", "framework_version", "adapter"],
+      "properties": {
+        "agent_name": {"type": "string", "minLength": 1},
+        "agent_version": {"type": "string", "minLength": 1},
+        "framework": {"type": "string", "minLength": 1},
+        "framework_version": {"type": "string", "minLength": 1},
+        "adapter": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    },
+    "trace": {
+      "type": "object",
+      "required": ["task_id", "goal", "agent", "steps", "claimed_status", "environment", "integrity"],
+      "properties": {
+        "task_id": {"type": "string"},
+        "goal": {"type": "string"},
+        "agent": {"type": "object"},
+        "steps": {"type": "array", "items": {"type": "object"}},
+        "claimed_status": {"enum": ["success", "failure", "uncertain"]},
+        "final_report": {"type": "string"},
+        "environment": {"type": "object"},
+        "integrity": {"type": "object"}
+      },
+      "additionalProperties": true
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["captured_at", "collector", "redaction_policy"],
+      "properties": {
+        "captured_at": {"type": "string", "minLength": 1},
+        "collector": {"type": "string", "minLength": 1},
+        "redaction_policy": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    },
+    "integrity": {
+      "type": "object",
+      "required": ["source_trace_hash", "hash_algorithm", "canonicalization"],
+      "properties": {
+        "source_trace_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "hash_algorithm": {"const": "sha256"},
+        "canonicalization": {"const": "json-sort-keys-utf8"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
