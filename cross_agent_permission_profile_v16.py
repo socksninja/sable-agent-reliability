@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""SABLE v1.6: compare permission/reliability profiles across runtimes on shared tasks."""
+"""SABLE v1.6: compare permission/reliability profiles across runtimes on shared tasks.
+
+The shared-task key is semantic (family + normalized goal), so framework-specific task IDs
+can still be compared without pretending the IDs themselves are interchangeable.
+"""
 from __future__ import annotations
 
 import argparse
