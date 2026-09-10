@@ -1,0 +1,35 @@
+name: SABLE Reliability Record Validation
+
+on:
+  push:
+    paths:
+      - 'records/**'
+      - 'schemas/reliability_record_v01.schema.json'
+      - 'scripts/validate_reliability_records.py'
+      - '.github/workflows/validate-reliability-records.yml'
+  workflow_dispatch:
+
+jobs:
+  validate-records:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Validate public Reliability Records
+        run: python scripts/validate_reliability_records.py
+      - name: Validate JSON syntax and schema metadata
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          schema=json.loads(Path('schemas/reliability_record_v01.schema.json').read_text())
+          assert schema['$id'].endswith('reliability_record_v01.schema.json')
+          for p in Path('records').glob('*.json'):
+              obj=json.loads(p.read_text())
+              assert obj['schema_version']=='sable.reliability_record.v0.1'
+          print('RELIABILITY_RECORD_METADATA_PASS')
+          PY
