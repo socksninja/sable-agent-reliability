@@ -1,0 +1,32 @@
+name: SABLE Capability Token v2.2
+on:
+  push:
+    paths:
+      - 'capability_token_v22.py'
+      - 'capability_gate_v22.py'
+      - 'tests/test_capability_token_v22.py'
+      - 'schemas/capability_token_v22.schema.json'
+      - 'requirements.txt'
+  workflow_dispatch:
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run v2.2 capability tests
+        run: pytest -q tests/test_capability_token_v22.py
+      - name: Verify schema and hard-gate source
+        run: |
+          python - <<'PY'
+          import json
+          s=json.load(open('schemas/capability_token_v22.schema.json'))
+          assert s['properties']['signing']['properties']['alg']['const']=='Ed25519'
+          src=open('capability_gate_v22.py').read()
+          assert 'verify_signed' in src and '_denied_observation' in src
+          print('v2.2 contract: PASS')
+          PY
