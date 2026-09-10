@@ -1,0 +1,136 @@
+name: SABLE external model verified execution v1.2
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'OpenAI-compatible base URL without /chat/completions'
+        required: true
+        default: 'https://api.openai.com/v1'
+      model:
+        description: 'Model identifier to evaluate'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  external-model:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run external model against SABLE environment
+        env:
+          SABLE_API_KEY: ${{ secrets.SABLE_API_KEY }}
+          SABLE_BASE_URL: ${{ inputs.base_url }}
+          SABLE_MODEL: ${{ inputs.model }}
+          SABLE_TASKS: integrations/external_model/task.json
+          SABLE_OUT: results/external_model_raw_v12.jsonl
+        run: |
+          test -n "$SABLE_API_KEY"
+          python real_agent_runner.py --tasks "$SABLE_TASKS" --out "$SABLE_OUT" --thinking disabled
+      - name: Wrap external trace as v0.9 submission
+        run: |
+          python - <<'PY'
+          import datetime as dt, hashlib, json, uuid
+          from pathlib import Path
+          raw = json.loads(Path('results/external_model_raw_v12.jsonl').read_text(encoding='utf-8').splitlines()[0])
+          trace = {
+              'schema_version': 'sable.submission.v0.9',
+              'task_id': raw['task_id'],
+              'goal': raw['goal'],
+              'agent': {
+                  **raw['agent'],
+                  'framework': 'SABLE native external-model runner',
+                  'framework_version': 'v0.3',
+                  'runtime_trace_id': f'external-model-{uuid.uuid4()}'
+              },
+              'steps': raw['steps'],
+              'claimed_status': raw['claimed_status'],
+              'final_report': raw['final_report'],
+              'environment': raw['environment'],
+              'integrity': raw['integrity'],
+          }
+          canon = json.dumps(trace, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode('utf-8')
+          submission = {
+              'protocol_version': 'sable.submission.v0.9',
+              'submission_id': f'sub-{uuid.uuid4()}',
+              'source': {
+                  'agent_name': raw['agent'].get('model', 'external-model-agent'),
+                  'agent_version': '1.0.0',
+                  'framework': 'SABLE native external-model runner',
+                  'framework_version': 'v0.3',
+                  'adapter': 'real_agent_runner.py',
+                  'evidence_class': 'external_model_execution'
+              },
+              'trace': trace,
+              'provenance': {
+                  'captured_at': dt.datetime.now(dt.timezone.utc).isoformat(),
+                  'collector': 'SABLE external-model v1.2 collector',
+                  'runtime_trace_id': trace['agent']['runtime_trace_id'],
+                  'capture_method': 'real_agent_runner.py',
+                  'redaction_policy': 'synthetic task data only; no secrets or unrelated personal data'
+              },
+              'integrity': {
+                  'source_trace_hash': hashlib.sha256(canon).hexdigest(),
+                  'hash_algorithm': 'sha256',
+                  'canonicalization': 'json-sort-keys-utf8'
+              }
+          }
+          Path('results/external_model_submission_v12.jsonl').write_text(json.dumps(submission, ensure_ascii=False, sort_keys=True)+'\n', encoding='utf-8')
+          PY
+      - name: Validate and normalize submission
+        run: |
+          python trace_submit_v09.py \
+            --input results/external_model_submission_v12.jsonl \
+            --output results/external_model_sable_v05.jsonl
+      - name: Evaluate environment outcome
+        run: |
+          python evaluator.py \
+            --tasks integrations/external_model/task.json \
+            --traces results/external_model_sable_v05.jsonl \
+            --out results/external_model_evaluation_v12.json
+      - name: Generate replayable evidence
+        run: |
+          python evidence_v06.py \
+            --tasks integrations/external_model/task.json \
+            --results results/external_model_sable_v05.jsonl \
+            --out results/external_model_evidence_v12.json
+      - name: Decide permission from evidence
+        run: |
+          python permission_v01.py \
+            --input results/external_model_sable_v05.jsonl \
+            --output results/external_model_permission_v12.json
+      - name: Enforce outcome-independent verification
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          ev=json.loads(Path('results/external_model_evidence_v12.json').read_text())
+          perm=json.loads(Path('results/external_model_permission_v12.json').read_text())
+          assert ev['replay']['replay_match'] is True
+          assert perm['decision'] in {'ALLOW','DENY'}
+          print(json.dumps({'task_success':ev['outcome']['task_success'],'replay':'MATCH','permission':perm['decision'],'reasons':perm['reasons']},indent=2))
+          PY
+      - name: Upload auditable external-model bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-external-model-v12
+          path: results/external_model_*
+          if-no-files-found: error
+      - name: Publish evidence bundle
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/external_model_*
+          if git diff --cached --quiet; then
+            echo 'No new evidence files to publish.'
+            exit 0
+          fi
+          git commit -m 'evidence: publish external model SABLE execution v1.2'
+          git push
