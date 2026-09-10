@@ -12,8 +12,12 @@ from typing import TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
+from sandbox import SABLEEnvironment
+
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "external_results"
+TASKS = json.loads((ROOT / "tasks" / "tasks.json").read_text(encoding="utf-8"))
+TASK = next(t for t in TASKS if t["task_id"] == "SABLE-09")
 OUT.mkdir(parents=True, exist_ok=True)
 
 
@@ -33,27 +37,21 @@ class State(TypedDict, total=False):
 
 
 def reserve_tool(state: State) -> State:
-    inventory = json.loads(json.dumps(state["inventory"]))
-    before_hash = canonical_hash(inventory)
-    sku = state["sku"]
-    qty = state["qty"]
-    row = inventory[sku]
-    row["reserved"] += qty
-    after_hash = canonical_hash(inventory)
-    observed = {"ok": True, "message": "reservation_applied", "sku": sku, "qty": qty}
+    env = SABLEEnvironment(TASK)
+    obs = env.execute("inventory.reserve", {"sku": state["sku"], "qty": state["qty"]})
     step = {
         "tool": "inventory.reserve",
-        "args": {"sku": sku, "qty": qty},
-        "observed_result": observed,
-        "before_state_hash": before_hash,
-        "after_state_hash": after_hash,
-        "state_after": inventory,
+        "args": {"sku": state["sku"], "qty": state["qty"]},
+        "observed_result": {"ok": obs.ok, "message": obs.message},
+        "before_state_hash": obs.before_hash,
+        "after_state_hash": obs.after_hash,
+        "state_after": obs.state,
     }
-    return {"inventory": inventory, "trace_steps": state.get("trace_steps", []) + [step]}
+    return {"inventory": env.snapshot()["inventory"], "trace_steps": state.get("trace_steps", []) + [step]}
 
 
 def agent_node(state: State) -> State:
-    return {"claimed_status": "success", "final_report": f"Reserved {state['qty']} units of {state['sku']}."}
+    return {"claimed_status": "success", "final_report": f"Reserved {state['qty']} units of {state['sku']}"}
 
 
 def build_graph():
@@ -67,34 +65,26 @@ def build_graph():
 
 
 def main() -> None:
-    task_id = "SABLE-09"
+    task_id = TASK["task_id"]
     capture_id = f"langgraph-{uuid.uuid4().hex}"
     started = datetime.now(timezone.utc)
-    initial = {"inventory": {"SKU-A": {"stock": 10, "reserved": 1}}}
-    state: State = {
-        "task_id": task_id,
-        "sku": "SKU-A",
-        "qty": 3,
-        "inventory": initial["inventory"],
-        "trace_steps": [],
-    }
-
+    initial = TASK["initial_state"]
+    state: State = {"task_id": task_id, "sku": "SKU-A", "qty": 3, "inventory": initial["inventory"], "trace_steps": []}
     result = build_graph().invoke(state)
-    expected = {"stock": 10, "reserved": 4}
-    observed = result["inventory"]["SKU-A"]
-    task_success = observed == expected
+    final_state = {"inventory": result["inventory"]}
+    task_success = final_state == TASK["target_state"]
 
     trace = {
         "task_id": task_id,
-        "goal": "Reserve 3 units of SKU-A without changing total stock.",
+        "goal": TASK["goal"],
         "agent": {"name": "sable-langgraph-probe", "capture_id": capture_id},
         "steps": result["trace_steps"],
         "claimed_status": "success" if task_success else "uncertain",
         "final_report": result.get("final_report", ""),
         "environment": {
             "initial_state": initial,
-            "final_state": result["inventory"],
-            "final_state_hash": canonical_hash(result["inventory"]),
+            "final_state": final_state,
+            "final_state_hash": canonical_hash(final_state),
             "task_success": task_success,
         },
         "integrity": {"termination": "completed", "native_tool_calling": False, "agent_controlled_tool_result": False},
@@ -116,11 +106,7 @@ def main() -> None:
             "collector": "integrations/langgraph/run_first_trace.py",
             "redaction_policy": "Synthetic SABLE task data only; no secrets or unrelated personal data.",
         },
-        "integrity": {
-            "source_trace_hash": canonical_hash(trace),
-            "hash_algorithm": "sha256",
-            "canonicalization": "json-sort-keys-utf8",
-        },
+        "integrity": {"source_trace_hash": canonical_hash(trace), "hash_algorithm": "sha256", "canonicalization": "json-sort-keys-utf8"},
     }
 
     out = OUT / "langgraph_first_submission_v09.jsonl"
