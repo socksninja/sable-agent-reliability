@@ -43,11 +43,7 @@ jobs:
           assert r['scoring_contract']['predictive_claim'] is False
           assert all(0 <= v['trust_score_observed'] <= 100 for v in r['profiles'].values())
           assert len(r['reputation_hash']) == 64
-          print(json.dumps({
-            'observations': r['observation_count'],
-            'profiles': len(r['profiles']),
-            'states': {k:v['reputation_state'] for k,v in r['profiles'].items()}
-          }, indent=2))
+          print(json.dumps({'observations': r['observation_count'], 'profiles': len(r['profiles']), 'states': {k:v['reputation_state'] for k,v in r['profiles'].items()}}, indent=2))
           PY
       - uses: actions/upload-artifact@v4
         with:
