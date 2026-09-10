@@ -7,6 +7,7 @@ on:
       - 'scripts/validate_reliability_records.py'
       - 'scripts/validate_adversarial_coverage_v01.py'
       - 'scripts/build_reliability_matrix.py'
+      - 'scripts/build_reliability_matrix_v02.py'
       - 'scripts/build_failure_taxonomy.py'
       - '.github/workflows/build-reliability-matrix.yml'
   workflow_dispatch:
@@ -25,8 +26,10 @@ jobs:
         run: python scripts/validate_reliability_records.py
       - name: Validate adversarial family coverage
         run: python scripts/validate_adversarial_coverage_v01.py
-      - name: Build deterministic Reliability Matrix
+      - name: Build deterministic Reliability Matrix v0.1
         run: python scripts/build_reliability_matrix.py
+      - name: Build deterministic Reliability Matrix v0.2
+        run: python scripts/build_reliability_matrix_v02.py
       - name: Build deterministic Failure Taxonomy
         run: python scripts/build_failure_taxonomy.py
       - name: Check generated profile consistency
@@ -36,21 +39,33 @@ jobs:
           from pathlib import Path
           matrix = json.loads(Path('records/RELIABILITY_MATRIX_V0.1.json').read_text())
           taxonomy = json.loads(Path('records/FAILURE_TAXONOMY_V0.1.json').read_text())
+          matrix2 = json.loads(Path('records/RELIABILITY_MATRIX_V0.2.json').read_text())
           assert matrix['record_count'] == len(matrix['records'])
           assert taxonomy['record_count'] == matrix['record_count']
+          assert matrix2['record_count'] == len(matrix2['records'])
+          assert matrix2['schema_version'] == 'sable.reliability_matrix.v0.2'
+          assert matrix2['record_count'] == matrix['record_count']
           for row in matrix['records']:
               assert 0 <= row['failure_rate'] <= 1
               assert row['failure_count'] == sum(row['failure_signature'].values())
               assert abs(row['failure_rate'] - row['failure_count'] / row['n']) < 1e-9
-          print(f"PROFILE_ROWS={len(matrix['records'])}")
+          for row in matrix2['records']:
+              assert 0 <= row['failure_rate'] <= 1
+              assert row['failure_count'] == sum(row['failure_signature'].values())
+              assert row['n'] > 0
+          print(f"PROFILE_ROWS_V01={len(matrix['records'])}")
+          print(f"PROFILE_ROWS_V02={len(matrix2['records'])}")
           print("PROFILE_CONSISTENCY=PASS")
           PY
+      - name: Assert v0.2 is reproducible
+        run: git diff --exit-code -- records/RELIABILITY_MATRIX_V0.2.json
       - name: Upload Reliability Matrix, Taxonomy, and Coverage
         uses: actions/upload-artifact@v4
         with:
-          name: sable-reliability-evidence-bundle-v01
+          name: sable-reliability-evidence-bundle-v02
           path: |
             records/RELIABILITY_MATRIX_V0.1.json
+            records/RELIABILITY_MATRIX_V0.2.json
             docs/RELIABILITY_MATRIX_V0.1.md
             records/FAILURE_TAXONOMY_V0.1.json
             docs/FAILURE_TAXONOMY_V0.1.md
