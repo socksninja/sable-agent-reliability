@@ -10,6 +10,21 @@ ROOT = Path(__file__).resolve().parents[1]
 RECORDS = ROOT / "records"
 OUT_JSON = RECORDS / "FAILURE_TAXONOMY_V0.1.json"
 OUT_MD = ROOT / "docs" / "FAILURE_TAXONOMY_V0.1.md"
+NON_RECORD_PREFIXES = ("RELIABILITY_MATRIX_", "FAILURE_TAXONOMY_", "ADVERSARIAL_FAMILY_COVERAGE_")
+
+
+def load_record(path: Path) -> dict | None:
+    if not path.name.endswith(".json") or path.name.startswith(NON_RECORD_PREFIXES):
+        return None
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if record.get("schema_version") != "sable.reliability_record.v0.1":
+        return None
+    if record.get("promotion", {}).get("status") != "PROMOTED":
+        return None
+    return record
 
 
 def classify(result: dict) -> tuple[str, str]:
@@ -58,16 +73,20 @@ def normalized_failures(record: dict) -> list[dict]:
 
 
 def main() -> None:
-    paths = [p for p in sorted(RECORDS.glob("*.json")) if p.name not in {"RELIABILITY_MATRIX_V0.1.json", "FAILURE_TAXONOMY_V0.1.json"}]
-    if not paths:
-        raise SystemExit("NO_RELIABILITY_RECORDS")
+    paths = sorted(RECORDS.glob("*.json"))
+    records = []
+    for path in paths:
+        record = load_record(path)
+        if record is not None:
+            records.append(record)
+    if not records:
+        raise SystemExit("NO_PROMOTED_RELIABILITY_RECORDS")
 
     classes = Counter()
     by_record: list[dict] = []
     failures: list[dict] = []
 
-    for path in paths:
-        record = json.loads(path.read_text(encoding="utf-8"))
+    for record in records:
         record_counts = Counter()
         for result in normalized_failures(record):
             failure_class, interpretation = classify(result)
@@ -95,7 +114,7 @@ def main() -> None:
     taxonomy = {
         "schema_version": "sable.failure_taxonomy.v0.1",
         "benchmark": "SABLE-Reliability-Corpus-v0.1",
-        "record_count": len(paths),
+        "record_count": len(records),
         "failure_count": sum(classes.values()),
         "classes": [
             {"failure_class": name, "count": count}
@@ -122,7 +141,7 @@ def main() -> None:
         lines.append("| `none_observed` | 0 |")
     lines += [
         "",
-        f"Records scanned: **{len(paths)}**.",
+        f"Records scanned: **{len(records)}**.",
         f"Observed task-level failures classified: **{sum(classes.values())}**.",
         "",
         "## Current evidence",
