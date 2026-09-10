@@ -15,10 +15,12 @@ def load(path: Path) -> dict | None:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--diagnostics", default="results/campaign_launch_diagnostics.json")
+    ap.add_argument("--diagnostics", "--launch", dest="diagnostics", default="results/campaign_launch_diagnostics.json")
     ap.add_argument("--campaign", default="results/external_model_campaign_v14.json")
     ap.add_argument("--taxonomy", default="results/failure_taxonomy_v14.json")
     ap.add_argument("--out", default="results/campaign_status_v01.json")
+    ap.add_argument("--run-id", type=int, default=None)
+    ap.add_argument("--head-sha", default=None)
     args = ap.parse_args()
 
     diagnostics = load(Path(args.diagnostics)) or {}
@@ -78,9 +80,9 @@ def main() -> None:
         "status": status,
         "reason": reason,
         "workflow": diagnostics.get("workflow"),
-        "run_id": diagnostics.get("run_id"),
+        "run_id": args.run_id if args.run_id is not None else diagnostics.get("run_id"),
         "run_attempt": diagnostics.get("run_attempt"),
-        "head_sha": diagnostics.get("head_sha"),
+        "head_sha": args.head_sha if args.head_sha else diagnostics.get("head_sha"),
         "event": diagnostics.get("event"),
         "model": diagnostics.get("model"),
         "base_url": diagnostics.get("base_url"),
