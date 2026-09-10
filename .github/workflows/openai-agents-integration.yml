@@ -1,0 +1,57 @@
+name: SABLE OpenAI Agents SDK Integration
+
+on:
+  push:
+    branches: [sable/openai-agents-sdk]
+  workflow_dispatch:
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_AGENTS_DISABLE_TRACING: "0"
+      OPENAI_AGENTS_TRACE_INCLUDE_SENSITIVE_DATA: "0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Require OpenAI API key
+        run: test -n "$OPENAI_API_KEY"
+      - name: Install SABLE dependencies
+        run: pip install -r requirements.txt
+      - name: Install OpenAI Agents SDK
+        run: pip install -r integrations/openai_agents/requirements.txt
+      - name: Run real OpenAI Agents SDK runtime
+        run: python3 integrations/openai_agents/run_real_trace_v09.py
+      - name: Validate and normalize v0.9 submission
+        run: |
+          python3 trace_submit_v09.py \
+            --input results/third_party_openai_agents_submission_v09.jsonl \
+            --output results/third_party_openai_agents_sable_v05.jsonl
+      - name: Deterministic SABLE evaluation and replay
+        run: |
+          python3 sable_v05.py \
+            --tasks integrations/openai_agents/task.json \
+            --results results/third_party_openai_agents_sable_v05.jsonl \
+            --report results/third_party_openai_agents_report.json \
+            --replay
+      - name: Assert acceptance criteria
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('results/third_party_openai_agents_report.json').read_text())
+          print(json.dumps(report, indent=2, ensure_ascii=False))
+          assert report.get('pass_rate', 0) == 1.0, report
+          PY
+      - name: Upload evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: sable-openai-agents-${{ github.run_id }}
+          path: results/
