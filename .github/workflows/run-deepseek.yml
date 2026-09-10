@@ -138,10 +138,7 @@ jobs:
           RESULTS: results/smoke_${{ github.run_id }}.jsonl
         run: python3 evidence_v06.py --tasks tasks/tasks_smoke_10.json --results "$RESULTS" --out results/smoke_evidence_v06.jsonl
       - name: Generate smoke leaderboard snapshot
-        env:
-          MODEL: ${{ env.SABLE_MODEL }}
-          PROVIDER: ${{ env.SABLE_PROVIDER }}
-        run: python3 leaderboard_v07.py --report results/smoke_reliability_report.json --model "$MODEL" --provider "$PROVIDER" --benchmark-id SABLE-v0.5-smoke-10 --out results/smoke_leaderboard_v07.json
+        run: python3 leaderboard_v07.py --report results/smoke_reliability_report.json --model "$SABLE_MODEL" --provider "$SABLE_PROVIDER" --benchmark-id SABLE-v0.5-smoke-10 --out results/smoke_leaderboard_v07.json
       - name: Run full 140-task benchmark
         if: ${{ inputs.suite == 'smoke_then_full' }}
         env:
@@ -165,10 +162,7 @@ jobs:
         run: python3 evidence_v06.py --tasks tasks/tasks_v0_4_140.json --results "$RESULTS" --out results/full_evidence_v06.jsonl
       - name: Generate full leaderboard snapshot
         if: ${{ inputs.suite == 'smoke_then_full' }}
-        env:
-          MODEL: ${{ env.SABLE_MODEL }}
-          PROVIDER: ${{ env.SABLE_PROVIDER }}
-        run: python3 leaderboard_v07.py --report results/full_reliability_report.json --model "$MODEL" --provider "$PROVIDER" --benchmark-id SABLE-v0.5-140 --out results/full_leaderboard_v07.json
+        run: python3 leaderboard_v07.py --report results/full_reliability_report.json --model "$SABLE_MODEL" --provider "$SABLE_PROVIDER" --benchmark-id SABLE-v0.5-140 --out results/full_leaderboard_v07.json
       - name: Upload real-model results
         if: always()
         uses: actions/upload-artifact@v7
