@@ -58,15 +58,12 @@ jobs:
           from pathlib import Path
           p = Path('.github/campaign_launch.json')
           cfg = json.loads(p.read_text()) if p.exists() else {}
-
           def pick(env_name, key, default=None):
               value = os.environ.get(env_name, '')
               return value if value else cfg.get(key, default)
-
           model = pick('DISPATCH_MODEL', 'model')
           if not model and cfg.get('model_source') == 'repository_variable:SABLE_MODEL':
               model = os.environ.get('REPOSITORY_MODEL', '')
-
           print(f"enabled={'true' if cfg.get('enabled', True) else 'false'}")
           print(f"base_url={pick('DISPATCH_BASE_URL','base_url','https://api.openai.com/v1')}")
           print(f"model={model}")
@@ -146,6 +143,13 @@ jobs:
           p.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
           exit "$rc"
+      - name: Build campaign status
+        if: always()
+        run: |
+          python scripts/build_campaign_status_v01.py \
+            --diagnostics results/campaign_launch_diagnostics.json \
+            --campaign results/external_model_campaign_v14.json \
+            --out results/campaign_status_v01.json
       - name: Build observed failure taxonomy
         if: steps.config.outputs.enabled == 'true' && success()
         run: |
@@ -186,6 +190,7 @@ jobs:
           name: sable-real-agent-140-campaign-v01
           if-no-files-found: warn
           path: |
+            results/campaign_status_v01.json
             results/campaign_launch_diagnostics.json
             results/campaign_launcher.log
             results/external_model_campaign_v14.json
