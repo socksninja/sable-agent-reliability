@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Run a real OpenAI Agents SDK runtime and emit a SABLE v0.9 submission.
 
-The model decides to call a local SABLE function tool; the tool result is produced
-by the SABLE sandbox, not by the model. The Agents SDK Runner manages the agent
-loop and function-tool execution. This integration uses a synthetic task only.
+The Agents SDK Runner manages the agent loop and function-tool execution. The
+model is accessed through an OpenAI-compatible OpenRouter endpoint so the test
+can reuse the existing repository provider secret without requiring a second
+OpenAI API key. SDK tracing export is disabled; the SDK-created trace ID remains
+part of the provenance record. The SABLE environment produces the authoritative
+tool result and state transition.
 """
 from __future__ import annotations
 
@@ -11,6 +14,7 @@ import datetime as dt
 import hashlib
 import importlib.metadata
 import json
+import os
 import sys
 import uuid
 from pathlib import Path
@@ -18,7 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from agents import Agent, Runner, function_tool, get_current_trace, trace
+from agents import Agent, AsyncOpenAI, OpenAIChatCompletionsModel, Runner, function_tool, set_tracing_disabled, trace
 from sandbox import SABLEEnvironment, stable_hash, task_passes
 
 TASK = json.loads((Path(__file__).with_name("task.json")).read_text(encoding="utf-8"))
@@ -36,8 +40,19 @@ def hash_obj(obj: object) -> str:
 
 def main() -> None:
     framework_version = importlib.metadata.version("openai-agents")
+    api_key = os.environ.get("OPENROUTER_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENROUTER_API_KEY is required for the live runtime test")
+
+    model_name = os.environ.get("OPENROUTER_MODEL", "nvidia/nemotron-3-ultra-550b-a55b-a55b:free")
     env = SABLEEnvironment(TASK)
-    runtime_trace_id: str | None = None
+
+    # The SDK's own exporter defaults to OpenAI tracing credentials. Disable
+    # export so the runtime test only needs the existing OpenRouter provider key.
+    set_tracing_disabled(True)
+
+    client = AsyncOpenAI(api_key=api_key, base_url="https://openrouter.ai/api/v1")
+    model = OpenAIChatCompletionsModel(model=model_name, openai_client=client)
 
     @function_tool
     def reserve_inventory(sku: str, qty: int) -> str:
@@ -52,6 +67,7 @@ def main() -> None:
             "with the exact requested SKU and quantity before reporting success. "
             "Do not invent tool results."
         ),
+        model=model,
         tools=[reserve_inventory],
     )
 
@@ -62,9 +78,10 @@ def main() -> None:
         "SABLE third-party runtime integration",
         trace_id=workflow_trace_id,
         metadata={"sable_task_id": TASK["task_id"], "integration": "openai-agents-sdk"},
+        disabled=True,
     ) as runtime_trace:
-        runtime_trace_id = runtime_trace.trace_id
         result = Runner.run_sync(agent, TASK["goal"])
+        runtime_trace_id = runtime_trace.trace_id
 
     passed, checks = task_passes(TASK, env.state)
     if not env.observations:
@@ -76,8 +93,8 @@ def main() -> None:
         "goal": TASK["goal"],
         "agent": {
             "name": "SABLE-OpenAI-Agents-Reference-Agent",
-            "model": "sdk-default",
-            "provider_base_url": "openai",
+            "model": model_name,
+            "provider_base_url": "https://openrouter.ai/api/v1",
             "framework": "OpenAI Agents SDK",
             "framework_version": framework_version,
             "runtime_trace_id": runtime_trace_id,
@@ -105,7 +122,7 @@ def main() -> None:
             "name": "OpenAI Agents SDK",
             "version": framework_version,
             "runtime_trace_id": runtime_trace_id,
-            "capture_method": "trace()+Runner.run_sync",
+            "capture_method": "trace(disabled=true)+Runner.run_sync",
             "captured_at": started_at,
         },
         "trace": trace_payload,
@@ -127,7 +144,7 @@ def main() -> None:
             "captured_at": started_at,
             "collector": "SABLE OpenAI Agents SDK v0.9 integration collector",
             "runtime_trace_id": runtime_trace_id,
-            "capture_method": "trace()+Runner.run_sync",
+            "capture_method": "trace(disabled=true)+Runner.run_sync",
             "redaction_policy": "synthetic task data only; no secrets or unrelated personal data",
         },
         "integrity": {
@@ -145,6 +162,7 @@ def main() -> None:
         "runtime": "OpenAI Agents SDK",
         "framework_version": framework_version,
         "runtime_trace_id": runtime_trace_id,
+        "model": model_name,
         "task_success": passed,
         "checks": checks,
         "tool_calls": len(env.observations),
