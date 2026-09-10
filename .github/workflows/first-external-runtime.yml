@@ -60,16 +60,18 @@ jobs:
           repo = os.environ['GITHUB_REPOSITORY']
           run_id = int(os.environ['GITHUB_RUN_ID'])
           token = os.environ['GH_TOKEN']
-          req = urllib.request.Request(
-              f'https://api.github.com/repos/{repo}/actions/runs/{run_id}/jobs?per_page=100',
-              headers={'Accept':'application/vnd.github+json','Authorization':f'Bearer {token}','User-Agent':'sable-record-generator/0.1'}
-          )
+          headers = {'Accept':'application/vnd.github+json','Authorization':f'Bearer {token}','User-Agent':'sable-record-generator/0.1'}
+          req = urllib.request.Request(f'https://api.github.com/repos/{repo}/actions/runs/{run_id}', headers=headers)
+          with urllib.request.urlopen(req, timeout=20) as r:
+              run_info = json.load(r)
+          req = urllib.request.Request(f'https://api.github.com/repos/{repo}/actions/runs/{run_id}/jobs?per_page=100', headers=headers)
           with urllib.request.urlopen(req, timeout=20) as r:
               jobs = json.load(r)['jobs']
           matches = [j for j in jobs if j.get('name') == 'external-runtime']
           if len(matches) != 1:
               raise SystemExit(f'expected exactly one external-runtime job, found {len(matches)}')
           job_id = matches[0]['id']
+          commit = run_info['head_sha']
 
           task_results = []
           for row in raw['tasks']:
@@ -105,7 +107,7 @@ jobs:
                   'repository': repo,
                   'run_id': run_id,
                   'job_id': job_id,
-                  'commit': os.environ['GITHUB_SHA'],
+                  'commit': commit,
               },
               'artifact': {
                   'artifact_id': int(os.environ['ARTIFACT_ID']),
