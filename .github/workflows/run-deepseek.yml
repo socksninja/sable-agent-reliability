@@ -8,10 +8,9 @@ on:
       provider:
         description: Provider
         required: true
-        default: groq
+        default: openrouter
         type: choice
         options:
-          - groq
           - openrouter
           - huggingface
           - deepseek
@@ -25,49 +24,55 @@ on:
           - smoke_then_full
 
 jobs:
-  run-sable:
+  selftest:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-
       - name: Install dependencies
         run: pip install -r requirements.txt
-
       - name: Generate SABLE v0.4 benchmark
         run: python3 tasks/generate_adversarial.py
+      - name: Run model-independent v0.5 self-test
+        run: python3 selftest_v05.py
+      - name: Upload self-test
+        uses: actions/upload-artifact@v7
+        with:
+          name: sable-v05-selftest-${{ github.run_id }}
+          path: results/selftest_v05.json
 
+  real-model:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    needs: selftest
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Generate SABLE v0.4 benchmark
+        run: python3 tasks/generate_adversarial.py
       - name: Resolve provider configuration
         env:
           INPUT_PROVIDER: ${{ inputs.provider }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            if [ -n "$GROQ_API_KEY" ]; then
-              PROVIDER="groq"
-            else
-              PROVIDER="openrouter"
-            fi
-          else
-            PROVIDER="${INPUT_PROVIDER:-groq}"
-          fi
+          PROVIDER="${INPUT_PROVIDER:-openrouter}"
           case "$PROVIDER" in
-            groq)
-              echo "SABLE_API_KEY=$GROQ_API_KEY" >> "$GITHUB_ENV"
-              echo "SABLE_BASE_URL=https://api.groq.com/openai/v1" >> "$GITHUB_ENV"
-              echo "SABLE_MODEL=qwen/qwen3.8-27b" >> "$GITHUB_ENV"
-              ;;
             huggingface)
               echo "SABLE_API_KEY=$HF_TOKEN" >> "$GITHUB_ENV"
               echo "SABLE_BASE_URL=https://router.huggingface.co/v1" >> "$GITHUB_ENV"
@@ -86,32 +91,37 @@ jobs:
             *) echo "Unsupported provider: $PROVIDER"; exit 1 ;;
           esac
           echo "SABLE_PROVIDER=$PROVIDER" >> "$GITHUB_ENV"
-
       - name: Run 10-task smoke test
+        if: ${{ inputs.suite == 'smoke_only' || inputs.suite == 'smoke_then_full' }}
         env:
           SABLE_TASKS: tasks/tasks_smoke_10.json
           SABLE_OUT: results/smoke_${{ github.run_id }}.jsonl
         run: |
           chmod +x ./run_sable.sh
           ./run_sable.sh
-
       - name: Evaluate smoke stability gate
         env:
           SMOKE_RESULTS: results/smoke_${{ github.run_id }}.jsonl
         run: python3 smoke_gate.py --results "$SMOKE_RESULTS" --expected 10 --max-model-errors 1
-
+      - name: Evaluate smoke trace
+        env:
+          RESULTS: results/smoke_${{ github.run_id }}.jsonl
+        run: python3 sable_v05.py --tasks tasks/tasks_smoke_10.json --results "$RESULTS" --report results/smoke_v05_report.json --replay
       - name: Run full 140-task benchmark
-        if: ${{ github.event_name == 'push' || inputs.suite == 'smoke_then_full' }}
+        if: ${{ inputs.suite == 'smoke_then_full' }}
         env:
           SABLE_TASKS: tasks/tasks_v0_4_140.json
           SABLE_OUT: results/full_${{ github.run_id }}.jsonl
-        run: |
-          ./run_sable.sh
-
-      - name: Upload results
+        run: ./run_sable.sh
+      - name: Evaluate full trace
+        if: ${{ inputs.suite == 'smoke_then_full' }}
+        env:
+          RESULTS: results/full_${{ github.run_id }}.jsonl
+        run: python3 sable_v05.py --tasks tasks/tasks_v0_4_140.json --results "$RESULTS" --report results/full_v05_report.json --replay
+      - name: Upload real-model results
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: sable-results-v0.4-${{ github.run_id }}
+          name: sable-v05-results-${{ github.run_id }}
           path: results/
           if-no-files-found: warn
