@@ -1,0 +1,2 @@
+crewai==1.15.21
+cryptography==50.0.1
