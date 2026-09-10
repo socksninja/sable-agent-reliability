@@ -1,0 +1,90 @@
+name: SABLE Public Qwen Reliability Corpus v0.1
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'integrations/external_model/qwen_reliability_corpus.py'
+      - 'integrations/external_model/reliability_corpus_v01.json'
+      - 'sandbox.py'
+      - '.github/workflows/public-model-qwen-reliability-corpus-v01.yml'
+
+env:
+  MODEL: Qwen/Qwen2.5-0.5B-Instruct
+
+jobs:
+  reliability-corpus:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install model runtime
+        run: |
+          python -m pip install --upgrade pip
+          pip install 'torch>=2.3' 'transformers[serving]>=5.6' 'safetensors>=0.4' 'huggingface_hub>=0.27' 'requests>=2.32'
+      - name: Start public model server
+        run: |
+          nohup transformers serve "$MODEL" --port 8000 --model-timeout -1 > results_public_model_qwen_reliability_server.log 2>&1 &
+          echo $! > server.pid
+          for i in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:8000/v1/models >/dev/null 2>&1; then
+              echo 'TRANSFORMERS_SERVE_READY'
+              break
+            fi
+            if ! kill -0 "$(cat server.pid)" 2>/dev/null; then
+              cat results_public_model_qwen_reliability_server.log || true
+              exit 1
+            fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8000/v1/models
+          echo
+          curl -N -fsS -X POST http://127.0.0.1:8000/load_model -H 'Content-Type: application/json' -d "{\"model\":\"$MODEL\"}" | tee load_model_reliability.sse
+          grep -q '"status": "ready"' load_model_reliability.sse
+      - name: Run adversarial reliability corpus
+        run: |
+          mkdir -p results
+          python integrations/external_model/qwen_reliability_corpus.py \
+            --tasks integrations/external_model/reliability_corpus_v01.json \
+            --model "$MODEL" \
+            --out results/public_model_qwen_reliability_corpus_v01.jsonl
+      - name: Produce public corpus summary
+        run: |
+          python - <<'PY'
+          import json
+          from collections import Counter
+          from pathlib import Path
+          rows=[json.loads(x) for x in Path('results/public_model_qwen_reliability_corpus_v01.jsonl').read_text().splitlines() if x.strip()]
+          summary={
+            'schema_version':'sable.reliability_corpus_result.v0.1',
+            'benchmark':'SABLE-Reliability-Corpus-v0.1',
+            'model':'Qwen/Qwen2.5-0.5B-Instruct',
+            'n':len(rows),
+            'task_successes':sum(bool(r['environment']['task_success']) for r in rows),
+            'native_tool_calls':sum(bool(r['native_tool_calling']) for r in rows),
+            'model_errors':sum(r['integrity'].get('termination')=='model_error' for r in rows),
+            'environment_mutations':sum(bool(r['steps']) and r['steps'][0]['observed_result']['ok'] for r in rows),
+            'families':Counter(r['task_id'] for r in rows),
+            'rows':rows,
+          }
+          summary['task_success_rate']=summary['task_successes']/summary['n'] if summary['n'] else 0
+          summary['native_tool_call_rate']=summary['native_tool_calls']/summary['n'] if summary['n'] else 0
+          Path('results/public_model_qwen_reliability_summary_v01.json').write_text(json.dumps(summary,ensure_ascii=False,sort_keys=True,indent=2)+'\n')
+          print(json.dumps({k:summary[k] for k in ['benchmark','model','n','task_successes','native_tool_calls','model_errors','environment_mutations','task_success_rate','native_tool_call_rate']},indent=2))
+          assert summary['n']==8, summary
+          PY
+      - name: Upload public reliability dataset
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-public-qwen-reliability-corpus-v01
+          path: |
+            results/public_model_qwen_reliability_*
+            results_public_model_qwen_reliability_server.log
+            load_model_reliability.sse
+          if-no-files-found: warn
