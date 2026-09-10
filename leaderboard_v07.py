@@ -20,11 +20,12 @@ def load_report(path: Path) -> dict:
         raise ValueError(f"{path}: tasks must be > 0")
     return data
 
-def compare_key(row: dict) -> tuple:
+def compare_key(entry: dict) -> tuple:
+    report = entry["report"]
     return (
-        float(row["reliability_score"]),
-        float(row["operational_score_excluding_provider_failures"]),
-        float(row["pass_rate"]),
+        float(report["reliability_score"]),
+        float(report["operational_score_excluding_provider_failures"]),
+        float(report["pass_rate"]),
     )
 
 def build(entries: list[dict], benchmark_id: str) -> dict:
@@ -64,5 +65,4 @@ def main() -> None:
     Path(args.out).write_text(json.dumps(out,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     print(json.dumps(out,ensure_ascii=False,indent=2))
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__": main()
