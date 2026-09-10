@@ -15,7 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SUBMISSIONS = ROOT / "submissions"
 STRUCTURAL = ROOT / "scripts" / "validate_reliability_submission_v01.py"
-EVIDENCE = ROOT / "scripts" / "admit_external_reliability_record_v01.py"
+EVIDENCE = ROOT / "scripts" / "admit_external_reliability_record_v02.py"
 
 
 def run_checker(script: Path, path: Path) -> tuple[bool, str]:
@@ -34,6 +34,7 @@ def main() -> int:
         "schema_version": "sable.admission_report.v0.1",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "submission_count": len(paths),
+        "evidence_verifier": "admit_external_reliability_record_v02.py",
         "results": [],
     }
 
