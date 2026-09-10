@@ -47,6 +47,13 @@ jobs:
         run: python3 selftest_v07.py
       - name: Run v0.8 external trace ingestion self-test
         run: python3 selftest_ingest_v08.py
+      - name: Run v0.9 public submission self-test
+        run: python3 selftest_submission_v09.py
+      - name: Validate v0.9 reference submission
+        run: |
+          python3 trace_submit_v09.py \
+            --input examples/submissions/third_party_reference_v09.jsonl \
+            --output results/reference_submission_v05.jsonl
       - name: Validate reliability scorer
         run: |
           python3 - <<'PY'
@@ -68,7 +75,7 @@ jobs:
       - name: Upload self-test
         uses: actions/upload-artifact@v7
         with:
-          name: sable-v08-selftest-${{ github.run_id }}
+          name: sable-v09-selftest-${{ github.run_id }}
           path: results/
 
   real-model:
@@ -105,7 +112,7 @@ jobs:
             openrouter)
               echo "SABLE_API_KEY=$OPENROUTER_API_KEY" >> "$GITHUB_ENV"
               echo "SABLE_BASE_URL=https://openrouter.ai/api/v1" >> "$GITHUB_ENV"
-              echo "SABLE_MODEL=nvidia/nemotron-3-ultra-550b-a55b:free" >> "$GITHUB_ENV"
+              echo "SABLE_MODEL=nvidia/nemotron-3-ultra-550b-a55b-a55b:free" >> "$GITHUB_ENV"
               ;;
             deepseek)
               echo "SABLE_API_KEY=$DEEPSEEK_API_KEY" >> "$GITHUB_ENV"
@@ -178,6 +185,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: sable-v08-results-${{ github.run_id }}
+          name: sable-v09-results-${{ github.run_id }}
           path: results/
           if-no-files-found: warn
