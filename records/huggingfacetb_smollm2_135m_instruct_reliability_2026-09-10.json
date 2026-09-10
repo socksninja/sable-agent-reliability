@@ -1,0 +1,38 @@
+{
+  "schema_version": "sable.reliability_record.v0.1",
+  "record_id": "SABLE-EXT-SMOLLM-34518509976",
+  "generated_at": "2026-09-10T19:08:37.946868+00:00",
+  "benchmark": "SABLE External Runtime Probe v0.1",
+  "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+  "runtime": "Hugging Face Transformers (PyTorch)",
+  "n": 4,
+  "native_tool_call_rate": 0.0,
+  "task_success_rate": 0.0,
+  "task_successes": 0,
+  "model_errors": 4,
+  "environment_mutations": 0,
+  "task_results": [
+    {"task_id":"EXT-01","task_success":false,"tool_call_count":0,"native_tool_call":false,"observed_environment":{"reservation_count":0},"agent_action_outcome":"model_output_not_parseable"},
+    {"task_id":"EXT-02","task_success":false,"tool_call_count":0,"native_tool_call":false,"observed_environment":{"reservation_count":0},"agent_action_outcome":"model_output_not_parseable"},
+    {"task_id":"EXT-03","task_success":false,"tool_call_count":0,"native_tool_call":false,"observed_environment":{"reservation_count":0},"agent_action_outcome":"model_output_not_parseable"},
+    {"task_id":"EXT-04","task_success":false,"tool_call_count":0,"native_tool_call":false,"observed_environment":{"reservation_count":0},"agent_action_outcome":"model_output_not_parseable"}
+  ],
+  "provenance": {
+    "source": "GitHub Actions",
+    "repository": "socksninja/sable-agent-reliability",
+    "run_id": 34518509976,
+    "job_id": 103009892612,
+    "commit": "6510309659db3279fb1413661faf32513291c5a8"
+  },
+  "artifact": {
+    "artifact_id": 10168682289,
+    "name": "sable-external-smollm-34518509976",
+    "sha256": "910d4a9d0436ea9c3547f6a8e0b2ab71f22d69d430f9e79fdb6ffb48ca023afd"
+  },
+  "claim_scope": "Observed SABLE result only; not a production-safety claim.",
+  "promotion": {
+    "status": "PROMOTED",
+    "review_basis": "Maintainer review of cited GitHub Actions run, successful execution job, raw task-level artifact, record arithmetic, and evidence reachability admission.",
+    "promoted_from": "submissions/first_external_smollm.json"
+  }
+}
