@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SABLE Permission Policy v1.5",
+  "type": "object",
+  "required": ["schema_version", "observation_count", "decision_contract", "runtime_profiles", "observations", "policy_hash"],
+  "properties": {
+    "schema_version": {"const": "sable.permission_policy.v1.5"},
+    "observation_count": {"type": "integer", "minimum": 0},
+    "decision_contract": {"type": "object"},
+    "runtime_profiles": {"type": "object"},
+    "observations": {"type": "array"},
+    "policy_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": true
+}
