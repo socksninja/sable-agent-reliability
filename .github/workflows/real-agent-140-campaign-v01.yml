@@ -77,6 +77,7 @@ jobs:
       - name: Write launch diagnostics
         if: always()
         env:
+          SABLE_API_KEY: ${{ secrets.SABLE_API_KEY }}
           ENABLED: ${{ steps.config.outputs.enabled }}
           BASE_URL: ${{ steps.config.outputs.base_url }}
           MODEL: ${{ steps.config.outputs.model }}
