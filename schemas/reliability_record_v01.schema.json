@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/socksninja/sable-agent-reliability/blob/main/schemas/reliability_record_v01.schema.json",
+  "title": "SABLE Reliability Record v0.1",
+  "type": "object",
+  "required": ["schema_version", "record_id", "generated_at", "benchmark", "model", "runtime", "n", "native_tool_call_rate", "task_success_rate", "task_successes", "model_errors", "environment_mutations", "provenance", "artifact"],
+  "properties": {
+    "schema_version": {"const": "sable.reliability_record.v0.1"},
+    "record_id": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "benchmark": {"type": "string", "minLength": 1},
+    "model": {"type": "string", "minLength": 1},
+    "runtime": {"type": "object", "required": ["server", "transport"], "properties": {"server": {"type": "string"}, "transport": {"type": "string"}}, "additionalProperties": true},
+    "n": {"type": "integer", "minimum": 1},
+    "native_tool_call_rate": {"type": "number", "minimum": 0, "maximum": 1},
+    "task_success_rate": {"type": "number", "minimum": 0, "maximum": 1},
+    "task_successes": {"type": "integer", "minimum": 0},
+    "model_errors": {"type": "integer", "minimum": 0},
+    "environment_mutations": {"type": "integer", "minimum": 0},
+    "provenance": {"type": "object", "required": ["source", "run_id", "job_id", "repository", "commit"], "properties": {"source": {"const": "GitHub Actions"}, "run_id": {"type": "integer", "minimum": 1}, "job_id": {"type": "integer", "minimum": 1}, "repository": {"type": "string"}, "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}}, "additionalProperties": true},
+    "artifact": {"type": "object", "required": ["name", "artifact_id", "sha256"], "properties": {"name": {"type": "string"}, "artifact_id": {"type": "integer", "minimum": 1}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}, "additionalProperties": true}
+  },
+  "additionalProperties": true
+}
