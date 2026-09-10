@@ -1,0 +1,158 @@
+name: SABLE Real-Agent 140 Campaign - Local Qwen v0.1
+
+on:
+  push:
+    paths:
+      - '.github/workflows/real-agent-140-local-qwen-v01.yml'
+      - '.github/campaign_launch_local_qwen.json'
+      - 'campaign_orchestrator_v14.py'
+      - 'real_agent_runner.py'
+      - 'trace_submit_v09.py'
+      - 'evaluator.py'
+      - 'evidence_v06.py'
+      - 'permission_v01.py'
+      - 'sandbox.py'
+      - 'tasks/**'
+      - 'scripts/**'
+  workflow_dispatch:
+
+env:
+  MODEL: Qwen/Qwen2.5-0.5B-Instruct
+  BASE_URL: http://127.0.0.1:8000/v1
+
+jobs:
+  local-qwen-140:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Materialize benchmark
+        run: python tasks/generate_adversarial.py --out tasks/tasks_v0_4_140.json
+
+      - name: Validate benchmark contract
+        run: python scripts/validate_adversarial_coverage_v01.py --baseline tasks/tasks.json --expanded tasks/tasks_v0_4_140.json --coverage-out results/local_qwen_coverage.json
+
+      - name: Install local public model runtime
+        run: |
+          python -m pip install --upgrade pip
+          pip install 'torch>=2.3' 'transformers[serving]>=5.6' 'safetensors>=0.4' 'huggingface_hub>=0.27' 'cryptography>=43.0' 'requests>=2.32'
+
+      - name: Start local Transformers Serve
+        run: |
+          mkdir -p results
+          nohup transformers serve "$MODEL" --port 8000 --model-timeout -1 > results/local_qwen_server.log 2>&1 &
+          echo $! > results/local_qwen_server.pid
+          ready=0
+          for i in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:8000/v1/models >/dev/null 2>&1; then
+              echo TRANSFORMERS_SERVE_READY
+              ready=1
+              break
+            fi
+            if ! kill -0 "$(cat results/local_qwen_server.pid)" 2>/dev/null; then
+              echo TRANSFORMERS_SERVE_EXITED
+              cat results/local_qwen_server.log || true
+              exit 1
+            fi
+            sleep 2
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo TRANSFORMERS_SERVE_TIMEOUT
+            cat results/local_qwen_server.log || true
+            exit 1
+          fi
+          curl -fsS http://127.0.0.1:8000/v1/models
+          echo
+          echo WARMING_MODEL
+          curl -N -fsS -X POST http://127.0.0.1:8000/load_model \
+            -H 'Content-Type: application/json' \
+            -d "{\"model\":\"$MODEL\"}" \
+            | tee results/local_qwen_load_model.sse
+          grep -q '"status": "ready"' results/local_qwen_load_model.sse
+
+      - name: Write launch diagnostics
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          launch={
+            'enabled': True,
+            'model': os.environ['MODEL'],
+            'base_url': os.environ['BASE_URL'],
+            'repeats': 1,
+            'max_turns': 8,
+            'thinking': 'disabled',
+            'api_key_present': True,
+            'execution_mode': 'local_public_model',
+            'runtime': 'Hugging Face Transformers Serve',
+          }
+          Path('results/campaign_launch_diagnostics.json').write_text(json.dumps(launch,indent=2)+'\n')
+          PY
+
+      - name: Run 140-task campaign
+        env:
+          SABLE_API_KEY: local-run-no-secret
+        run: |
+          python campaign_orchestrator_v14.py \
+            --model "$MODEL" \
+            --base-url "$BASE_URL" \
+            --api-key "$SABLE_API_KEY" \
+            --repeats 1 \
+            --max-turns 8 \
+            --thinking disabled \
+            --tasks tasks/tasks_v0_4_140.json \
+            --out results/external_model_campaign_v14.json
+
+      - name: Build observed failure taxonomy
+        run: python scripts/build_failure_taxonomy.py --campaign results/external_model_campaign_v14.json --out results/failure_taxonomy_v14.json --markdown-out results/failure_taxonomy_v14.md
+
+      - name: Build campaign status
+        run: |
+          python scripts/build_campaign_status_v01.py \
+            --campaign results/external_model_campaign_v14.json \
+            --taxonomy results/failure_taxonomy_v14.json \
+            --launch results/campaign_launch_diagnostics.json \
+            --run-id "$GITHUB_RUN_ID" \
+            --head-sha "$GITHUB_SHA" \
+            --out results/campaign_status_v01.json
+
+      - name: Build attack-family heatmap
+        run: |
+          python scripts/build_campaign_family_heatmap_v01.py \
+            --campaign results/external_model_campaign_v14.json \
+            --out results/campaign_family_heatmap_v01.json \
+            --markdown-out results/campaign_family_heatmap_v01.md
+
+      - name: Enforce evidence integrity
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          campaign=json.loads(Path('results/external_model_campaign_v14.json').read_text())
+          taxonomy=json.loads(Path('results/failure_taxonomy_v14.json').read_text())
+          heatmap=json.loads(Path('results/campaign_family_heatmap_v01.json').read_text())
+          assert campaign['observation_count'] == 140, campaign
+          assert campaign['repetition_count'] == 1, campaign
+          assert campaign['all_replay_matches'] is True, campaign
+          assert len(campaign['records']) == 140, campaign
+          assert taxonomy['observation_count'] == 140, taxonomy
+          assert heatmap['observation_count'] == 140, heatmap
+          assert len(heatmap['families']) == 10, heatmap
+          print('LOCAL_QWEN_140_EVIDENCE_INTEGRITY_PASS')
+          PY
+
+      - name: Upload complete campaign evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-real-agent-140-local-qwen-v01
+          path: |
+            results/**
+            tasks/tasks_v0_4_140.json
+          if-no-files-found: warn
