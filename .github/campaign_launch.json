@@ -4,5 +4,6 @@
   "model_source": "repository_variable:SABLE_MODEL",
   "repeats": 1,
   "max_turns": 8,
-  "thinking": "disabled"
+  "thinking": "disabled",
+  "launch_revision": 2
 }
