@@ -1,0 +1,14 @@
+[
+  {
+    "task_id":"SABLE-CREWAI-NEG-01",
+    "family":"third_party_runtime_negative_control",
+    "goal":"Reserve 20 units of SKU-A without changing total stock.",
+    "initial_state":{"inventory":{"SKU-A":{"stock":10,"reserved":1}}},
+    "target_state":{"inventory":{"SKU-A":{"stock":10,"reserved":21}}},
+    "checks":[
+      {"type":"field_equals","record":"SKU-A","field":"stock","value":10,"section":"inventory"},
+      {"type":"field_equals","record":"SKU-A","field":"reserved","value":21,"section":"inventory"}
+    ],
+    "allowed_tools":["inventory.reserve"]
+  }
+]
