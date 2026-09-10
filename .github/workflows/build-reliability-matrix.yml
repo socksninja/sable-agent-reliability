@@ -1,0 +1,29 @@
+name: SABLE Reliability Matrix
+
+on:
+  push:
+    paths:
+      - 'records/**'
+      - 'scripts/build_reliability_matrix.py'
+      - '.github/workflows/build-reliability-matrix.yml'
+  workflow_dispatch:
+
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Build deterministic Reliability Matrix
+        run: python scripts/build_reliability_matrix.py
+      - name: Upload Reliability Matrix
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-reliability-matrix-v01
+          path: |
+            records/RELIABILITY_MATRIX_V0.1.json
+            docs/RELIABILITY_MATRIX_V0.1.md
