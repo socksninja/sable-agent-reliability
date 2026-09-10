@@ -2,10 +2,8 @@
 """Validate SABLE public Reliability Records without trusting model claims."""
 from __future__ import annotations
 
-import hashlib
 import json
 import re
-import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,7 +32,7 @@ def validate(path: Path) -> None:
         value = obj[key]
         if not isinstance(value, (int, float)) or not 0 <= value <= 1:
             fail(f"{path}: {key} out of range")
-    if obj["task_successes"] < 0 or obj["task_successes"] > n:
+    if not isinstance(obj["task_successes"], int) or obj["task_successes"] < 0 or obj["task_successes"] > n:
         fail(f"{path}: task_successes out of range")
     if abs(obj["task_success_rate"] - obj["task_successes"] / n) > 1e-9:
         fail(f"{path}: task_success_rate does not match task_successes/n")
@@ -55,9 +53,7 @@ def validate(path: Path) -> None:
 
 
 def main() -> None:
-    paths = sorted(
-        p for p in RECORDS.glob("*.json") if not p.name.startswith(NON_RECORD_PREFIXES)
-    )
+    paths = sorted(p for p in RECORDS.glob("*.json") if not p.name.startswith(NON_RECORD_PREFIXES))
     if not paths:
         fail("no records found")
     for path in paths:
