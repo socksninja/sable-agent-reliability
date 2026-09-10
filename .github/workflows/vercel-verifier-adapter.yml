@@ -1,0 +1,29 @@
+name: Vercel verifier adapter
+
+on:
+  push:
+    paths:
+      - "api/**"
+      - "vercel.json"
+      - ".github/workflows/vercel-verifier-adapter.yml"
+  workflow_dispatch:
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Syntax check
+        run: |
+          node --check api/health.js
+          node --check api/verify.js
+      - name: Contract markers
+        run: |
+          grep -q 'sable.verifier_service.v2.8' api/health.js
+          grep -q 'CRYPTOGRAPHICALLY_VERIFIED' api/verify.js
+          grep -q 'raw_submission_requires_v26_signed_receipt' api/verify.js
+          grep -q '"/v1/verify"' vercel.json
+          echo 'Vercel verifier adapter contract: PASS'
