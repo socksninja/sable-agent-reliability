@@ -2,6 +2,18 @@
 
 SABLE is a model-independent evaluation harness for tool-using AI agents. It measures whether an agent actually reaches the required environment state, rather than trusting the agent's final claim.
 
+## v0.9 public trace submission layer
+
+SABLE v0.9 adds a versioned public submission protocol for external agents and agent frameworks:
+
+`external agent → v0.9 submission envelope → integrity/provenance validation → v0.5 trace → deterministic evaluation → evidence → reliability score → leaderboard`
+
+The submission protocol is JSONL-based and keeps agent claims, observed execution, environment outcomes, and provenance/integrity distinct. See `docs/TRACE_SUBMISSION_PROTOCOL_V0.9.md`, `schemas/submission_v09.schema.json`, and `trace_submit_v09.py`.
+
+A deterministic fixture is available at `examples/submissions/third_party_reference_v09.jsonl`. It is a protocol fixture, **not** evidence of real third-party execution.
+
+The first runtime-level integration target is LangGraph; the acceptance criteria are documented in `docs/FIRST_THIRD_PARTY_INTEGRATION.md`. SABLE should not claim external validation until a live third-party trace has been captured and evaluated.
+
 ## v0.5 core
 
 The evaluation layer is independent of any model provider:
@@ -37,12 +49,26 @@ See `RELIABILITY_SCORE.md` for the exact measurement convention.
 ```bash
 python3 tasks/generate_adversarial.py
 python3 selftest_v05.py
+python3 selftest_ingest_v08.py
+python3 selftest_submission_v09.py
 ```
 
-The self-test requires no API key or external model.
+These self-tests require no API key or external model.
+
+## Running an external submission
+
+Prepare a UTF-8 JSONL file containing one `sable.submission.v0.9` envelope per line, then validate and normalize it:
+
+```bash
+python3 trace_submit_v09.py \
+  --input submission.jsonl \
+  --output sable_traces_v05.jsonl
+```
+
+The normalized traces are compatible with the existing evaluator, evidence layer, score generator, and leaderboard.
 
 ## Running a real model
 
 Real-model evaluation is an optional second layer. Configure `SABLE_API_KEY`, `SABLE_BASE_URL`, and `SABLE_MODEL`, then use `run_sable.sh` or the GitHub Actions workflow's manual dispatch. A provider outage or quota limit is recorded separately and must not be confused with agent reliability.
 
-See `schemas/trace.schema.json` for the v0.5 trace contract, `sable_v05.py` for evaluation/replay, and `reliability_score.py` for scoring/report generation.
+See `schemas/trace.schema.json` for the v0.5 trace contract, `schemas/submission_v09.schema.json` for the v0.9 public submission contract, `sable_v05.py` for evaluation/replay, and `reliability_score.py` for scoring/report generation.
