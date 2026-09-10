@@ -1,0 +1,41 @@
+name: SABLE tool gateway v2.0
+
+on:
+  push:
+    paths:
+      - 'tool_gateway_v20.py'
+      - 'schemas/tool_gateway_v20.schema.json'
+      - 'tests/test_tool_gateway_v20.py'
+      - '.github/workflows/tool-gateway-v20.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gateway:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install test dependency
+        run: python -m pip install pytest
+      - name: Run gateway security self-test
+        run: python -m pytest -q tests/test_tool_gateway_v20.py
+      - name: Enforce decision contract
+        run: |
+          python - <<'PY'
+          import json, subprocess, sys, tempfile
+          from pathlib import Path
+          with tempfile.TemporaryDirectory() as d:
+              p=Path(d)/'profile.json'; o=Path(d)/'decision.json'
+              p.write_text(json.dumps({'permission_tier':'LIMITED','trust_score_observed':80}))
+              subprocess.run([sys.executable,'tool_gateway_v20.py','--profile',str(p),'--tool','inventory.reserve','--out',str(o)],check=True)
+              r=json.loads(o.read_text())
+              assert r['decision']=='ALLOW'
+              assert r['executable'] is True
+              assert len(r['decision_hash'])==64
+              print(json.dumps(r, indent=2))
+          PY
