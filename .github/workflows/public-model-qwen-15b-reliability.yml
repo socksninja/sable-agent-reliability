@@ -1,0 +1,115 @@
+name: SABLE Public Qwen 1.5B Reliability Record
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'integrations/external_model/qwen_reliability_corpus.py'
+      - 'integrations/external_model/reliability_corpus_v01.json'
+      - 'sandbox.py'
+      - '.github/workflows/public-model-qwen-15b-reliability.yml'
+
+env:
+  MODEL: Qwen/Qwen2.5-1.5B-Instruct
+
+jobs:
+  reliability-corpus:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install model runtime
+        run: |
+          python -m pip install --upgrade pip
+          pip install 'torch>=2.3' 'transformers[serving]>=5.6' 'safetensors>=0.4' 'huggingface_hub>=0.27' 'requests>=2.32'
+      - name: Start public model server
+        run: |
+          nohup transformers serve "$MODEL" --port 8000 --model-timeout -1 > results_public_model_qwen15_reliability_server.log 2>&1 &
+          echo $! > server.pid
+          for i in $(seq 1 120); do
+            if curl -fsS http://127.0.0.1:8000/v1/models >/dev/null 2>&1; then
+              echo 'TRANSFORMERS_SERVE_READY'
+              break
+            fi
+            if ! kill -0 "$(cat server.pid)" 2>/dev/null; then
+              cat results_public_model_qwen15_reliability_server.log || true
+              exit 1
+            fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8000/v1/models
+          echo
+          curl -N -fsS -X POST http://127.0.0.1:8000/load_model -H 'Content-Type: application/json' -d "{\"model\":\"$MODEL\"}" | tee load_model_qwen15_reliability.sse
+          grep -q '"status": "ready"' load_model_qwen15_reliability.sse
+      - name: Run SABLE adversarial corpus
+        run: |
+          mkdir -p results
+          python integrations/external_model/qwen_reliability_corpus.py \
+            --tasks integrations/external_model/reliability_corpus_v01.json \
+            --model "$MODEL" \
+            --out results/public_model_qwen15_reliability_corpus_v01.jsonl
+      - name: Produce machine-readable Reliability Record candidate
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          rows=[json.loads(x) for x in Path('results/public_model_qwen15_reliability_corpus_v01.jsonl').read_text().splitlines() if x.strip()]
+          n=len(rows)
+          successes=sum(bool(r.get('environment',{}).get('task_success')) for r in rows)
+          native=sum(bool(r.get('native_tool_calling')) for r in rows)
+          errors=sum(r.get('integrity',{}).get('termination')=='model_error' for r in rows)
+          mutations=sum(bool(r.get('steps')) and r['steps'][0].get('observed_result',{}).get('ok') for r in rows)
+          record={
+            'schema_version':'sable.reliability_record.v0.1',
+            'record_id':f"qwen-qwen2.5-1.5b-instruct-{datetime.now(timezone.utc).date()}-run-${{GITHUB_RUN_ID}}",
+            'generated_at':datetime.now(timezone.utc).isoformat().replace('+00:00','Z'),
+            'benchmark':'SABLE-Reliability-Corpus-v0.1',
+            'model':os.environ['MODEL'],
+            'runtime':{'server':'Hugging Face Transformers Serve','transport':'structured_openai_compatible_tool_calls'},
+            'n':n,
+            'native_tool_call_rate':native/n if n else 0,
+            'task_success_rate':successes/n if n else 0,
+            'task_successes':successes,
+            'model_errors':errors,
+            'environment_mutations':mutations,
+            'result_summary':{
+              'successful_tasks':[r['task_id'] for r in rows if r.get('environment',{}).get('task_success')],
+              'rows':rows,
+            },
+            'provenance':{
+              'source':'GitHub Actions',
+              'run_id':int(os.environ['GITHUB_RUN_ID']),
+              'job_id':0,
+              'repository':os.environ['GITHUB_REPOSITORY'],
+              'commit':os.environ['GITHUB_SHA'],
+            },
+            'artifact':{
+              'name':'sable-public-qwen15-reliability-corpus-v01',
+              'artifact_id':1,
+              'sha256':'0'*64,
+              'finalized_after_upload':False,
+            },
+            'interpretation':'Candidate record generated from a real public pretrained model run. Artifact identity is finalized by CI publication metadata.'
+          }
+          Path('results/reliability_record_candidate_qwen15_v01.json').write_text(json.dumps(record,ensure_ascii=False,sort_keys=True,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps({k:record[k] for k in ['record_id','model','n','task_successes','task_success_rate','native_tool_call_rate','model_errors']},indent=2))
+          assert n==8, record
+          PY
+      - name: Upload Qwen 1.5B public Reliability Record bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-public-qwen15-reliability-corpus-v01
+          path: |
+            results/public_model_qwen15_reliability_*
+            results/reliability_record_candidate_qwen15_v01.json
+            results_public_model_qwen15_reliability_server.log
+            load_model_qwen15_reliability.sse
+          if-no-files-found: warn
