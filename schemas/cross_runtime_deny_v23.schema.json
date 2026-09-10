@@ -1,0 +1,13 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://sable.dev/schemas/cross-runtime-deny-v2.3.json",
+  "title":"SABLE Cross-Runtime Deny Evidence v2.3",
+  "type":"object",
+  "required":["schema_version","runtimes","status"],
+  "properties":{
+    "schema_version":{"const":"sable.cross_runtime_deny.v2.3"},
+    "runtimes":{"type":"array","minItems":2},
+    "status":{"const":"PASS"}
+  },
+  "additionalProperties":false
+}
