@@ -1,0 +1,46 @@
+name: SABLE Public Submission Verifier v2.7
+
+on:
+  push:
+    paths:
+      - 'submit_v27.py'
+      - 'tests/test_submit_v27.py'
+      - 'schemas/submission_verifier_v27.schema.json'
+      - 'results/third_party_*_submission_v09.jsonl'
+      - 'requirements.txt'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run verifier contract tests
+        run: pytest -q tests/test_submit_v27.py
+      - name: Verify a real third-party submission
+        run: |
+          python submit_v27.py \
+            --input results/third_party_langgraph_submission_v09.jsonl \
+            --out results/third_party_langgraph_verification_v27.json
+      - name: Assert machine-readable VERIFIED result
+        run: |
+          python - <<'PY'
+          import json
+          r=json.load(open('results/third_party_langgraph_verification_v27.json'))
+          assert r['verified'] is True and r['decision']=='VERIFIED'
+          assert r['runtime']=='LangGraph'
+          print('REAL_SUBMISSION_VERIFIED_V27', r['source_trace_hash'])
+          PY
+      - name: Verify schema contract
+        run: |
+          python - <<'PY'
+          import json
+          s=json.load(open('schemas/submission_verifier_v27.schema.json'))
+          assert s['properties']['schema_version']['const']=='sable.submission_verifier.v2.7'
+          print('SUBMISSION_VERIFIER_V27_SCHEMA_PASS')
+          PY
