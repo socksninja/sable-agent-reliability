@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - 'integrations/langgraph/**'
+      - 'capability_token_v22.py'
+      - 'capability_gate_v22.py'
+      - 'tests/test_capability_token_v22.py'
       - 'permission_v01.py'
       - 'trace_submit_v09.py'
       - 'evaluator.py'
@@ -22,87 +25,63 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Install third-party runtime
-        run: python -m pip install --upgrade pip langgraph
-
-      - name: Capture live LangGraph runtime trace
+      - name: Install third-party runtime and gate crypto
+        run: python -m pip install --upgrade pip 'langgraph' 'cryptography>=43.0.0'
+      - name: Verify capability gate contract
+        run: pytest -q tests/test_capability_token_v22.py
+      - name: Capture LangGraph trace through signed capability gate
         run: python integrations/langgraph/run_real_trace_v09.py
-
-      - name: Validate and normalize SABLE submission
-        run: |
-          python trace_submit_v09.py \
-            --input results/third_party_langgraph_submission_v09.jsonl \
-            --output results/third_party_langgraph_sable_v05.jsonl
-
-      - name: Evaluate environment outcome
-        run: |
-          python evaluator.py \
-            --tasks integrations/langgraph/task.json \
-            --traces results/third_party_langgraph_sable_v05.jsonl \
-            --out results/third_party_langgraph_evaluation.json
-
-      - name: Generate verified evidence
-        run: |
-          python evidence_v06.py \
-            --tasks integrations/langgraph/task.json \
-            --results results/third_party_langgraph_sable_v05.jsonl \
-            --out results/third_party_langgraph_evidence.json
-
-      - name: Decide execution permission
-        run: |
-          python permission_v01.py \
-            --input results/third_party_langgraph_sable_v05.jsonl \
-            --output results/third_party_langgraph_permission.json
-
-      - name: Enforce full Trace -> Verification -> Permission gate
+      - name: Assert trace records v2.2 gate
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          submission = json.loads(Path('results/third_party_langgraph_submission_v09.jsonl').read_text())
-          normalized = json.loads(Path('results/third_party_langgraph_sable_v05.jsonl').read_text())
-          evaluation = json.loads(Path('results/third_party_langgraph_evaluation.json').read_text())
-          evidence = json.loads(Path('results/third_party_langgraph_evidence.json').read_text())
-          permission = json.loads(Path('results/third_party_langgraph_permission.json').read_text())
-
-          assert submission['integrity']['source_trace_hash']
-          assert normalized['submission']['source_trace_hash'] == submission['integrity']['source_trace_hash']
-          assert evaluation['summary']['task_success_rate'] == 1.0
-          assert evidence['evidence_hash']
-          assert permission['verified'] is True
-          assert permission['decision'] == 'ALLOW'
-          print(json.dumps({
-              'trace': 'CAPTURED',
-              'verification': 'PASS',
-              'evidence': 'GENERATED',
-              'permission': 'ALLOW',
-              'source_trace_hash': submission['integrity']['source_trace_hash'],
-              'runtime_trace_id': submission['provenance']['runtime_trace_id'],
-              'framework_version': submission['source']['framework_version'],
-          }, indent=2))
+          trace=json.loads(Path('results/third_party_langgraph_submission_v09.jsonl').read_text())['trace']
+          assert trace['integrity']['capability_gate']=='sable.capability_token.v2.2'
+          assert trace['integrity']['capability_signature_present'] is True
+          assert trace['environment']['task_success'] is True
+          assert len(trace['steps'])==1 and trace['steps'][0]['observed_result']['ok'] is True
+          print('LANGGRAPH_V22_GATE_EXECUTION_PASS', trace['integrity']['capability_token_hash'])
           PY
-
+      - name: Validate and normalize SABLE submission
+        run: python trace_submit_v09.py --input results/third_party_langgraph_submission_v09.jsonl --output results/third_party_langgraph_sable_v05.jsonl
+      - name: Evaluate environment outcome
+        run: python evaluator.py --tasks integrations/langgraph/task.json --traces results/third_party_langgraph_sable_v05.jsonl --out results/third_party_langgraph_evaluation.json
+      - name: Generate verified evidence
+        run: python evidence_v06.py --tasks integrations/langgraph/task.json --results results/third_party_langgraph_sable_v05.jsonl --out results/third_party_langgraph_evidence.json
+      - name: Decide execution permission
+        run: python permission_v01.py --input results/third_party_langgraph_sable_v05.jsonl --output results/third_party_langgraph_permission.json
+      - name: Enforce Trace -> Verification -> Permission
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          submission=json.loads(Path('results/third_party_langgraph_submission_v09.jsonl').read_text())
+          normalized=json.loads(Path('results/third_party_langgraph_sable_v05.jsonl').read_text())
+          evaluation=json.loads(Path('results/third_party_langgraph_evaluation.json').read_text())
+          evidence=json.loads(Path('results/third_party_langgraph_evidence.json').read_text())
+          permission=json.loads(Path('results/third_party_langgraph_permission.json').read_text())
+          assert normalized['submission']['source_trace_hash']==submission['integrity']['source_trace_hash']
+          assert evaluation['summary']['task_success_rate']==1.0
+          assert evidence['replay']['replay_match'] is True
+          assert permission['verified'] is True and permission['decision']=='ALLOW'
+          print('LANGGRAPH_TRACE_VERIFICATION_PERMISSION_PASS')
+          PY
       - name: Upload auditable evidence bundle
         uses: actions/upload-artifact@v4
         with:
-          name: sable-langgraph-verified-execution
+          name: sable-langgraph-v22-gated-execution
           path: results/
           if-no-files-found: error
-
       - name: Publish evidence bundle to repository
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add results/
-          if git diff --cached --quiet; then
-            echo 'No new evidence files to publish.'
-            exit 0
-          fi
-          git commit -m 'evidence: first live LangGraph verified execution'
+          if git diff --cached --quiet; then echo 'No new evidence files to publish.'; exit 0; fi
+          git commit -m 'evidence: LangGraph v2.2 gated execution'
           git push
