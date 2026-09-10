@@ -1,0 +1,49 @@
+{
+  "schema_version": "sable.reliability_record.v0.1",
+  "record_id": "SABLE-CREWAI-REF-34522362667",
+  "generated_at": "2026-09-10T19:47:00Z",
+  "benchmark": "SABLE-Reliability-Corpus-v0.1",
+  "model": "deterministic-crewai-stub",
+  "runtime": {
+    "server": "CrewAI 1.15.21",
+    "transport": "native_function_tool_to_sable_sandbox"
+  },
+  "n": 1,
+  "native_tool_call_rate": 1.0,
+  "task_success_rate": 1.0,
+  "task_successes": 1,
+  "model_errors": 0,
+  "environment_mutations": 1,
+  "task_results": [
+    {
+      "task_id": "SABLE-CREWAI-01",
+      "task_success": true,
+      "tool_call_count": 1,
+      "native_tool_call": true,
+      "observed_environment": {
+        "task_success": true,
+        "checks_passed": 2,
+        "checks_total": 2
+      },
+      "agent_action_outcome": "reserved"
+    }
+  ],
+  "provenance": {
+    "source": "GitHub Actions",
+    "repository": "socksninja/sable-agent-reliability",
+    "run_id": 34522362667,
+    "job_id": 103022723634,
+    "commit": "83beca5b3d4b205da2e89e6e712b073734e453ef"
+  },
+  "artifact": {
+    "artifact_id": 10170183324,
+    "name": "sable-crewai-trace-34522362667",
+    "sha256": "94098181ec37f1473473bbe6f58789ac36d3267be9f0ea179505e552cd2bcc97"
+  },
+  "claim_scope": "Observed SABLE framework/runtime result only; deterministic local reference LLM. Not independent model provenance and not a production-safety claim.",
+  "promotion": {
+    "status": "PROMOTED",
+    "review_basis": "Maintainer verification of GitHub Actions run 34522362667, successful CrewAI runtime job 103022723634, raw v0.9 trace, normalized SABLE evaluation, replay_match_rate=1.0, task success=1.0, and immutable artifact digest.",
+    "promoted_from": "PR #15 live CrewAI runtime evidence"
+  }
+}
