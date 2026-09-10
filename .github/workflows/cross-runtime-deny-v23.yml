@@ -24,14 +24,35 @@ jobs:
         run: pip install -r requirements.txt
       - name: Run cross-runtime deny tests
         run: pytest -q tests/test_cross_runtime_deny_v23.py
-      - name: Run executable harness
-        run: python cross_runtime_deny_v23.py
+      - name: Run executable harness and persist evidence
+        run: |
+          mkdir -p results
+          python - <<'PY'
+          import json
+          from cross_runtime_deny_v23 import exercise
+          rows=[exercise('langgraph'), exercise('crewai')]
+          assert all(r['deny_without_token']['state_hash_unchanged'] for r in rows)
+          assert all(r['allow_with_signed_token']['ok'] for r in rows)
+          assert all(not r['replay_denied']['ok'] for r in rows)
+          assert all(r['reserved']==4 for r in rows)
+          out={'schema_version':'sable.cross_runtime_deny.v2.3','runtimes':rows,'status':'PASS'}
+          open('results/cross_runtime_deny_v23.json','w',encoding='utf-8').write(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(out,indent=2))
+          PY
       - name: Verify schema contract
         run: |
           python - <<'PY'
           import json
           s=json.load(open('schemas/cross_runtime_deny_v23.schema.json'))
+          r=json.load(open('results/cross_runtime_deny_v23.json'))
           assert s['properties']['schema_version']['const']=='sable.cross_runtime_deny.v2.3'
-          assert s['properties']['status']['const']=='PASS'
+          assert r['schema_version']=='sable.cross_runtime_deny.v2.3' and r['status']=='PASS'
+          assert len(r['runtimes'])==2
           print('CROSS_RUNTIME_DENY_V23_SCHEMA_PASS')
           PY
+      - name: Upload cross-runtime deny evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-cross-runtime-deny-v23
+          path: results/cross_runtime_deny_v23.json
+          if-no-files-found: error
