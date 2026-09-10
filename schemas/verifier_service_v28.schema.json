@@ -1,0 +1,21 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://sable.dev/schemas/verifier-service-v2.8.json",
+  "title":"SABLE Verifier Service Response v2.8",
+  "type":"object",
+  "required":["schema_version","verified","decision","reasons","verification_level","execution_proof"],
+  "properties":{
+    "schema_version":{"const":"sable.verifier_service.v2.8"},
+    "verified":{"type":"boolean"},
+    "decision":{"enum":["VERIFIED","REJECTED"]},
+    "reasons":{"type":"array","items":{"type":"string"}},
+    "verification_level":{"enum":["STRUCTURALLY_VALID","CRYPTOGRAPHICALLY_VERIFIED","REJECTED"]},
+    "execution_proof":{"type":"boolean"},
+    "submission_id":{"type":["string","null"]},
+    "source_trace_hash":{"type":["string","null"]},
+    "task_id":{"type":["string","null"]},
+    "runtime":{"type":["string","null"]},
+    "receipt_hash":{"type":["string","null"]}
+  },
+  "additionalProperties":false
+}
