@@ -58,6 +58,8 @@ def call_model(base_url: str, key: str, model: str, messages: list[dict], max_to
         except HTTPError as e:
             detail=e.read().decode(errors='replace')[:2000]
             last_error=RuntimeError(f"model HTTP {e.code}: {detail}")
+            if e.code == 429 and any(marker in detail.lower() for marker in ("free-models-per-day", "free model", "daily free", "free-model limit")):
+                raise RuntimeError(f"provider-rate-limit: model HTTP 429: {detail}")
             if e.code not in (408,425,429,500,502,503,504) or attempt == 4:
                 raise last_error
         except URLError as e:
@@ -75,7 +77,7 @@ def run_task(task: dict, base_url: str, key: str, model: str, max_turns: int, th
             msg=call_model(base_url,key,model,messages,thinking=thinking)
         except RuntimeError as e:
             infra_error=str(e)
-            termination="model_error"
+            termination="provider-rate-limit" if str(e).startswith("provider-rate-limit:") else "model_error"
             break
         assistant_message={"role":"assistant","content":msg.get("content")}
         if msg.get("reasoning_content") is not None: assistant_message["reasoning_content"]=msg["reasoning_content"]
