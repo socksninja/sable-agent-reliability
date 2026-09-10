@@ -5,7 +5,7 @@ on:
     paths:
       - 'records/**'
       - 'scripts/validate_reliability_records.py'
-      - 'scripts/validate_adversarial_coverage.py'
+      - 'scripts/validate_adversarial_coverage_v01.py'
       - 'scripts/build_reliability_matrix.py'
       - 'scripts/build_failure_taxonomy.py'
       - '.github/workflows/build-reliability-matrix.yml'
@@ -24,7 +24,7 @@ jobs:
       - name: Validate public Reliability Records
         run: python scripts/validate_reliability_records.py
       - name: Validate adversarial family coverage
-        run: python scripts/validate_adversarial_coverage.py
+        run: python scripts/validate_adversarial_coverage_v01.py
       - name: Build deterministic Reliability Matrix
         run: python scripts/build_reliability_matrix.py
       - name: Build deterministic Failure Taxonomy
@@ -35,7 +35,9 @@ jobs:
           import json
           from pathlib import Path
           matrix = json.loads(Path('records/RELIABILITY_MATRIX_V0.1.json').read_text())
+          taxonomy = json.loads(Path('records/FAILURE_TAXONOMY_V0.1.json').read_text())
           assert matrix['record_count'] == len(matrix['records'])
+          assert taxonomy['record_count'] == matrix['record_count']
           for row in matrix['records']:
               assert 0 <= row['failure_rate'] <= 1
               assert row['failure_count'] == sum(row['failure_signature'].values())
