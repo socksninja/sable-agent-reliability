@@ -86,7 +86,10 @@ def evaluate_task(task, trace):
     return {'task_id':task['task_id'],'family':task['family'],'task_success':success,'silent_failure':(not success) and (not failure_detected),'failure_detected':failure_detected,'recovery':recovery,'human_intervention':human,'checks_passed':sum(passed),'checks_total':len(passed),'final_report':trace.get('final_report','')}
 
 def main():
-    ap=argparse.ArgumentParser(); ap.add_argument('--tasks',required=True); ap.add_argument('--traces',required=True); ap.add_argument('--out'); args=ap.parse_args(); tasks={t['task_id']:t for t in json.load(open(args.tasks,encoding='utf-8'))}; rows=[]
+    ap=argparse.ArgumentParser(); ap.add_argument('--tasks',required=True); ap.add_argument('--traces',required=True); ap.add_argument('--out'); args=ap.parse_args()
+    raw_tasks=json.load(open(args.tasks,encoding='utf-8'))
+    if isinstance(raw_tasks, dict): raw_tasks=[raw_tasks]
+    tasks={t['task_id']:t for t in raw_tasks}; rows=[]
     for line in open(args.traces,encoding='utf-8'):
         if line.strip(): tr=json.loads(line); rows.append(evaluate_task(tasks[tr['task_id']],tr))
     n=len(rows) or 1; failed=[r for r in rows if not r['task_success']]
