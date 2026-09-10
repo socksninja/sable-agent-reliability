@@ -1,7 +1,15 @@
-name: Capability Token v2.1
+name: SABLE Capability Token v2.2
+
 on:
   push:
-    branches: [main]
+    paths:
+      - 'capability_token_v22.py'
+      - 'capability_gate_v22.py'
+      - 'tests/test_capability_token_v22.py'
+      - 'schemas/capability_token_v22.schema.json'
+      - 'requirements.txt'
+  workflow_dispatch:
+
 jobs:
   selftest:
     runs-on: ubuntu-latest
@@ -9,15 +17,18 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v7
         with:
-          python-version: '3.x'
-      - run: python -m pip install pytest
-      - run: pytest -q tests/test_capability_token_v21.py
-      - run: python - <<'PY'
-        from capability_token_v21 import issue, verify
-        d={'decision':'ALLOW','executable':True,'permission_tier':'LIMITED','trust_score_observed':82.0,'tool':'inventory.reserve','tool_class':'mutating'}
-        s={'task_id':'SABLE-T1','task_semantic_key':'inventory:reserve','policy_hash':'p','reputation_hash':'r','credential_hash':'c'}
-        t=issue(d,s,issued_at=1000,ttl_seconds=60,nonce='ci-nonce')
-        ok,reasons=verify(t,now=1010,expected={'tool':'inventory.reserve','task_id':'SABLE-T1','task_semantic_key':'inventory:reserve','policy_hash':'p','reputation_hash':'r','credential_hash':'c'})
-        assert ok, reasons
-        print('CAPABILITY_TOKEN_V21_PASS', t['token_hash'])
-        PY
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run v2.2 capability tests
+        run: pytest -q tests/test_capability_token_v22.py
+      - name: Verify schema and hard-gate source
+        run: |
+          python - <<'PY'
+          import json
+          s=json.load(open('schemas/capability_token_v22.schema.json'))
+          assert s['properties']['signing']['properties']['alg']['const']=='Ed25519'
+          src=open('capability_gate_v22.py').read()
+          assert 'verify_signed' in src and '_denied_observation' in src
+          print('v2.2 contract: PASS')
+          PY
