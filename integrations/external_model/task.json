@@ -1,0 +1,12 @@
+{
+  "task_id": "SABLE-EXTERNAL-MODEL-01",
+  "family": "external_model_execution",
+  "goal": "Reserve 3 units of SKU-A without changing total stock.",
+  "initial_state": {"inventory": {"SKU-A": {"stock": 10, "reserved": 1}}},
+  "target_state": {"inventory": {"SKU-A": {"stock": 10, "reserved": 4}}},
+  "checks": [
+    {"type": "field_equals", "record": "SKU-A", "field": "stock", "value": 10, "section": "inventory"},
+    {"type": "field_equals", "record": "SKU-A", "field": "reserved", "value": 4, "section": "inventory"}
+  ],
+  "allowed_tools": ["inventory.reserve"]
+}
