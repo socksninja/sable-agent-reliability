@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SABLE Tool Gateway v2.0 decision",
+  "type": "object",
+  "required": ["schema_version", "decision", "executable", "permission_tier", "trust_score_observed", "tool", "tool_class", "reasons", "decision_hash"],
+  "properties": {
+    "schema_version": {"const": "sable.tool_gateway.v2.0"},
+    "decision": {"enum": ["ALLOW", "DENY"]},
+    "executable": {"type": "boolean"},
+    "permission_tier": {"enum": ["UNKNOWN", "OBSERVE", "LIMITED", "TRUSTED"]},
+    "trust_score_observed": {"type": "number", "minimum": 0, "maximum": 100},
+    "tool": {"type": "string", "minLength": 1},
+    "tool_class": {"enum": ["read", "mutating", "destructive", "unknown"]},
+    "reasons": {"type": "array", "items": {"type": "string"}},
+    "decision_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": true
+}
