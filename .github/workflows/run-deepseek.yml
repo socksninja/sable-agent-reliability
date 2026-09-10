@@ -8,9 +8,10 @@ on:
       provider:
         description: Provider
         required: true
-        default: openrouter
+        default: groq
         type: choice
         options:
+          - groq
           - openrouter
           - huggingface
           - deepseek
@@ -50,13 +51,23 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then
-            PROVIDER="openrouter"
+            if [ -n "$GROQ_API_KEY" ]; then
+              PROVIDER="groq"
+            else
+              PROVIDER="openrouter"
+            fi
           else
-            PROVIDER="${INPUT_PROVIDER:-openrouter}"
+            PROVIDER="${INPUT_PROVIDER:-groq}"
           fi
           case "$PROVIDER" in
+            groq)
+              echo "SABLE_API_KEY=$GROQ_API_KEY" >> "$GITHUB_ENV"
+              echo "SABLE_BASE_URL=https://api.groq.com/openai/v1" >> "$GITHUB_ENV"
+              echo "SABLE_MODEL=qwen/qwen3.8-27b" >> "$GITHUB_ENV"
+              ;;
             huggingface)
               echo "SABLE_API_KEY=$HF_TOKEN" >> "$GITHUB_ENV"
               echo "SABLE_BASE_URL=https://router.huggingface.co/v1" >> "$GITHUB_ENV"
