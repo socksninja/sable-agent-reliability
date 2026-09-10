@@ -1,0 +1,89 @@
+name: SABLE Verification Receipt v2.6
+
+on:
+  push:
+    paths:
+      - 'verification_receipt_v24.py'
+      - 'verification_receipt_v26.py'
+      - 'tests/test_verification_receipt_v26.py'
+      - 'schemas/verification_receipt_v26.schema.json'
+      - 'results/*evidence.json'
+      - 'results/*permission.json'
+      - 'requirements.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  receipt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Test receipt signer and verifier
+        run: pytest -q tests/test_verification_receipt_v26.py
+      - name: Generate receipts from existing verified runtime evidence
+        run: |
+          python - <<'PY'
+          import json, glob
+          from pathlib import Path
+          from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+          from verification_receipt_v24 import build_receipt
+          from verification_receipt_v26 import sign_receipt, verify_self_contained, public_key_b64
+          out=Path('results'); key=Ed25519PrivateKey.generate(); generated=0
+          for ev_path in glob.glob('results/*evidence.json'):
+              perm_path=ev_path.replace('_evidence.json','_permission.json')
+              if not Path(perm_path).exists(): continue
+              evidence=json.loads(Path(ev_path).read_text()); permission=json.loads(Path(perm_path).read_text())
+              if evidence.get('outcome',{}).get('task_success') is not True: continue
+              if evidence.get('replay',{}).get('replay_match') is not True: continue
+              if permission.get('decision')!='ALLOW' or permission.get('verified') is not True: continue
+              receipt=build_receipt(evidence, permission)
+              signed=sign_receipt(receipt,key)
+              ok,reasons=verify_self_contained(signed)
+              assert ok, reasons
+              name=Path(ev_path).name.replace('_evidence.json','_signed_receipt_v26.json')
+              Path(out/name).write_text(json.dumps(signed,ensure_ascii=False,sort_keys=True,indent=2)+'\n')
+              generated += 1
+              print(json.dumps({'receipt':name,'receipt_hash':signed['receipt_hash'],'public_key':public_key_b64(key.public_key())}))
+          assert generated >= 1, 'no verified runtime evidence available for signed receipt'
+          print('SIGNED_RECEIPTS_GENERATED', generated)
+          PY
+      - name: Independent verification pass
+        run: |
+          python - <<'PY'
+          import glob, json
+          from verification_receipt_v26 import verify_self_contained
+          n=0
+          for p in glob.glob('results/*_signed_receipt_v26.json'):
+              r=json.load(open(p)); ok,reasons=verify_self_contained(r); assert ok, (p,reasons); n+=1
+          assert n >= 1
+          print('INDEPENDENT_RECEIPT_VERIFY_PASS', n)
+          PY
+      - name: Verify schema contract
+        run: |
+          python - <<'PY'
+          import json
+          s=json.load(open('schemas/verification_receipt_v26.schema.json'))
+          assert s['properties']['schema_version']['const']=='sable.verification_receipt.v2.6'
+          assert s['properties']['signing']['properties']['alg']['const']=='Ed25519'
+          print('RECEIPT_V26_SCHEMA_PASS')
+          PY
+      - name: Upload public receipt bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-signed-verification-receipts-v26
+          path: results/*_signed_receipt_v26.json
+      - name: Publish signed receipts
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/*_signed_receipt_v26.json
+          if git diff --cached --quiet; then echo 'No new receipts.'; exit 0; fi
+          git commit -m 'evidence: publish signed verification receipts v2.6'
+          git push
