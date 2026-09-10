@@ -17,7 +17,7 @@ def test_sign_and_verify():
     ok,reasons=verify_signed_receipt(signed,p.public_key())
     assert ok and reasons==[]
     assert signed["signing"]["alg"]=="Ed25519"
-    assert public_key_b64(p.public_key())
+    assert public_key_b64(p.public_key()) == signed["public_key"]
 
 
 def test_tamper_is_denied():
@@ -27,7 +27,14 @@ def test_tamper_is_denied():
     assert not ok and "receipt_integrity_mismatch" in reasons and "signature_invalid" in reasons
 
 
+def test_public_key_swap_is_denied():
+    p=Ed25519PrivateKey.generate(); other=Ed25519PrivateKey.generate(); signed=sign_receipt(receipt(),p)
+    signed["public_key"]=public_key_b64(other.public_key())
+    ok,reasons=verify_signed_receipt(signed,p.public_key())
+    assert not ok and "public_key_mismatch" in reasons
+
+
 def test_unsigned_is_denied():
-    p=Ed25519PrivateKey.generate(); r=receipt(); r["receipt_hash"]="bad"; r["signature"]="bad"; r["signing"]={"alg":"Ed25519","key_id":"x"}
+    p=Ed25519PrivateKey.generate(); r=receipt(); r["receipt_hash"]="bad"; r["signature"]="bad"; r["signing"]={"alg":"Ed25519","key_id":"x"}; r["public_key"]=public_key_b64(p.public_key())
     ok,reasons=verify_signed_receipt(r,p.public_key())
     assert not ok and "signature_invalid" in reasons
