@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SABLE Execution Campaign v1.3",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "campaign_id",
+    "model",
+    "provider",
+    "repetition_count",
+    "sample_quality",
+    "counts",
+    "all_replay_matches",
+    "records"
+  ],
+  "properties": {
+    "schema_version": {"const": "sable.execution_campaign.v1.3"},
+    "campaign_id": {"type": "string", "minLength": 1},
+    "model": {"type": "string", "minLength": 1},
+    "provider": {"type": "string", "minLength": 1},
+    "repetition_count": {"type": "integer", "minimum": 2},
+    "sample_quality": {"enum": ["observations_only", "rate_estimate"]},
+    "minimum_observations_for_rate_estimate": {"type": "integer", "minimum": 1},
+    "counts": {
+      "type": "object",
+      "required": ["verified_allow", "verified_deny", "infrastructure_failure", "other"],
+      "properties": {
+        "verified_allow": {"type": "integer", "minimum": 0},
+        "verified_deny": {"type": "integer", "minimum": 0},
+        "infrastructure_failure": {"type": "integer", "minimum": 0},
+        "other": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "verified_task_success_rate": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "infrastructure_failure_rate": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "all_replay_matches": {"const": true},
+    "records": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["repetition", "task_id", "model", "provider", "runtime", "task_success", "replay_match", "permission"],
+        "properties": {
+          "repetition": {"type": "integer", "minimum": 1},
+          "task_id": {"type": "string"},
+          "model": {"type": "string"},
+          "provider": {"type": "string"},
+          "runtime": {"type": "string"},
+          "framework_version": {"type": "string"},
+          "task_success": {"type": "boolean"},
+          "replay_match": {"const": true},
+          "permission": {"enum": ["ALLOW", "DENY"]},
+          "failure_labels": {"type": "array", "items": {"type": "string"}},
+          "infrastructure_error": {"type": ["string", "null"]},
+          "evidence_hash": {"type": ["string", "null"]}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
