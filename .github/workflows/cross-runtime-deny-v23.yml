@@ -1,0 +1,37 @@
+name: SABLE Cross-Runtime Deny v2.3
+
+on:
+  push:
+    paths:
+      - 'cross_runtime_deny_v23.py'
+      - 'tests/test_cross_runtime_deny_v23.py'
+      - 'schemas/cross_runtime_deny_v23.schema.json'
+      - 'capability_token_v22.py'
+      - 'capability_gate_v22.py'
+      - 'sandbox.py'
+      - 'requirements.txt'
+  workflow_dispatch:
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run cross-runtime deny tests
+        run: pytest -q tests/test_cross_runtime_deny_v23.py
+      - name: Run executable harness
+        run: python cross_runtime_deny_v23.py
+      - name: Verify schema contract
+        run: |
+          python - <<'PY'
+          import json
+          s=json.load(open('schemas/cross_runtime_deny_v23.schema.json'))
+          assert s['properties']['schema_version']['const']=='sable.cross_runtime_deny.v2.3'
+          assert s['properties']['status']['const']=='PASS'
+          print('CROSS_RUNTIME_DENY_V23_SCHEMA_PASS')
+          PY
