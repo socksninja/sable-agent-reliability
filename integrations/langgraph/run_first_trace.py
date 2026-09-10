@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.metadata
 import json
 import uuid
 from datetime import datetime, timezone
@@ -52,8 +53,6 @@ def reserve_tool(state: State) -> State:
 
 
 def agent_node(state: State) -> State:
-    # Real LangGraph application node: the graph decides the tool action,
-    # then hands execution to the mutation-capable tool node.
     return {"claimed_status": "success", "final_report": f"Reserved {state['qty']} units of {state['sku']}."}
 
 
@@ -84,16 +83,14 @@ def main() -> None:
     expected = {"stock": 10, "reserved": 4}
     observed = result["inventory"]["SKU-A"]
     task_success = observed == expected
-    result["claimed_status"] = "success" if task_success else result.get("claimed_status", "uncertain")
-    result["final_report"] = result.get("final_report", "")
 
     trace = {
         "task_id": task_id,
         "goal": "Reserve 3 units of SKU-A without changing total stock.",
         "agent": {"name": "sable-langgraph-probe", "capture_id": capture_id},
         "steps": result["trace_steps"],
-        "claimed_status": result["claimed_status"],
-        "final_report": result["final_report"],
+        "claimed_status": "success" if task_success else "uncertain",
+        "final_report": result.get("final_report", ""),
         "environment": {
             "initial_state": initial,
             "final_state": result["inventory"],
@@ -110,7 +107,7 @@ def main() -> None:
             "agent_name": "sable-langgraph-probe",
             "agent_version": "0.1",
             "framework": "LangGraph",
-            "framework_version": __import__("langgraph").__version__,
+            "framework_version": importlib.metadata.version("langgraph"),
             "adapter": "sable-langgraph-v0.1",
         },
         "trace": trace,
