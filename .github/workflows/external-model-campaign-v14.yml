@@ -1,0 +1,84 @@
+name: SABLE multi-task external-model campaign v1.4
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        required: true
+        default: https://api.openai.com/v1
+        description: OpenAI-compatible provider base URL
+      model:
+        required: true
+        description: Model identifier
+      repeats:
+        required: true
+        default: '5'
+        description: Repetitions over the full task set
+      max_turns:
+        required: true
+        default: '8'
+      thinking:
+        required: true
+        default: disabled
+        type: choice
+        options:
+          - disabled
+          - enabled
+
+permissions:
+  contents: read
+
+jobs:
+  campaign:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run multi-task campaign
+        env:
+          SABLE_API_KEY: ${{ secrets.SABLE_API_KEY }}
+        run: |
+          test -n "$SABLE_API_KEY"
+          python campaign_orchestrator_v14.py \
+            --api-key "$SABLE_API_KEY" \
+            --base-url "${{ inputs.base_url }}" \
+            --model "${{ inputs.model }}" \
+            --repeats "${{ inputs.repeats }}" \
+            --max-turns "${{ inputs.max_turns }}" \
+            --thinking "${{ inputs.thinking }}"
+      - name: Build failure taxonomy
+        run: |
+          mapfile -t E < <(find results/campaigns -name '*_evidence.jsonl' | sort)
+          mapfile -t P < <(find results/campaigns -name '*_permission.jsonl' | sort)
+          test "${#E[@]}" -gt 0
+          test "${#E[@]}" -eq "${#P[@]}"
+          python failure_taxonomy_v14.py \
+            --evidence "${E[@]}" \
+            --permission "${P[@]}" \
+            --out results/failure_taxonomy_v14.json
+      - name: Enforce evidence integrity
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('results/failure_taxonomy_v14.json').read_text())
+          assert r['observation_count'] >= 10, r['observation_count']
+          assert r['all_replay_matches'] is True
+          print(json.dumps({
+              'observations': r['observation_count'],
+              'root_causes': r['root_cause_counts'],
+              'fault_domains': r['fault_domain_counts']
+          }, indent=2))
+          PY
+      - name: Upload campaign bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-multitask-campaign-v14
+          path: results/campaigns/**
+      - name: Upload taxonomy
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-failure-taxonomy-v14
+          path: results/failure_taxonomy_v14.json
