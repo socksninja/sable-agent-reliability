@@ -1,0 +1,20 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://github.com/socksninja/sable-agent-reliability/blob/main/schemas/trace.schema.json",
+  "title":"SABLE Agent Trace v0.5",
+  "type":"object",
+  "required":["task_id","goal","agent","steps","claimed_status","environment","integrity"],
+  "properties":{
+    "task_id":{"type":"string"},"goal":{"type":"string"},
+    "agent":{"type":"object","required":["model","provider_base_url"]},
+    "steps":{"type":"array","items":{"type":"object","required":["tool","args","observed_result","before_state_hash","after_state_hash"],"properties":{
+      "tool":{"type":"string"},"args":{"type":"object"},
+      "observed_result":{"type":"object","required":["ok","message"],"properties":{"ok":{"type":"boolean"},"message":{"type":"string"}}},
+      "before_state_hash":{"type":"string"},"after_state_hash":{"type":"string"},"state_after":{"type":"object"}
+    }}},
+    "claimed_status":{"type":"string","enum":["success","failure","uncertain"]},
+    "final_report":{"type":"string"},
+    "environment":{"type":"object","required":["task_success","checks_passed","checks_total","final_state_hash"]},
+    "integrity":{"type":"object","required":["native_tool_calling","tool_results_observed_by_sandbox","agent_controlled_tool_result","termination"]}
+  }
+}
