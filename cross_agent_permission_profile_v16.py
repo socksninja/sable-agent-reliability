@@ -27,6 +27,12 @@ def canon_hash(obj: object) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+def semantic_task_key(task: dict) -> str:
+    family = str(task.get("family", "unknown")).strip().lower()
+    goal = " ".join(str(task.get("goal", "")).split()).strip().lower()
+    return f"{family}:{canon_hash({'family': family, 'goal': goal})[:16]}"
+
+
 def collect(evidence_paths: list[str], permission_paths: list[str]) -> list[dict]:
     if len(evidence_paths) != len(permission_paths):
         raise SystemExit("evidence/permission file counts must match")
@@ -41,6 +47,8 @@ def collect(evidence_paths: list[str], permission_paths: list[str]) -> list[dict
             outcome = ev.get("outcome", {})
             rows.append({
                 "task_id": task.get("task_id"),
+                "semantic_task_key": semantic_task_key(task),
+                "goal": task.get("goal"),
                 "family": task.get("family", "unknown"),
                 "runtime": agent.get("framework", "unknown"),
                 "framework_version": agent.get("framework_version"),
@@ -62,7 +70,7 @@ def profile(rows: list[dict]) -> dict:
     by_task: dict[str, list[dict]] = defaultdict(list)
     for r in rows:
         by_rt[r["runtime"]].append(r)
-        by_task[r["task_id"]].append(r)
+        by_task[r["semantic_task_key"]].append(r)
 
     runtime_profiles = {}
     for runtime, rs in sorted(by_rt.items()):
@@ -83,7 +91,7 @@ def profile(rows: list[dict]) -> dict:
         }
 
     comparisons = []
-    for task_id, rs in sorted(by_task.items()):
+    for task_key, rs in sorted(by_task.items()):
         runtimes = sorted({r["runtime"] for r in rs})
         if len(runtimes) < 2:
             continue
@@ -97,14 +105,14 @@ def profile(rows: list[dict]) -> dict:
                 "replay_matches": sum(r["replay_match"] for r in sub),
                 "allow_rate_observed": sum(r["permission"] == "ALLOW" for r in sub) / len(sub),
             }
-        outcome_consistent = len({v["allow"] > 0 for v in per_runtime.values()}) == 1
         comparisons.append({
-            "task_id": task_id,
+            "semantic_task_key": task_key,
+            "task_ids": sorted({r["task_id"] for r in rs}),
             "family": rs[0]["family"],
+            "goal": rs[0]["goal"],
             "runtimes": runtimes,
             "per_runtime": per_runtime,
             "shared_replay_clean": all(v["replay_matches"] == v["observations"] for v in per_runtime.values()),
-            "permission_pattern_consistent": outcome_consistent,
         })
 
     result = {
