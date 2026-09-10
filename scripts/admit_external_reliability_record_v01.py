@@ -13,6 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
+REPO = re.compile(r"^[^/\s]+/[^/\s]+$")
 API = "https://api.github.com"
 
 
@@ -51,7 +52,7 @@ def main() -> None:
     artifact_name = artifact.get("name")
     artifact_sha = artifact.get("sha256")
 
-    if not isinstance(repo, str) or not re.fullmatch(r"[^/\\s]+/[^/\\s]+", repo):
+    if not isinstance(repo, str) or not REPO.fullmatch(repo):
         fail("invalid provenance.repository")
     if not isinstance(run_id, int) or run_id < 1:
         fail("invalid provenance.run_id")
