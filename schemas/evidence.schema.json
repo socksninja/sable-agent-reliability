@@ -1,0 +1,17 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://github.com/socksninja/sable-agent-reliability/blob/main/schemas/evidence.schema.json",
+  "title":"SABLE Evidence Pack v0.6",
+  "type":"object",
+  "required":["schema_version","task","agent","outcome","execution","state","replay","evidence_hash"],
+  "properties":{
+    "schema_version":{"const":"sable.evidence.v0.6"},
+    "task":{"type":"object","required":["task_id","family","goal"]},
+    "agent":{"type":"object"},
+    "outcome":{"type":"object","required":["task_success","claimed_status","checks_passed","checks_total","failure_labels"]},
+    "execution":{"type":"object","required":["tool_calls","tools","termination"]},
+    "state":{"type":"object","required":["initial_state_hash","final_state_hash","changed"]},
+    "replay":{"type":"object","required":["replay_match"]},
+    "evidence_hash":{"type":"string","minLength":64,"maxLength":64}
+  }
+}
