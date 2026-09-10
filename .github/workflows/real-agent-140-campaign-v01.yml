@@ -74,7 +74,7 @@ jobs:
       - name: Write launch diagnostics
         if: always()
         env:
-          SABLE_API_KEY: ${{ secrets.SABLE_API_KEY }}
+          SABLE_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           ENABLED: ${{ steps.config.outputs.enabled }}
           BASE_URL: ${{ steps.config.outputs.base_url }}
           MODEL: ${{ steps.config.outputs.model }}
@@ -115,10 +115,15 @@ jobs:
         env:
           MODEL: ${{ steps.config.outputs.model }}
         run: test -n "$MODEL"
+      - name: Require API key
+        if: steps.config.outputs.enabled == 'true'
+        env:
+          SABLE_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: test -n "$SABLE_API_KEY"
       - name: Run 140-task campaign
         if: steps.config.outputs.enabled == 'true'
         env:
-          SABLE_API_KEY: ${{ secrets.SABLE_API_KEY }}
+          SABLE_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: |
           mkdir -p results
           set +e
