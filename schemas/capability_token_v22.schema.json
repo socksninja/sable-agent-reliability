@@ -1,0 +1,17 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://sable.dev/schemas/capability-token-v2.2.json",
+  "title":"SABLE Capability Token v2.2",
+  "type":"object",
+  "required":["schema_version","subject","authorization","bindings","issued_at","expires_at","nonce","signing","token_hash","signature"],
+  "properties":{
+    "schema_version":{"const":"sable.capability_token.v2.2"},
+    "subject":{"type":"object","required":["agent_id","model","provider","runtime","framework_version"]},
+    "authorization":{"type":"object","required":["tool","tool_class","decision","permission_tier","trust_score_observed"],"properties":{"tool":{"type":"string"},"tool_class":{"type":"string"},"decision":{"const":"ALLOW"},"permission_tier":{"type":"string"},"trust_score_observed":{"type":"number"}}},
+    "bindings":{"type":"object","required":["task_id","task_semantic_key","policy_hash","reputation_hash","credential_hash"]},
+    "issued_at":{"type":"integer"},"expires_at":{"type":"integer"},"nonce":{"type":"string","minLength":1},
+    "signing":{"type":"object","required":["alg","key_id"],"properties":{"alg":{"const":"Ed25519"},"key_id":{"type":"string"}}},
+    "token_hash":{"type":"string","pattern":"^[0-9a-f]{64}$"},"signature":{"type":"string","minLength":1}
+  },
+  "additionalProperties":false
+}
