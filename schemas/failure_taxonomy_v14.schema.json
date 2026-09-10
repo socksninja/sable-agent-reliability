@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SABLE Failure Taxonomy v1.4",
+  "type": "object",
+  "required": ["schema_version", "observation_count", "records", "root_cause_counts", "fault_domain_counts"],
+  "properties": {
+    "schema_version": {"const": "sable.failure_taxonomy.v1.4"},
+    "observation_count": {"type": "integer", "minimum": 0},
+    "verified_successes": {"type": "integer", "minimum": 0},
+    "verified_denials": {"type": "integer", "minimum": 0},
+    "all_replay_matches": {"type": "boolean"},
+    "root_cause_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "fault_domain_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "label_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "task_breakdown": {"type": "object"},
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["task_id", "primary_label", "fault_domain", "root_cause", "task_success", "replay_match", "permission"]
+      }
+    }
+  }
+}
