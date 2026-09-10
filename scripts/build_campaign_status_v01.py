@@ -17,16 +17,19 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--diagnostics", default="results/campaign_launch_diagnostics.json")
     ap.add_argument("--campaign", default="results/external_model_campaign_v14.json")
+    ap.add_argument("--taxonomy", default="results/failure_taxonomy_v14.json")
     ap.add_argument("--out", default="results/campaign_status_v01.json")
     args = ap.parse_args()
 
     diagnostics = load(Path(args.diagnostics)) or {}
     campaign = load(Path(args.campaign))
+    taxonomy = load(Path(args.taxonomy))
 
     status = "NOT_OBSERVED"
     reason = "No campaign diagnostics were produced."
     observations = 0
     replay_ok = None
+    provider_error_observations = 0
 
     if diagnostics:
         enabled = diagnostics.get("enabled", False)
@@ -51,12 +54,18 @@ def main() -> None:
             observations = int(campaign.get("observation_count", 0))
             replay_ok = campaign.get("all_replay_matches")
             expected = 140 * int(campaign.get("repetition_count", 0))
+            if taxonomy:
+                fault_domain_counts = taxonomy.get("fault_domain_counts", {})
+                provider_error_observations = int(fault_domain_counts.get("infrastructure", 0))
             if observations != expected:
                 status = "EVIDENCE_INCOMPLETE"
                 reason = f"Observation count {observations} did not match expected {expected}."
             elif replay_ok is not True:
                 status = "REPLAY_FAILED"
                 reason = "At least one replay check failed."
+            elif provider_error_observations == observations and observations > 0:
+                status = "PROVIDER_ERROR"
+                reason = "All observations were classified as infrastructure/provider errors; model reliability was not observed."
             else:
                 status = "SUCCESS"
                 reason = "Campaign completed with expected observations and replay integrity."
@@ -78,6 +87,7 @@ def main() -> None:
         "repetition_count": (campaign or {}).get("repetition_count", diagnostics.get("repeats")),
         "observation_count": observations,
         "all_replay_matches": replay_ok,
+        "provider_error_observations": provider_error_observations,
         "api_key_present": diagnostics.get("api_key_present"),
     }
     out = Path(args.out)
