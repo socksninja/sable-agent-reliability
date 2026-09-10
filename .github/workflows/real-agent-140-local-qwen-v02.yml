@@ -1,0 +1,190 @@
+name: SABLE Real-Agent 140 Campaign - Local Qwen v0.2
+
+on:
+  push:
+    paths:
+      - '.github/workflows/real-agent-140-local-qwen-v02.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: sable-local-qwen-140
+  cancel-in-progress: true
+
+env:
+  MODEL: Qwen/Qwen2.5-0.5B-Instruct
+  BASE_URL: http://127.0.0.1:8000/v1
+  SHARD_COUNT: 4
+
+jobs:
+  shard:
+    name: shard-${{ matrix.shard }}
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Materialize benchmark shard
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          python tasks/generate_adversarial.py --out tasks/tasks_v0_4_140.json
+          python scripts/validate_adversarial_coverage_v01.py --baseline tasks/tasks.json --expanded tasks/tasks_v0_4_140.json --coverage-out results/coverage.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          tasks=json.loads(Path('tasks/tasks_v0_4_140.json').read_text())
+          shard=int(os.environ['SHARD'])
+          selected=[t for i,t in enumerate(tasks) if i % 4 == shard]
+          assert len(selected)==35, len(selected)
+          Path(f'tasks/tasks_shard_{shard}.json').write_text(json.dumps(selected,ensure_ascii=False,indent=2)+'\n')
+          print(f'SHARD_TASKS={len(selected)}')
+          PY
+      - name: Install local public model runtime
+        run: |
+          python -m pip install --upgrade pip
+          pip install --only-binary=:all: 'torch>=2.3' 'transformers[serving]>=5.6' 'safetensors>=0.4' 'huggingface_hub>=0.27' 'cryptography>=43.0' 'requests>=2.32'
+      - name: Start local Transformers Serve
+        run: |
+          mkdir -p results
+          nohup transformers serve "$MODEL" --port 8000 --model-timeout -1 > results/server.log 2>&1 &
+          echo $! > results/server.pid
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8000/v1/models >/dev/null 2>&1; then break; fi
+            if ! kill -0 "$(cat results/server.pid)" 2>/dev/null; then cat results/server.log; exit 1; fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8000/v1/models
+          curl -N -fsS -X POST http://127.0.0.1:8000/load_model \
+            -H 'Content-Type: application/json' \
+            -d "{\"model\":\"$MODEL\"}" \
+            | tee results/load_model.sse
+          grep -q '"status": "ready"' results/load_model.sse
+      - name: Run shard
+        env:
+          SABLE_API_KEY: local-run-no-secret
+          SHARD: ${{ matrix.shard }}
+        run: |
+          python real_agent_runner.py \
+            --tasks tasks/tasks_shard_${SHARD}.json \
+            --out results/shard_${SHARD}_raw.jsonl \
+            --base-url "$BASE_URL" \
+            --model "$MODEL" \
+            --max-turns 8 \
+            --thinking disabled
+      - name: Evaluate shard
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          shard=os.environ['SHARD']
+          raw=[json.loads(x) for x in Path(f'results/shard_{shard}_raw.jsonl').read_text().splitlines() if x]
+          submissions=[]
+          import hashlib
+          for row in raw:
+            trace={k:row[k] for k in ['task_id','goal','agent','steps','claimed_status','final_report','environment','integrity']}
+            trace['schema_version']='sable.submission.v0.9'
+            submissions.append({
+              'protocol_version':'sable.submission.v0.9',
+              'submission_id':f'local-qwen-v02-shard-{shard}-{row["task_id"]}',
+              'source':{'agent_name':row['agent']['model'],'agent_version':'1.0.0','framework':'SABLE native external-model runner','framework_version':'v0.3','adapter':'real_agent_runner.py','evidence_class':'public_pretrained_model_execution'},
+              'trace':trace,
+              'provenance':{'captured_at':'github-actions','collector':'SABLE local Qwen 140 campaign v0.2','runtime_trace_id':f'local-qwen-v02-{shard}-{row["task_id"]}','capture_method':'real_agent_runner.py','redaction_policy':'synthetic task data only'},
+              'integrity':{'source_trace_hash':hashlib.sha256(json.dumps(trace,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest(),'hash_algorithm':'sha256','canonicalization':'json-sort-keys-utf8'}
+            })
+          p=Path(f'results/shard_{shard}_submission.jsonl'); p.write_text(''.join(json.dumps(x,ensure_ascii=False,sort_keys=True)+'\n' for x in submissions))
+          PY
+          python trace_submit_v09.py --input results/shard_${SHARD}_submission.jsonl --output results/shard_${SHARD}_sable.jsonl
+          python evaluator.py --tasks tasks/tasks_shard_${SHARD}.json --traces results/shard_${SHARD}_sable.jsonl --out results/shard_${SHARD}_evaluation.json
+          python evidence_v06.py --tasks tasks/tasks_shard_${SHARD}.json --results results/shard_${SHARD}_sable.jsonl --out results/shard_${SHARD}_evidence.jsonl
+          python permission_v01.py --input results/shard_${SHARD}_sable.jsonl --output results/shard_${SHARD}_permission.jsonl
+      - name: Upload shard evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-local-qwen-v02-shard-${{ matrix.shard }}
+          path: |
+            results/**
+            tasks/tasks_shard_${{ matrix.shard }}.json
+
+  aggregate:
+    name: aggregate
+    needs: shard
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Download shard evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: sable-local-qwen-v02-shard-*
+          path: shard_artifacts
+          merge-multiple: false
+      - name: Aggregate campaign
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          roots=sorted(Path('shard_artifacts').glob('sable-local-qwen-v02-shard-*'))
+          assert len(roots)==4, roots
+          records=[]
+          for root in roots:
+            shard_evidence=sorted(root.glob('results/*_evidence.jsonl'))
+            shard_perm=sorted(root.glob('results/*_permission.jsonl'))
+            assert len(shard_evidence)==1 and len(shard_perm)==1
+            ev=[json.loads(x) for x in shard_evidence[0].read_text().splitlines() if x]
+            pm=[json.loads(x) for x in shard_perm[0].read_text().splitlines() if x]
+            assert len(ev)==len(pm)==35
+            for e,p in zip(ev,pm):
+              records.append({
+                'task_id':e['task']['task_id'],'family':e['task'].get('family','unknown'),'model':e['agent'].get('model'),'provider':e['agent'].get('provider_base_url'),'runtime':e['agent'].get('framework'),'framework_version':e['agent'].get('framework_version'),'task_success':e['outcome']['task_success'],'replay_match':e['replay']['replay_match'],'permission':p['decision'],'failure_labels':e['outcome'].get('failure_labels',[]),'infrastructure_error':e.get('execution',{}).get('infrastructure_error'),'evidence_hash':e.get('evidence_hash')
+              })
+          assert len(records)==140
+          records.sort(key=lambda r:int(r['task_id'].split('-')[1]) if r['task_id'].split('-')[1].isdigit() else r['task_id'])
+          allow=sum(r['permission']=='ALLOW' and r['task_success'] for r in records)
+          deny=sum(r['permission']=='DENY' for r in records)
+          infra=sum(bool(r['infrastructure_error']) for r in records)
+          campaign={'schema_version':'sable.execution_campaign.v1.4','campaign_id':'local-qwen-v02-${{ github.run_id }}','model':'Qwen/Qwen2.5-0.5B-Instruct','provider':'http://127.0.0.1:8000/v1','task_set':'tasks/tasks_v0_4_140.json','repetition_count':1,'observation_count':140,'sample_quality':'rate_estimate','minimum_observations_for_rate_estimate':10,'verified_task_success_rate':allow/(allow+deny) if allow+deny else None,'counts':{'verified_allow':allow,'verified_deny':deny,'infrastructure_failure':infra,'other':140-allow-deny},'all_replay_matches':all(r['replay_match'] is True for r in records),'records':records}
+          Path('results').mkdir(exist_ok=True)
+          Path('results/external_model_campaign_v14.json').write_text(json.dumps(campaign,ensure_ascii=False,indent=2)+'\n')
+          print(json.dumps({k:campaign[k] for k in ['observation_count','verified_task_success_rate','counts','all_replay_matches']},indent=2))
+          PY
+      - name: Build taxonomy and heatmap
+        run: |
+          python tasks/generate_adversarial.py --out tasks/tasks_v0_4_140.json
+          python scripts/build_failure_taxonomy.py --campaign results/external_model_campaign_v14.json --out results/failure_taxonomy_v14.json --markdown-out results/failure_taxonomy_v14.md
+          python scripts/build_campaign_status_v01.py --campaign results/external_model_campaign_v14.json --taxonomy results/failure_taxonomy_v14.json --launch /dev/null --run-id "$GITHUB_RUN_ID" --head-sha "$GITHUB_SHA" --out results/campaign_status_v01.json
+          python scripts/build_campaign_family_heatmap_v01.py --campaign results/external_model_campaign_v14.json --out results/campaign_family_heatmap_v01.json --markdown-out results/campaign_family_heatmap_v01.md
+      - name: Enforce final integrity
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          c=json.loads(Path('results/external_model_campaign_v14.json').read_text())
+          assert c['observation_count']==140
+          assert len(c['records'])==140
+          assert c['all_replay_matches'] is True
+          print('LOCAL_QWEN_V02_140_AGGREGATION_PASS')
+          PY
+      - name: Upload aggregate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-real-agent-140-local-qwen-v02-final
+          path: |
+            results/**
+            tasks/tasks_v0_4_140.json
