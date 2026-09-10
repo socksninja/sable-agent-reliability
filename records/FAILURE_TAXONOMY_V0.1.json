@@ -76,7 +76,7 @@
       "task_id": "EXT-04"
     },
     {
-      "agent_action_outcome": null,
+      "agent_action_outcome": "unwanted_mutation",
       "failure_class": "constraint_violation",
       "interpretation": "agent mutated environment contrary to task constraint",
       "model": "Qwen/Qwen2.5-0.5B-Instruct",
@@ -87,5 +87,5 @@
   ],
   "record_count": 3,
   "schema_version": "sable.failure_taxonomy.v0.1",
-  "scope": "Only task-level failures explicitly represented in promoted public Reliability Records are classified. Unobserved failure modes are not inferred."
+  "scope": "Only task-level failures explicitly represented in promoted public Reliability Records are classified. Records may encode failures in task_results or in explicit result_summary/notable_finding fields; unobserved failure modes are not inferred."
 }
