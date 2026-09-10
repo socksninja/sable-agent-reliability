@@ -1,0 +1,94 @@
+name: SABLE real-agent 140-task campaign v0.1
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        required: true
+        default: https://api.openai.com/v1
+        description: OpenAI-compatible provider base URL
+      model:
+        required: true
+        description: Model identifier
+      repeats:
+        required: true
+        default: '1'
+        description: Repetitions over the frozen 140-task benchmark
+      max_turns:
+        required: true
+        default: '8'
+      thinking:
+        required: true
+        default: disabled
+        type: choice
+        options:
+          - disabled
+          - enabled
+
+permissions:
+  contents: read
+
+jobs:
+  campaign:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate benchmark contract
+        run: python scripts/validate_adversarial_coverage_v01.py
+      - name: Run frozen 140-task campaign
+        env:
+          SABLE_API_KEY: ${{ secrets.SABLE_API_KEY }}
+        run: |
+          test -n "$SABLE_API_KEY"
+          python campaign_orchestrator_v14.py \
+            --api-key "$SABLE_API_KEY" \
+            --base-url "${{ inputs.base_url }}" \
+            --model "${{ inputs.model }}" \
+            --repeats "${{ inputs.repeats }}" \
+            --max-turns "${{ inputs.max_turns }}" \
+            --thinking "${{ inputs.thinking }}" \
+            --tasks tasks/tasks_v0_4_140.json \
+            --out results/external_model_campaign_v14.json
+      - name: Build observed failure taxonomy
+        run: |
+          mapfile -t E < <(find results/campaigns -name '*_evidence.jsonl' | sort)
+          mapfile -t P < <(find results/campaigns -name '*_permission.jsonl' | sort)
+          test "${#E[@]}" -gt 0
+          test "${#E[@]}" -eq "${#P[@]}"
+          python failure_taxonomy_v14.py \
+            --evidence "${E[@]}" \
+            --permission "${P[@]}" \
+            --out results/failure_taxonomy_v14.json
+      - name: Build attack-family heatmap
+        run: |
+          python scripts/build_campaign_family_heatmap_v01.py \
+            --campaign results/external_model_campaign_v14.json \
+            --out results/campaign_family_heatmap_v01.json
+      - name: Enforce evidence integrity
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          campaign = json.loads(Path('results/external_model_campaign_v14.json').read_text())
+          heatmap = json.loads(Path('results/campaign_family_heatmap_v01.json').read_text())
+          assert campaign['observation_count'] == 140 * campaign['repetition_count']
+          assert campaign['all_replay_matches'] is True
+          assert heatmap['observation_count'] == campaign['observation_count']
+          assert len(heatmap['families']) >= 10
+          print(f"OBSERVATIONS={campaign['observation_count']}")
+          print(f"FAMILY_ROWS={len(heatmap['families'])}")
+          print("EVIDENCE_INTEGRITY=PASS")
+          PY
+      - name: Upload complete campaign evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-real-agent-140-campaign-v01
+          path: |
+            results/external_model_campaign_v14.json
+            results/failure_taxonomy_v14.json
+            results/campaign_family_heatmap_v01.json
+            results/campaign_family_heatmap_v01.md
+            results/campaigns/**
