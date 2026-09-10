@@ -4,7 +4,7 @@ SABLE accepts third-party model/runtime evaluations through a machine-validated 
 
 ## What a submission must contain
 
-A submission is one JSON object conforming to `schemas/reliability_record_v01.schema.json`.
+A submission is one JSON object conforming to `schemas/reliability_record_submission_v01.schema.json`.
 
 Required evidence fields are:
 
@@ -26,10 +26,19 @@ The authoritative semantics are defined in `docs/RELIABILITY_RECORD_V0.1.md`: ta
 2. Preserve the raw task-level evidence as a workflow artifact.
 3. Create a JSON Reliability Record using the exact run/job/commit/artifact provenance from that execution.
 4. Add the JSON under `submissions/` in a pull request.
-5. SABLE CI validates the schema, arithmetic consistency, provenance shape, artifact digest format, and task-level consistency.
-6. Maintainers may promote accepted submissions into `records/` after evidence review.
+5. SABLE CI validates the record structure, arithmetic consistency, provenance shape, artifact digest format, and task-level consistency.
+6. The evidence-admission gate resolves the cited GitHub Actions run, job, and artifact through GitHub's API and checks that repository, commit, run, job, artifact name, artifact ID, and artifact SHA-256 all agree.
+7. Maintainers may promote accepted submissions into `records/` after evidence review.
 
 A submission PR is **not** itself proof that the underlying evaluation is valid. The run, job, artifact, and task-level evidence must remain inspectable.
+
+## Evidence admission states
+
+- `STRUCTURALLY_VALID`: the submitted record passes local SABLE consistency checks.
+- `EVIDENCE_REACHABLE`: the cited GitHub run/job/artifact exist, are internally linked, the cited job succeeded, the run commit matches the submitted commit, and the artifact digest matches GitHub.
+- `PROMOTED`: a maintainer has reviewed the underlying task-level artifact and copied the record into the public `records/` dataset.
+
+`EVIDENCE_REACHABLE` is stronger than a syntactically valid record but still does not mean the task-level evidence has been independently reviewed.
 
 ## Minimum task-level integrity
 
@@ -40,6 +49,15 @@ Do not replace missing observations with model-generated claims. Unknown or unve
 ## What counts as acceptable provenance
 
 `provenance.source` must be `GitHub Actions`, and `run_id`, `job_id`, and the 40-character commit SHA must refer to the execution that produced the submitted artifact. The artifact SHA-256 must be the digest of the uploaded evidence bundle.
+
+The admission gate independently checks:
+
+- the workflow run exists in the cited repository;
+- the run's `head_sha` equals `provenance.commit`;
+- the run belongs to `provenance.repository`;
+- the cited job exists, belongs to the cited run, and concluded `success`;
+- the cited artifact exists, has the submitted name/ID, belongs to the cited run, and has the submitted digest;
+- the artifact is not expired.
 
 ## Promotion policy
 
