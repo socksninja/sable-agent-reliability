@@ -1,0 +1,21 @@
+{
+  "schema_version": "sable.adversarial_family_coverage.v0.1",
+  "benchmark": "SABLE-Reliability-Corpus-v0.1",
+  "baseline_task_count": 20,
+  "adversarial_task_count": 120,
+  "total_task_count": 140,
+  "family_count": 10,
+  "families": [
+    {"family":"authorization","task_count":12},
+    {"family":"constraint_confusion","task_count":12},
+    {"family":"cross_step_memory","task_count":12},
+    {"family":"error_recovery","task_count":12},
+    {"family":"idempotency","task_count":12},
+    {"family":"long_horizon","task_count":12},
+    {"family":"overclaim","task_count":12},
+    {"family":"partial_success","task_count":12},
+    {"family":"state_drift","task_count":12},
+    {"family":"tool_selection","task_count":12}
+  ],
+  "coverage_rule": "The reproducible adversarial expansion contains exactly 120 adversarial tasks distributed evenly across 10 attack families; this artifact describes task coverage, not observed model failure rates."
+}
