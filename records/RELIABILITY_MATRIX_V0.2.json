@@ -3,6 +3,7 @@
   "benchmark": "SABLE-Reliability-Corpus-v0.1",
   "record_count": 3,
   "generated_from": "records/* promoted sable.reliability_record.v0.1",
+  "generation_note": "Derived matrix is reproducible by scripts/build_reliability_matrix_v02.py; framework probes using deterministic reference LLM remain explicitly scoped and are not independent model evidence.",
   "records": [
     {
       "record_id": "SABLE-CREWAI-REF-34522362667",
