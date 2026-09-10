@@ -7,6 +7,7 @@ on:
       - 'scripts/validate_reliability_submission_v01.py'
       - 'scripts/validate_external_submissions.py'
       - 'scripts/admit_external_reliability_record_v01.py'
+      - 'scripts/admit_external_submissions_v01.py'
       - 'schemas/reliability_record_submission_v01.schema.json'
   workflow_dispatch:
 
@@ -27,12 +28,47 @@ jobs:
       - name: Validate submission structure
         run: python scripts/validate_external_submissions.py
 
-      - name: Verify cited GitHub evidence
-        if: ${{ hashFiles('submissions/*.json') != '' }}
+      - name: Verify cited GitHub evidence and build audit report
+        id: admission
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          for file in submissions/*.json; do
-            echo "=== $file ==="
-            python scripts/admit_external_reliability_record_v01.py "$file"
-          done
+          mkdir -p results
+          python scripts/admit_external_submissions_v01.py | tee results/admission_report.json
+
+      - name: Publish admission summary
+        if: always()
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          p = Path("results/admission_report.json")
+          if not p.exists():
+              print("## SABLE Admission\n\nAdmission report was not generated.")
+              raise SystemExit(0)
+          r = json.loads(p.read_text())
+          print("## SABLE External Evidence Admission")
+          print(f"**Status:** `{r.get('status')}`")
+          print(f"**Submissions:** {r.get('submission_count', 0)}  ")
+          print(f"**Evidence reachable:** {r.get('evidence_reachable_count', 0)}")
+          print()
+          print("| Record | Structure | Evidence | Promotion |")
+          print("|---|---|---|---|")
+          for x in r.get('results', []):
+              print(f"| `{x.get('record_id')}` | `{x.get('structural_status')}` | `{x.get('evidence_status')}` | `{x.get('promotion_status')}` |")
+          print()
+          print("> Promotion remains a human-review decision. CI never auto-promotes a submission.")
+          PY
+
+      - name: Upload machine-readable admission report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: sable-admission-report-${{ github.run_id }}
+          path: results/admission_report.json
+          if-no-files-found: warn
+
+      - name: Enforce admission result
+        if: steps.admission.outcome == 'failure'
+        run: exit 1
