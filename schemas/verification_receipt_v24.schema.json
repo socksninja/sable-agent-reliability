@@ -1,0 +1,15 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://sable.dev/schemas/verification-receipt-v2.4.json",
+  "title":"SABLE Verification Receipt v2.4",
+  "type":"object",
+  "required":["schema_version","execution","authorization","evidence","receipt_hash"],
+  "properties":{
+    "schema_version":{"const":"sable.verification_receipt.v2.4"},
+    "execution":{"type":"object","required":["task_id","runtime","runtime_trace_id"]},
+    "authorization":{"type":"object","required":["permission","verified"]},
+    "evidence":{"type":"object","required":["evidence_hash","task_success","replay_match","after_state_hash","termination"]},
+    "receipt_hash":{"type":"string","pattern":"^[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}
