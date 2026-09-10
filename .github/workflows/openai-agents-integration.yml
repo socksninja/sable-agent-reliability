@@ -28,6 +28,8 @@ jobs:
         run: pip install -r requirements.txt
       - name: Install OpenAI Agents SDK
         run: pip install -r integrations/openai_agents/requirements.txt
+      - name: Run permission gate self-test
+        run: python3 selftest_permission_v01.py
       - name: Run real OpenAI Agents SDK runtime
         run: python3 integrations/openai_agents/run_real_trace_v09.py
       - name: Validate and normalize v0.9 submission
@@ -42,6 +44,20 @@ jobs:
             --results results/third_party_openai_agents_sable_v05.jsonl \
             --report results/third_party_openai_agents_report.json \
             --replay
+      - name: Verified execution permission gate
+        run: |
+          python3 permission_v01.py \
+            --input results/third_party_openai_agents_sable_v05.jsonl \
+            --report results/third_party_openai_agents_report.json \
+            --output results/third_party_openai_agents_permission_v01.jsonl
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          decisions = [json.loads(line) for line in Path('results/third_party_openai_agents_permission_v01.jsonl').read_text().splitlines() if line.strip()]
+          print(json.dumps(decisions, indent=2, ensure_ascii=False))
+          assert len(decisions) == 1
+          assert decisions[0]['decision'] == 'ALLOW', decisions
+          PY
       - name: Assert acceptance criteria
         run: |
           python3 - <<'PY'
@@ -50,6 +66,7 @@ jobs:
           report = json.loads(Path('results/third_party_openai_agents_report.json').read_text())
           print(json.dumps(report, indent=2, ensure_ascii=False))
           assert report.get('pass_rate', 0) == 1.0, report
+          assert report.get('replay_match_rate', 0) == 1.0, report
           PY
       - name: Upload evidence
         uses: actions/upload-artifact@v7
