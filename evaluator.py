@@ -38,7 +38,12 @@ def check_one(state, check):
     raise ValueError(f'Unknown check type: {t}')
 
 def apply_step(state, step):
-    if step.get('result',{}).get('ok') is False: return copy.deepcopy(state)
+    # Trace schema uses observed_result; never re-apply a tool call that the sandbox
+    # explicitly reported as failed. This preserves the environment's authoritative
+    # outcome and prevents evaluator crashes on malformed/unauthorized model calls.
+    observed = step.get('observed_result', step.get('result', {})) or {}
+    if observed.get('ok') is False:
+        return copy.deepcopy(state)
     s=copy.deepcopy(state); tool,args=step.get('tool'),step.get('args',{})
     if tool in {'file.move','file.rename'}:
         src=args.get('src',args.get('source')); dst=args.get('dst',args.get('destination',args.get('new_name'))); files=s['files']
