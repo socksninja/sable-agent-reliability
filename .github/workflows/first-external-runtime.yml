@@ -115,18 +115,18 @@ jobs:
               'claim_scope': 'Observed SABLE result only; not a production-safety claim.',
           }
           Path('submissions').mkdir(exist_ok=True)
-          Path('submissions/first_external_smolllm.json').write_text(json.dumps(record, indent=2, ensure_ascii=False) + '\n')
+          Path('submissions/first_external_smollm.json').write_text(json.dumps(record, indent=2, ensure_ascii=False) + '\n')
           Path('external_results/sable_reliability_record.json').write_text(json.dumps(record, indent=2, ensure_ascii=False) + '\n')
           print(json.dumps(record, indent=2, ensure_ascii=False))
           PY
 
       - name: Validate external Reliability Record
-        run: python3 scripts/validate_reliability_submission_v01.py submissions/first_external_smolllm.json
+        run: python3 scripts/validate_reliability_submission_v01.py submissions/first_external_smollm.json
 
       - name: Verify evidence reachability
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: python3 scripts/admit_external_reliability_record_v01.py submissions/first_external_smolllm.json
+        run: python3 scripts/admit_external_reliability_record_v01.py submissions/first_external_smollm.json
 
       - name: Generate admission report
         id: admission
@@ -141,7 +141,7 @@ jobs:
         if: always()
         run: |
           python3 - <<'PY'
-          import json
+          import json, os
           from pathlib import Path
           p = Path('external_results/admission_report.json')
           if p.exists():
@@ -152,7 +152,7 @@ jobs:
               print(f"- Promotion: {r['results'][0]['promotion_status']}")
               print(f"- Record: {r['results'][0].get('record_id')}")
               with Path(os.environ['GITHUB_STEP_SUMMARY']).open('a') as out:
-                  out.write(f"## SABLE External Admission\n")
+                  out.write("## SABLE External Admission\n")
                   out.write(f"- Structure: `{r['results'][0]['structural_status']}`\n")
                   out.write(f"- Evidence: `{r['results'][0]['evidence_status']}`\n")
                   out.write(f"- Promotion: `{r['results'][0]['promotion_status']}`\n")
