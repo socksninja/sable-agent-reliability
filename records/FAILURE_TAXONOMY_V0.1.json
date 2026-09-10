@@ -18,6 +18,13 @@
       "task_count": 4
     },
     {
+      "failure_classes": {},
+      "failure_count": 0,
+      "model": "deterministic-reference-agent",
+      "record_id": "SABLE-LANGGRAPH-34520607245",
+      "task_count": 1
+    },
+    {
       "failure_classes": {
         "constraint_violation": 1
       },
@@ -85,7 +92,7 @@
       "task_id": "SABLE-RC-08"
     }
   ],
-  "record_count": 3,
+  "record_count": 4,
   "schema_version": "sable.failure_taxonomy.v0.1",
   "scope": "Only task-level failures explicitly represented in promoted public Reliability Records are classified. Records may encode failures in task_results or in explicit result_summary/notable_finding fields; unobserved failure modes are not inferred."
 }
