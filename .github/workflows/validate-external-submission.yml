@@ -1,0 +1,30 @@
+name: Validate External Reliability Submission
+
+on:
+  pull_request:
+    paths:
+      - 'submissions/**/*.json'
+      - 'scripts/validate_reliability_submission_v01.py'
+      - 'scripts/validate_external_submissions.py'
+      - 'schemas/reliability_record_submission_v01.schema.json'
+      - 'schemas/reliability_record_v01.schema.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-submissions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Validate external submissions
+        run: python scripts/validate_external_submissions.py
