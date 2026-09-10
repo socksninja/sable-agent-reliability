@@ -1,0 +1,51 @@
+name: SABLE cross-agent permission profile v1.6
+
+on:
+  push:
+    paths:
+      - 'cross_agent_permission_profile_v16.py'
+      - 'schemas/cross_agent_permission_profile_v16.schema.json'
+      - 'tests/test_cross_agent_permission_profile_v16.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run v1.6 self-test
+        run: python -m pytest -q tests/test_cross_agent_permission_profile_v16.py
+      - name: Build profile from verified evidence
+        run: |
+          python cross_agent_permission_profile_v16.py \
+            --evidence results/third_party_langgraph_evidence.json results/third_party_crewai_evidence.json \
+            --permission results/third_party_langgraph_permission.json results/third_party_crewai_permission.json \
+            --out results/cross_agent_permission_profile_v16.json
+      - name: Enforce profile invariants
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('results/cross_agent_permission_profile_v16.json').read_text())
+          assert r['runtime_count'] >= 2, r
+          assert r['shared_task_count'] >= 1, r
+          assert len(r['profile_hash']) == 64
+          assert all(x['shared_replay_clean'] for x in r['shared_task_comparisons'])
+          print(json.dumps({
+              'observations': r['observation_count'],
+              'runtimes': r['runtime_count'],
+              'shared_tasks': r['shared_task_count'],
+              'profile_hash': r['profile_hash']
+          }, indent=2))
+          PY
+      - name: Upload profile
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-cross-agent-permission-profile-v16
+          path: results/cross_agent_permission_profile_v16.json
