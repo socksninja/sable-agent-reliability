@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-"""Validate the frozen 140-task SABLE benchmark coverage contract."""
+"""Validate the reproducible 140-task SABLE v0.4 adversarial task expansion."""
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = ROOT / "tasks" / "tasks.json"
+GENERATOR = ROOT / "tasks" / "generate_adversarial.py"
 EXPANDED = ROOT / "tasks" / "tasks_v0_4_140.json"
 
 EXPECTED_FAMILIES = {
@@ -28,7 +31,26 @@ def fail(msg: str) -> None:
     raise SystemExit(f"INVALID_ADVERSARIAL_COVERAGE: {msg}")
 
 
+def ensure_expanded_exists() -> None:
+    if EXPANDED.exists():
+        return
+    if not GENERATOR.exists():
+        fail("generated expansion is missing and generator is unavailable")
+    proc = subprocess.run(
+        [sys.executable, str(GENERATOR)],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        fail(f"generator failed: {proc.stderr.strip() or proc.stdout.strip()}")
+    if not EXPANDED.exists():
+        fail("generator completed but tasks_v0_4_140.json was not produced")
+
+
 def main() -> None:
+    ensure_expanded_exists()
     base = json.loads(BASE.read_text(encoding="utf-8"))
     expanded = json.loads(EXPANDED.read_text(encoding="utf-8"))
     if len(base) != 20:
