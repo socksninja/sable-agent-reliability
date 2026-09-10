@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SABLE — Verified Execution → Permission</title>
+<style>
+:root{--bg:#08090b;--panel:#101216;--panel2:#15181e;--line:#272b34;--text:#f3f5f7;--muted:#9ca3af;--good:#69e39b;--bad:#ff6b6b;--accent:#8ea7ff;--warn:#f4c95d}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -10%,#1a2030 0,#08090b 45%);color:var(--text);font:15px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}main{max-width:1180px;margin:0 auto;padding:42px 20px 80px}.eyebrow{color:var(--accent);font-weight:700;letter-spacing:.12em;font-size:12px;text-transform:uppercase}.hero{display:grid;grid-template-columns:1.2fr .8fr;gap:22px;align-items:start}.hero h1{font-size:clamp(38px,6vw,72px);line-height:.96;letter-spacing:-.055em;margin:10px 0 18px;max-width:760px}.hero p{font-size:18px;color:#c9ced7;max-width:720px}.panel{background:rgba(16,18,22,.9);border:1px solid var(--line);border-radius:18px;box-shadow:0 14px 40px rgba(0,0,0,.22)}.heroCard{padding:22px}.metric{font-size:44px;font-weight:800;letter-spacing:-.04em}.metric.good{color:var(--good)}.metric.bad{color:var(--bad)}.metricLabel{color:var(--muted);font-size:13px}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:24px 0}.btn{border:1px solid var(--line);background:#1a1e25;color:var(--text);padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700}.btn:hover{background:#222732}.btn.primary{background:#eef2ff;color:#0b0d11;border-color:#eef2ff}.layout{display:grid;grid-template-columns:1fr 1fr;gap:18px}.section{padding:18px}.section h2{font-size:14px;text-transform:uppercase;letter-spacing:.1em;color:#bfc5cf;margin:0 0 12px}.trace{width:100%;min-height:360px;resize:vertical;background:#0a0c0f;color:#e7eaf0;border:1px solid var(--line);border-radius:12px;padding:14px;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;outline:none}.trace:focus{border-color:#4e62a8}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.check{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}.checkHead{display:flex;align-items:center;justify-content:space-between;gap:10px}.status{font-weight:800;font-size:12px;padding:3px 8px;border-radius:999px}.ok{color:#07130c;background:var(--good)}.no{color:#1a0606;background:var(--bad)}.neutral{color:#161208;background:var(--warn)}.check small{display:block;color:var(--muted);margin-top:5px}.decision{margin-top:18px;padding:20px;border-radius:16px;border:1px solid var(--line);background:#0c0e12}.decision.allow{border-color:rgba(105,227,155,.45);background:linear-gradient(135deg,rgba(105,227,155,.08),#0c0e12)}.decision.deny{border-color:rgba(255,107,107,.45);background:linear-gradient(135deg,rgba(255,107,107,.08),#0c0e12)}.decisionLabel{font-size:46px;font-weight:900;letter-spacing:-.04em}.reasons{margin:10px 0 0;padding-left:18px;color:#c7ccd4}.steps{margin-top:12px;display:grid;gap:8px}.step{display:grid;grid-template-columns:38px 1fr auto;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;background:#0c0e12}.num{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#232833;color:#d7dce5;font-weight:800}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.hash{word-break:break-all;color:#aeb5c1}.foot{margin-top:24px;color:#7f8795;font-size:12px}.kicker{color:#dfe4ea;font-weight:700}.flow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;color:#c6ccd7;font-size:13px}.pill{padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:#10131a}.arrow{color:#606978}@media(max-width:900px){.hero,.layout{grid-template-columns:1fr}.hero h1{font-size:50px}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">SABLE / Silent Agent Reliability Benchmark</div>
+  <div class="hero">
+    <section>
+      <h1>Execution Truth<br>→ Permission.</h1>
+      <p>Paste one agent execution trace. SABLE checks what the agent actually did, whether the environment reached the target state, whether the trace can be replayed, and whether the evidence is strong enough to <b>ALLOW</b> or <b>DENY</b> a consequential action.</p>
+      <div class="flow" aria-label="verification flow">
+        <span class="pill">Trace</span><span class="arrow">→</span><span class="pill">Evidence</span><span class="arrow">→</span><span class="pill">Verification</span><span class="arrow">→</span><span class="pill">ALLOW / DENY</span>
+      </div>
+    </section>
+    <aside class="panel heroCard">
+      <div class="metric" id="topDecision">—</div>
+      <div class="metricLabel">permission decision</div>
+      <div style="height:18px"></div>
+      <div class="kicker" id="topSummary">Load a trace to begin.</div>
+    </aside>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn primary" onclick="loadGood()">Load passing trace</button>
+    <button class="btn" onclick="loadBad()">Load failing trace</button>
+    <button class="btn" onclick="evaluateTrace()">Evaluate trace</button>
+  </div>
+
+  <div class="layout">
+    <section class="panel section">
+      <h2>Agent execution trace</h2>
+      <textarea id="trace" class="trace" spellcheck="false" aria-label="Agent execution trace"></textarea>
+      <div class="foot">Runs locally in your browser. No trace is sent to a server by this page.</div>
+    </section>
+
+    <section class="panel section">
+      <h2>Evidence verification</h2>
+      <div class="grid" id="checks"></div>
+      <div class="decision" id="decisionBox">
+        <div class="decisionLabel" id="decision">—</div>
+        <div id="decisionSub">Evaluate a trace.</div>
+        <ul class="reasons" id="reasons"></ul>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel section" style="margin-top:18px">
+    <h2>Observed execution</h2>
+    <div id="steps" class="steps"></div>
+  </section>
+
+  <div class="foot">SABLE demo protocol: deterministic, model-independent verification. This demo mirrors the current <span class="mono">sable.permission.v0.1</span> decision model and is not a production authorization system.</div>
+</main>
+<script>
+const GOOD={
+  schema_version:"sable.submission.v0.9", task_id:"DEMO-PASS-01", claimed_status:"success",
+  steps:[{tool:"inventory.reserve",args:{sku:"SKU-A",qty:3},before_state_hash:"before_demo",after_state_hash:"after_demo",observed_result:{ok:true,message:"reserved 3 units"}}],
+  environment:{task_success:true,final_state_hash:"937e31b6d17219f92b26fb3c88acae6bf72108396cbd13c291624afa3fbee354"},
+  integrity:{termination:"final",native_tool_calling:true,tool_results_observed_by_sandbox:true,agent_controlled_tool_result:false},
+  evaluation:{pass_rate:1.0,replay_match_rate:1.0}
+};
+const BAD={...GOOD,task_id:"DEMO-FAIL-01",claimed_status:"success",environment:{task_success:false,final_state_hash:"wrong_state"},evaluation:{pass_rate:0,replay_match_rate:0}};
+const traceEl=document.getElementById('trace');
+function loadGood(){traceEl.value=JSON.stringify(GOOD,null,2);evaluateTrace()}
+function loadBad(){traceEl.value=JSON.stringify(BAD,null,2);evaluateTrace()}
+function parse(){let raw=traceEl.value.trim();if(!raw)throw new Error('Trace is empty');let obj=JSON.parse(raw);if(Array.isArray(obj)) obj=obj[0];if(!obj||typeof obj!=='object')throw new Error('Trace must be a JSON object');return obj}
+function bool(v){return v===true}
+function decide(row){
+  const env=row.environment||{}, i=row.integrity||{}, steps=row.steps||[], e=row.evaluation||{}; const reasons=[];
+  if(!bool(env.task_success)) reasons.push('environment_state_not_verified');
+  if(!steps.length) reasons.push('no_observed_tool_execution');
+  if(i.termination!=='final') reasons.push('non_final_termination');
+  if(i.native_tool_calling!==true) reasons.push('native_tool_calling_not_attested');
+  if(i.tool_results_observed_by_sandbox!==true) reasons.push('sandbox_observation_not_attested');
+  if(i.agent_controlled_tool_result!==false) reasons.push('tool_result_control_not_excluded');
+  if(e.pass_rate!==undefined && e.pass_rate!==1) reasons.push('evaluation_not_fully_passed');
+  if(e.replay_match_rate!==undefined && e.replay_match_rate!==1) reasons.push('replay_not_fully_verified');
+  steps.forEach((s,n)=>{if(s?.observed_result?.ok!==true)reasons.push(`step_${n+1}_failed`);if(!s?.after_state_hash)reasons.push(`step_${n+1}_missing_state_hash`)});
+  return {decision:reasons.length?'DENY':'ALLOW',reasons};
+}
+async function sha256(obj){
+  const canonical=JSON.stringify(obj,Object.keys(obj).sort());
+  const bytes=new TextEncoder().encode(canonical);
+  const digest=await crypto.subtle.digest('SHA-256',bytes);
+  return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function checkCard(name, passed, detail){return `<div class="check"><div class="checkHead"><span>${name}</span><span class="status ${passed?'ok':'no'}">${passed?'PASS':'FAIL'}</span></div><small>${detail}</small></div>`}
+async function evaluateTrace(){
+  try{
+    const row=parse(), out=decide(row), steps=row.steps||[], env=row.environment||{}, i=row.integrity||{}, e=row.evaluation||{};
+    const cards=[
+      ['Environment target',bool(env.task_success),`task_success = ${!!env.task_success}`],
+      ['Observed tool execution',steps.length>0,`${steps.length} observed step(s)`],
+      ['Final termination',i.termination==='final',`termination = ${i.termination||'missing'}`],
+      ['Native tool calling',i.native_tool_calling===true,`attested = ${!!i.native_tool_calling}`],
+      ['Sandbox observation',i.tool_results_observed_by_sandbox===true,`observed_by_sandbox = ${!!i.tool_results_observed_by_sandbox}`],
+      ['Agent result control',i.agent_controlled_tool_result===false,`agent_controlled = ${!!i.agent_controlled_tool_result}`],
+      ['Evaluation',e.pass_rate===undefined?true:e.pass_rate===1,`pass_rate = ${e.pass_rate===undefined?'not supplied':e.pass_rate}`],
+      ['Replay',e.replay_match_rate===undefined?true:e.replay_match_rate===1,`replay_match_rate = ${e.replay_match_rate===undefined?'not supplied':e.replay_match_rate}`]
+    ];
+    document.getElementById('checks').innerHTML=cards.map(x=>checkCard(...x)).join('');
+    const box=document.getElementById('decisionBox'); box.className='decision '+(out.decision==='ALLOW'?'allow':'deny');
+    document.getElementById('decision').textContent=out.decision;
+    document.getElementById('topDecision').textContent=out.decision;
+    document.getElementById('topDecision').className='metric '+(out.decision==='ALLOW'?'good':'bad');
+    document.getElementById('decisionSub').textContent=out.decision==='ALLOW'?'The evidence satisfies the current permission policy.':'The evidence is insufficient for permission under the current policy.';
+    document.getElementById('topSummary').textContent=`${steps.length} tool step(s) · task_success=${!!env.task_success}`;
+    document.getElementById('reasons').innerHTML=out.reasons.length?out.reasons.map(r=>`<li><span class="mono">${r}</span></li>`).join(''):'<li>No rejection reasons.</li>';
+    document.getElementById('steps').innerHTML=steps.length?steps.map((s,n)=>`<div class="step"><div class="num">${n+1}</div><div><div><b>${s.tool||'unknown tool'}</b></div><div class="hash">before: ${s.before_state_hash||'—'}<br>after: ${s.after_state_hash||'—'}</div></div><span class="status ${s?.observed_result?.ok?'ok':'no'}">${s?.observed_result?.ok?'OBSERVED OK':'OBSERVED FAIL'}</span></div>`).join(''):'<div class="foot">No observed steps.</div>';
+    const copy={...row,_demo_decision:out.decision,_demo_decision_reasons:out.reasons}; const digest=await sha256(copy);
+    document.getElementById('topSummary').textContent+=` · evidence SHA-256 ${digest.slice(0,16)}…`;
+  }catch(err){
+    document.getElementById('checks').innerHTML=checkCard('Trace parse',false,err.message);
+    document.getElementById('decisionBox').className='decision deny';
+    document.getElementById('decision').textContent='DENY';
+    document.getElementById('topDecision').textContent='DENY'; document.getElementById('topDecision').className='metric bad';
+    document.getElementById('decisionSub').textContent='The trace could not be verified.';
+    document.getElementById('topSummary').textContent=err.message;
+    document.getElementById('reasons').innerHTML=`<li><span class="mono">invalid_trace</span></li>`;
+    document.getElementById('steps').innerHTML='';
+  }
+}
+loadGood();
+</script>
+</body>
+</html>
