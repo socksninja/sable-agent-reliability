@@ -22,6 +22,8 @@ Submit a record under `submissions/*.json` using `schemas/reliability_record_sub
 
 A validated submission is not automatically considered evidence of general reliability or production safety; promotion requires inspection of the cited run, job, artifact, and task-level observations.
 
+**External submitter quickstart:** `docs/EXTERNAL_SUBMISSION_QUICKSTART.md`
+
 ## v0.9 public trace submission layer
 
 SABLE v0.9 adds a versioned public submission protocol for external agents and agent frameworks:
@@ -86,6 +88,8 @@ python3 trace_submit_v09.py \
 ```
 
 The normalized traces are compatible with the existing evaluator, evidence layer, score generator, and leaderboard.
+
+For the public evidence and PR admission path, follow `docs/EXTERNAL_SUBMISSION_QUICKSTART.md`.
 
 ## Running a real model
 
