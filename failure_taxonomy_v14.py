@@ -40,10 +40,12 @@ def labels_from_evidence(ev: dict) -> set[str]:
     return labels
 
 
-def primary(labels: set[str]) -> tuple[str, str, str]:
+def primary(labels: set[str], task_success: bool) -> tuple[str, str, str]:
     for label, domain, root in ROOT_PRIORITY:
         if label in labels:
             return label, domain, root
+    if task_success:
+        return "none", "verification", "verified_success"
     return "unknown", "unknown", "unknown"
 
 
@@ -62,7 +64,8 @@ def build(evidence_paths: list[str], permission_paths: list[str]) -> dict:
             raise SystemExit(f"evidence/permission record counts must match for {ep} and {pp}")
         for ev, pm in zip(evs, pms):
             labels = labels_from_evidence(ev)
-            label, domain, root = primary(labels)
+            task_success = bool(ev.get("outcome", {}).get("task_success"))
+            label, domain, root = primary(labels, task_success)
             task = ev.get("task", {})
             row = {
                 "task_id": task.get("task_id"),
@@ -72,7 +75,7 @@ def build(evidence_paths: list[str], permission_paths: list[str]) -> dict:
                 "model": ev.get("agent", {}).get("model"),
                 "provider": ev.get("agent", {}).get("provider_base_url"),
                 "permission": pm.get("decision"),
-                "task_success": bool(ev.get("outcome", {}).get("task_success")),
+                "task_success": task_success,
                 "replay_match": bool(ev.get("replay", {}).get("replay_match")),
                 "observed_labels": sorted(labels),
                 "primary_label": label,
@@ -83,7 +86,7 @@ def build(evidence_paths: list[str], permission_paths: list[str]) -> dict:
             records.append(row)
             root_counts[root] += 1
             domain_counts[domain] += 1
-            for x in labels or {"unknown"}:
+            for x in labels or {"none" if task_success else "unknown"}:
                 label_counts[x] += 1
             by_task[row["task_id"]][root] += 1
     n = len(records)
