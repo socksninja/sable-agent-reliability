@@ -1,0 +1,18 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://sable.dev/schemas/submission-verifier-v2.7.json",
+  "title":"SABLE Submission Verification Response v2.7",
+  "type":"object",
+  "required":["schema_version","verified","decision","reasons","source_trace_hash","task_id","runtime"],
+  "properties":{
+    "schema_version":{"const":"sable.submission_verifier.v2.7"},
+    "verified":{"type":"boolean"},
+    "decision":{"enum":["VERIFIED","REJECTED"]},
+    "reasons":{"type":"array","items":{"type":"string"}},
+    "submission_id":{"type":["string","null"]},
+    "source_trace_hash":{"type":["string","null"]},
+    "task_id":{"type":["string","null"]},
+    "runtime":{"type":["string","null"]}
+  },
+  "additionalProperties":false
+}
