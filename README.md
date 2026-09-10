@@ -10,7 +10,7 @@ SABLE now supports a versioned public evidence loop for real pretrained models:
 
 A Reliability Record is an auditable model/runtime snapshot, not a benchmark marketing score. It keeps successful executions, rejected/failed tool actions, environment outcomes, native tool-call transport, provenance, and the CI evidence reference together.
 
-The first public record is `records/qwen_qwen2_5_0_5b_instruct_reliability_2026-09-10.json`, generated from GitHub Actions run `34513779679` and its uploaded corpus artifact.
+The first public record is `records/qwen_qwen2_5_0_5b_instruct_reliability_2026-09-10.json`, generated from GitHub Actions run `34513779679` and its uploaded corpus artifact. See `docs/RELIABILITY_RECORD_V0.1.md` for the record contract.
 
 ## v0.9 public trace submission layer
 
