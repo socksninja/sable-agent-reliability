@@ -42,6 +42,18 @@ jobs:
             --report external_results/langgraph_sable_report.json \
             --replay
 
+      - name: Enforce replay integrity
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('external_results/langgraph_sable_report.json').read_text(encoding='utf-8'))
+          rate = report.get('replay_match_rate')
+          if rate != 1.0:
+              raise SystemExit(f'replay_integrity_failed: replay_match_rate={rate!r}')
+          print('REPLAY_INTEGRITY=1.0')
+          PY
+
       - name: Upload LangGraph evidence
         uses: actions/upload-artifact@v4
         with:
