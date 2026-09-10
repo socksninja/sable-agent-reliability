@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SABLE Execution Distribution v1.2",
+  "type": "object",
+  "required": ["schema_version", "observation_count", "sample_quality", "counts", "records"],
+  "properties": {
+    "schema_version": {"const": "sable.execution_distribution.v1.2"},
+    "observation_count": {"type": "integer", "minimum": 0},
+    "sample_quality": {"enum": ["observations_only", "rate_estimate"]},
+    "minimum_observations_for_rate_estimate": {"type": "integer", "const": 5},
+    "counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "verified_task_success_rate": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "verified_failure_rate": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "infrastructure_failure_rate": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "all_replay_matches": {"type": "boolean"},
+    "runtime_breakdown": {"type": "object"},
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["task_id", "runtime", "classification", "fault_domain", "task_success", "replay_match", "permission"],
+        "properties": {
+          "task_id": {"type": ["string", "null"]},
+          "runtime": {"type": ["string", "null"]},
+          "framework_version": {"type": ["string", "null"]},
+          "model": {"type": ["string", "null"]},
+          "provider": {"type": ["string", "null"]},
+          "classification": {"enum": ["verified_allow", "verified_deny", "infrastructure_failure", "unverified"]},
+          "fault_domain": {"enum": ["agent", "infrastructure", "unknown"]},
+          "task_success": {"type": "boolean"},
+          "replay_match": {"type": "boolean"},
+          "permission": {"type": ["string", "null"]},
+          "evidence_hash": {"type": ["string", "null"]}
+        }
+      }
+    }
+  }
+}
