@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RECORDS = ROOT / "records"
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
+NON_RECORD_PREFIXES = ("RELIABILITY_MATRIX_", "FAILURE_TAXONOMY_", "ADVERSARIAL_FAMILY_COVERAGE_")
 
 
 def fail(message: str) -> None:
@@ -54,7 +55,9 @@ def validate(path: Path) -> None:
 
 
 def main() -> None:
-    paths = sorted(RECORDS.glob("*.json"))
+    paths = sorted(
+        p for p in RECORDS.glob("*.json") if not p.name.startswith(NON_RECORD_PREFIXES)
+    )
     if not paths:
         fail("no records found")
     for path in paths:
