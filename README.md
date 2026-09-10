@@ -2,6 +2,16 @@
 
 SABLE is a model-independent evaluation harness for tool-using AI agents. It measures whether an agent actually reaches the required environment state, rather than trusting the agent's final claim.
 
+## Public Reliability Record loop
+
+SABLE now supports a versioned public evidence loop for real pretrained models:
+
+`public model → structured tool call → SABLE Sandbox → observed state → task checks → replay/evidence → versioned Reliability Record`
+
+A Reliability Record is an auditable model/runtime snapshot, not a benchmark marketing score. It keeps successful executions, rejected/failed tool actions, environment outcomes, native tool-call transport, provenance, and the CI evidence reference together.
+
+The first public record is `records/qwen_qwen2_5_0_5b_instruct_reliability_2026-09-10.json`, generated from GitHub Actions run `34513779679` and its uploaded corpus artifact.
+
 ## v0.9 public trace submission layer
 
 SABLE v0.9 adds a versioned public submission protocol for external agents and agent frameworks:
