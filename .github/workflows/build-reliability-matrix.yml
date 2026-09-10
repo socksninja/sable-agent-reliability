@@ -5,6 +5,7 @@ on:
     paths:
       - 'records/**'
       - 'scripts/build_reliability_matrix.py'
+      - 'scripts/build_failure_taxonomy.py'
       - '.github/workflows/build-reliability-matrix.yml'
   workflow_dispatch:
 
@@ -18,12 +19,18 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
+      - name: Validate public Reliability Records
+        run: python scripts/validate_reliability_records.py
       - name: Build deterministic Reliability Matrix
         run: python scripts/build_reliability_matrix.py
-      - name: Upload Reliability Matrix
+      - name: Build deterministic Failure Taxonomy
+        run: python scripts/build_failure_taxonomy.py
+      - name: Upload Reliability Matrix and Failure Taxonomy
         uses: actions/upload-artifact@v4
         with:
-          name: sable-reliability-matrix-v01
+          name: sable-reliability-matrix-and-taxonomy-v01
           path: |
             records/RELIABILITY_MATRIX_V0.1.json
             docs/RELIABILITY_MATRIX_V0.1.md
+            records/FAILURE_TAXONOMY_V0.1.json
+            docs/FAILURE_TAXONOMY_V0.1.md
