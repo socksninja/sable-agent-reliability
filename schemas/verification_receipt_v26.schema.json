@@ -1,0 +1,18 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://sable.dev/schemas/verification-receipt-v2.6.json",
+  "title":"SABLE Verification Receipt v2.6",
+  "type":"object",
+  "required":["schema_version","execution","authorization","evidence","receipt_hash","signing","public_key","signature"],
+  "properties":{
+    "schema_version":{"const":"sable.verification_receipt.v2.6"},
+    "execution":{"type":"object"},
+    "authorization":{"type":"object"},
+    "evidence":{"type":"object"},
+    "receipt_hash":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "signing":{"type":"object","required":["alg","key_id"],"properties":{"alg":{"const":"Ed25519"},"key_id":{"type":"string"}}},
+    "public_key":{"type":"string","minLength":32},
+    "signature":{"type":"string","minLength":1}
+  },
+  "additionalProperties":false
+}
