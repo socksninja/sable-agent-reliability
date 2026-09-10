@@ -1,0 +1,38 @@
+name: SABLE External Reliability Evidence Admission
+
+on:
+  pull_request:
+    paths:
+      - 'submissions/**/*.json'
+      - 'scripts/validate_reliability_submission_v01.py'
+      - 'scripts/validate_external_submissions.py'
+      - 'scripts/admit_external_reliability_record_v01.py'
+      - 'schemas/reliability_record_submission_v01.schema.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  admission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Validate submission structure
+        run: python scripts/validate_external_submissions.py
+
+      - name: Verify cited GitHub evidence
+        if: ${{ hashFiles('submissions/*.json') != '' }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          for file in submissions/*.json; do
+            echo "=== $file ==="
+            python scripts/admit_external_reliability_record_v01.py "$file"
+          done
