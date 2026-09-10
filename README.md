@@ -12,6 +12,16 @@ A Reliability Record is an auditable model/runtime snapshot, not a benchmark mar
 
 The first public record is `records/qwen_qwen2_5_0_5b_instruct_reliability_2026-09-10.json`, generated from GitHub Actions run `34513779679` and its uploaded corpus artifact. See `docs/RELIABILITY_RECORD_V0.1.md` for the record contract.
 
+## External Reliability Record intake
+
+SABLE now has a machine-validated path for third-party model/runtime submissions:
+
+`external evaluation → GitHub Actions evidence → Reliability Record JSON → submission PR → CI validation → maintainer evidence review → public records/`
+
+Submit a record under `submissions/*.json` using `schemas/reliability_record_submission_v01.schema.json`. The validator checks task-result cardinality, task-success arithmetic, native-tool-call arithmetic, provenance shape, and artifact digest format. See `docs/EXTERNAL_RELIABILITY_RECORD_SUBMISSION_V0.1.md` for the full admission and promotion policy.
+
+A validated submission is not automatically considered evidence of general reliability or production safety; promotion requires inspection of the cited run, job, artifact, and task-level observations.
+
 ## v0.9 public trace submission layer
 
 SABLE v0.9 adds a versioned public submission protocol for external agents and agent frameworks:
