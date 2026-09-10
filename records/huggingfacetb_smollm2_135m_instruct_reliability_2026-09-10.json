@@ -35,7 +35,7 @@
   "claim_scope": "Observed SABLE result only; not a production-safety claim.",
   "promotion": {
     "status": "PROMOTED",
-    "review_basis": "Maintainer review of cited GitHub Actions run, successful execution job, raw task-level artifact, record arithmetic, and evidence reachability admission.",
+    "review_basis": "Maintainer review of cited GitHub Actions run 34518509976, successful external-runtime job 103009892612, raw task-level artifact 10168682289, record arithmetic, and EVIDENCE_REACHABLE admission.",
     "promoted_from": "submissions/first_external_smollm.json"
   }
 }
