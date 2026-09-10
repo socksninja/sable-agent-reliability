@@ -74,8 +74,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sable-external-model-campaign-v13
-          path: results/external_model_campaigns/**
-          if-no-files-found: warn
+          path: results/campaigns/**
+          if-no-files-found: error
       - name: Upload campaign summary
         uses: actions/upload-artifact@v4
         with:
