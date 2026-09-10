@@ -9,12 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import sys
 from pathlib import Path
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
 
 from sandbox import ALLOWED_TOOLS, SABLEEnvironment, task_passes
 
@@ -35,10 +30,10 @@ TOOL_DEFS = [
     }
 ]
 
-SYSTEM = """You are an agent evaluated by SABLE. You must act on the environment using a tool.
-For the requested state change, output exactly one tool call using this format:
+SYSTEM = """You are an agent evaluated by SABLE. Use the provided tool to perform the requested state change.
+Return exactly one tool call in the format below, using the tool schema supplied by the system:
 <tool_call>{\"name\":\"inventory_reserve\",\"arguments\":{\"sku\":\"SKU-A\",\"qty\":3}}</tool_call>
-Do not output prose before the tool call. After the tool result is supplied, output a brief final report.
+Do not output prose before the tool call. After execution, a brief final report is acceptable.
 """
 
 
@@ -63,7 +58,7 @@ def main() -> None:
     task = json.loads(Path(args.task).read_text(encoding="utf-8"))
     env = SABLEEnvironment(task)
     tokenizer = AutoTokenizer.from_pretrained(args.model)
-    model = AutoModelForCausalLM.from_pretrained(args.model, torch_dtype=torch.float32)
+    model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.float32)
     model.eval()
 
     prompt = [
@@ -74,11 +69,17 @@ def main() -> None:
             "initial_state": task["initial_state"],
         }, ensure_ascii=False)},
     ]
-    rendered = tokenizer.apply_chat_template(prompt, tokenize=False, add_generation_prompt=True)
+    rendered = tokenizer.apply_chat_template(
+        prompt,
+        tokenize=False,
+        add_generation_prompt=True,
+        tools=TOOL_DEFS,
+    )
     inputs = tokenizer(rendered, return_tensors="pt")
     with torch.no_grad():
         generated = model.generate(**inputs, max_new_tokens=160, do_sample=False)
     text = tokenizer.decode(generated[0][inputs["input_ids"].shape[1]:], skip_special_tokens=False)
+    print("MODEL_RESPONSE=" + json.dumps(text, ensure_ascii=False))
 
     tool = parse_tool_call(text)
     native = tool is not None
@@ -94,17 +95,17 @@ def main() -> None:
         else:
             obs = env.execute(tool_name.replace("_", ".") if tool_name == "inventory_reserve" else tool_name, tool_args)
             observed = {"ok": obs.ok, "message": obs.message, "state": obs.state, "after_state_hash": obs.after_hash}
-            steps.append({"tool": "inventory.reserve", "args": tool_args, "observed_result": observed, "before_state_hash": env.replay_states[-2] if len(env.replay_states) >= 2 else None, "after_state_hash": env.state_hash(), "state_after": env.snapshot()})
-        if observed.get("ok"):
-            termination = "final"
-            final_report = observed.get("message", "")
-            claimed = "success"
-        else:
-            termination = "final"
-            final_report = observed.get("message", "")
-            claimed = "failure"
-    else:
-        final_report = text
+            steps.append({
+                "tool": "inventory.reserve",
+                "args": tool_args,
+                "observed_result": observed,
+                "before_state_hash": env.initial_state_hash,
+                "after_state_hash": env.state_hash(),
+                "state_after": env.snapshot(),
+            })
+        termination = "final"
+        final_report = observed.get("message", "")
+        claimed = "success" if observed.get("ok") else "failure"
 
     task_success, checks = task_passes(task, env.state)
     row = {
@@ -147,4 +148,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-# Trigger the path-scoped public-model E2E workflow without changing behavior.
