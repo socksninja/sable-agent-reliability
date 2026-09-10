@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SABLE v1.4 multi-task repeated external-model campaign."""
+"""SABLE multi-task repeated external-model campaign."""
 from __future__ import annotations
 import argparse
 import datetime as dt
@@ -78,16 +78,16 @@ def main() -> None:
     ap.add_argument("--model", required=True)
     ap.add_argument("--base-url", required=True)
     ap.add_argument("--api-key", default=os.getenv("SABLE_API_KEY"))
-    ap.add_argument("--repeats", type=int, default=5)
+    ap.add_argument("--repeats", type=int, default=1)
     ap.add_argument("--max-turns", type=int, default=8)
     ap.add_argument("--thinking", choices=["disabled", "enabled"], default="disabled")
-    ap.add_argument("--tasks", default="integrations/external_model/multi_task_v14.json")
+    ap.add_argument("--tasks", default="tasks/tasks_v0_4_140.json")
     ap.add_argument("--out", default="results/external_model_campaign_v14.json")
     args = ap.parse_args()
     if not args.api_key:
         raise SystemExit("Missing SABLE_API_KEY")
-    if args.repeats < 2:
-        raise SystemExit("--repeats must be >= 2")
+    if args.repeats < 1:
+        raise SystemExit("--repeats must be >= 1")
 
     campaign_id = f"campaign-{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:8]}"
     campaign_dir = ROOT / "results" / "campaigns" / campaign_id
@@ -168,5 +168,4 @@ def main() -> None:
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__": main()
