@@ -1,0 +1,45 @@
+{
+  "schema_version": "sable.execution_distribution.v1.2",
+  "observation_count": 2,
+  "sample_quality": "observations_only",
+  "minimum_observations_for_rate_estimate": 5,
+  "counts": {
+    "verified_allow": 2
+  },
+  "verified_task_success_rate": 1.0,
+  "verified_failure_rate": 0.0,
+  "infrastructure_failure_rate": 0.0,
+  "all_replay_matches": true,
+  "runtime_breakdown": {
+    "CrewAI": {"verified_allow": 1},
+    "LangGraph": {"verified_allow": 1}
+  },
+  "records": [
+    {
+      "task_id": "SABLE-CREWAI-01",
+      "runtime": "CrewAI",
+      "framework_version": "1.15.20",
+      "model": "deterministic-crewai-stub",
+      "provider": "local",
+      "classification": "verified_allow",
+      "fault_domain": "agent",
+      "task_success": true,
+      "replay_match": true,
+      "permission": "ALLOW",
+      "evidence_hash": "2bb6a444790e0f921e24a40f2148fd3d1b55682f8e00f9cffbe3c3e2ce408984"
+    },
+    {
+      "task_id": "SABLE-LANGGRAPH-01",
+      "runtime": "LangGraph",
+      "framework_version": "1.2.11",
+      "model": "deterministic-reference-policy",
+      "provider": "local",
+      "classification": "verified_allow",
+      "fault_domain": "agent",
+      "task_success": true,
+      "replay_match": true,
+      "permission": "ALLOW",
+      "evidence_hash": "cb3cec7635d4636e19655af469becba9097c5251e00865b312f3f14c8f96daa8"
+    }
+  ]
+}
