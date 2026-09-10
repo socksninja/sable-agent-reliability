@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SABLE Cross-Agent Permission Profile v1.6",
+  "type": "object",
+  "required": ["schema_version", "observation_count", "runtime_count", "shared_task_count", "runtime_profiles", "shared_task_comparisons", "observations", "profile_hash"],
+  "properties": {
+    "schema_version": {"const": "sable.cross_agent_permission_profile.v1.6"},
+    "observation_count": {"type": "integer", "minimum": 0},
+    "runtime_count": {"type": "integer", "minimum": 0},
+    "shared_task_count": {"type": "integer", "minimum": 0},
+    "runtime_profiles": {"type": "object"},
+    "shared_task_comparisons": {"type": "array"},
+    "observations": {"type": "array"},
+    "profile_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": true
+}
