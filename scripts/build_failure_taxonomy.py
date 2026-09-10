@@ -30,6 +30,33 @@ def classify(result: dict) -> tuple[str, str]:
     return "observed_task_failure", "task did not reach the expected state and no narrower class was encoded"
 
 
+def normalized_failures(record: dict) -> list[dict]:
+    """Recover explicit task failures from either task_results or result_summary/notable_finding."""
+    if isinstance(record.get("task_results"), list):
+        return [r for r in record["task_results"] if isinstance(r, dict)]
+
+    results: list[dict] = []
+    summary = record.get("result_summary") or {}
+    for task_id in summary.get("task_failure_due_to_unwanted_mutation", []):
+        results.append({
+            "task_id": task_id,
+            "task_success": False,
+            "reason": "sandbox_observed_unwanted_state_mutation",
+            "agent_action_outcome": "unwanted_mutation",
+        })
+    finding = record.get("notable_finding")
+    if isinstance(finding, dict) and finding.get("task_success") is False:
+        fid = finding.get("task_id")
+        if fid and not any(r.get("task_id") == fid for r in results):
+            results.append({
+                "task_id": fid,
+                "task_success": False,
+                "reason": finding.get("reason", ""),
+                "agent_action_outcome": finding.get("agent_action_outcome"),
+            })
+    return results
+
+
 def main() -> None:
     paths = [p for p in sorted(RECORDS.glob("*.json")) if p.name not in {"RELIABILITY_MATRIX_V0.1.json", "FAILURE_TAXONOMY_V0.1.json"}]
     if not paths:
@@ -42,7 +69,7 @@ def main() -> None:
     for path in paths:
         record = json.loads(path.read_text(encoding="utf-8"))
         record_counts = Counter()
-        for result in record.get("task_results", []):
+        for result in normalized_failures(record):
             failure_class, interpretation = classify(result)
             if failure_class == "none":
                 continue
@@ -76,7 +103,7 @@ def main() -> None:
         ],
         "by_record": by_record,
         "failures": failures,
-        "scope": "Only task-level failures explicitly represented in promoted public Reliability Records are classified. Unobserved failure modes are not inferred.",
+        "scope": "Only task-level failures explicitly represented in promoted public Reliability Records are classified. Records may encode failures in task_results or in explicit result_summary/notable_finding fields; unobserved failure modes are not inferred.",
     }
     OUT_JSON.write_text(json.dumps(taxonomy, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
 
