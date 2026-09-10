@@ -22,6 +22,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install test dependency
+        run: python -m pip install pytest
       - name: Self-test
         run: python -m pytest -q tests/test_reputation_v17.py
       - name: Build reputation from verified evidence
@@ -39,7 +41,7 @@ jobs:
           r=json.loads(Path('results/reputation_v17.json').read_text())
           assert r['schema_version']=='sable.reputation.v1.7'
           assert r['scoring_contract']['predictive_claim'] is False
-          assert all(len(v['failure_labels']) >= 0 for v in r['profiles'].values())
+          assert all(0 <= v['trust_score_observed'] <= 100 for v in r['profiles'].values())
           assert len(r['reputation_hash']) == 64
           print(json.dumps({
             'observations': r['observation_count'],
