@@ -50,8 +50,15 @@ jobs:
       - name: Ingest, evaluate and authorize
         run: |
           python trace_submit_v09.py --input results/public_model_qwen_submission.jsonl --output results/public_model_qwen_sable_v05.jsonl
-          python evaluator.py --tasks integrations/external_model/task.json --traces results/public_model_qwen_sable_v05.jsonl --out results/public_model_qwen_evaluation.json
-          python evidence_v06.py --tasks integrations/external_model/task.json --results results/public_model_qwen_sable_v05.jsonl --out results/public_model_qwen_evidence.jsonl
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          task=json.loads(Path('integrations/external_model/task.json').read_text(encoding='utf-8'))
+          normalized=task if isinstance(task,list) else [task]
+          Path('results/public_model_qwen_tasks.json').write_text(json.dumps(normalized,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+          python evaluator.py --tasks results/public_model_qwen_tasks.json --traces results/public_model_qwen_sable_v05.jsonl --out results/public_model_qwen_evaluation.json
+          python evidence_v06.py --tasks results/public_model_qwen_tasks.json --results results/public_model_qwen_sable_v05.jsonl --out results/public_model_qwen_evidence.jsonl
           python permission_v01.py --input results/public_model_qwen_sable_v05.jsonl --output results/public_model_qwen_permission.jsonl
       - name: Build and independently verify signed receipt
         run: |
