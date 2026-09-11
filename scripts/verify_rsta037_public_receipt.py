@@ -69,7 +69,7 @@ def main():
         "status": "PASS",
         "source": SOURCE,
         "content_address": receipt["content_address"],
-        "commitment_hash": receipt["commitment"]["commitment_id"],
+        "commitment_hash": receipt["providers"]["github"]["commitment_hash"],
         "github_receipt_hash": receipt["providers"]["github"]["receipt_hash"],
         "vercel_receipt_hash": receipt["providers"]["vercel"]["receipt_hash"],
         "providers": [receipt["providers"]["github"]["executor_id"], receipt["providers"]["vercel"]["executor_id"]],
