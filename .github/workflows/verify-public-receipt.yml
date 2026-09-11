@@ -1,0 +1,19 @@
+name: Verify Public Receipt
+
+on:
+  workflow_dispatch:
+    inputs:
+      receipt_url:
+        description: 'HTTPS URL of a public RNCP execution receipt JSON'
+        required: true
+        type: string
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify public receipt
+        run: python3 scripts/verify_public_receipt.py "${{ inputs.receipt_url }}"
