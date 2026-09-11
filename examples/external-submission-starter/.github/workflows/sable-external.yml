@@ -1,0 +1,14 @@
+name: SABLE External Verification
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'run_one_sable_task.py'
+      - '.github/workflows/sable-external.yml'
+
+jobs:
+  sable:
+    uses: socksninja/sable-agent-reliability/.github/workflows/external-verification-reusable.yml@main
+    with:
+      agent_command: python examples/external-submission-starter/run_one_sable_task.py
