@@ -134,17 +134,21 @@ def main() -> None:
                 "task_success": ev["outcome"]["task_success"],
                 "replay_match": ev["replay"]["replay_match"],
                 "permission": pm["decision"],
+                "permission_reasons": pm.get("reasons", []),
                 "failure_labels": ev["outcome"].get("failure_labels", []),
                 "infrastructure_error": ev.get("execution", {}).get("infrastructure_error"),
                 "evidence_hash": ev.get("evidence_hash"),
             })
 
     n = len(records)
-    allow = sum(r["permission"] == "ALLOW" and r["task_success"] for r in records)
-    deny = sum(r["permission"] == "DENY" for r in records)
+    task_success_count = sum(r["task_success"] is True for r in records)
+    task_failure_count = sum(r["task_success"] is False for r in records)
+    verified_execution_allow_count = sum(r["permission"] == "ALLOW" for r in records)
+    verified_execution_deny_count = sum(r["permission"] == "DENY" for r in records)
+    successful_verified_execution_count = sum(r["permission"] == "ALLOW" and r["task_success"] is True for r in records)
     infra = sum(bool(r["infrastructure_error"]) for r in records)
     result = {
-        "schema_version": "sable.execution_campaign.v1.4",
+        "schema_version": "sable.execution_campaign.v1.5",
         "campaign_id": campaign_id,
         "model": args.model,
         "provider": args.base_url,
@@ -153,12 +157,17 @@ def main() -> None:
         "observation_count": n,
         "sample_quality": "rate_estimate" if n >= 10 else "observations_only",
         "minimum_observations_for_rate_estimate": 10,
-        "verified_task_success_rate": allow / (allow + deny) if allow + deny else None,
+        "verified_task_success_rate": task_success_count / n if n else None,
+        "verified_execution_allow_rate": verified_execution_allow_count / n if n else None,
+        "successful_verified_execution_rate": successful_verified_execution_count / n if n else None,
         "counts": {
-            "verified_allow": allow,
-            "verified_deny": deny,
+            "task_success": task_success_count,
+            "task_failure": task_failure_count,
+            "verified_execution_allow": verified_execution_allow_count,
+            "verified_execution_deny": verified_execution_deny_count,
+            "successful_verified_execution": successful_verified_execution_count,
             "infrastructure_failure": infra,
-            "other": n - allow - deny,
+            "other": n - task_success_count - task_failure_count,
         },
         "all_replay_matches": all(r["replay_match"] is True for r in records),
         "records": records,
