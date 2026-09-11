@@ -104,6 +104,8 @@ jobs:
             'execution_mode': 'local_public_model',
             'runtime': 'Hugging Face Transformers Serve',
             'workflow_timeout_minutes': 360,
+            'progress_contract': 'per-task stdout + flushed jsonl',
+            'campaign_recovery': 'restartable from shard without semantic changes',
           }
           Path('results/campaign_launch_diagnostics.json').write_text(json.dumps(launch,indent=2)+'\n')
           PY
@@ -111,8 +113,9 @@ jobs:
       - name: Run 140-task campaign
         env:
           SABLE_API_KEY: local-run-no-secret
+          PYTHONUNBUFFERED: '1'
         run: |
-          python campaign_orchestrator_v14.py \
+          stdbuf -oL -eL python campaign_orchestrator_v14.py \
             --model "$MODEL" \
             --base-url "$BASE_URL" \
             --api-key "$SABLE_API_KEY" \
@@ -120,7 +123,7 @@ jobs:
             --max-turns 8 \
             --thinking disabled \
             --tasks tasks/tasks_v0_4_140.json \
-            --out results/external_model_campaign_v14.json
+            --out results/external_model_campaign_v14.json | tee results/campaign_progress.log
 
       - name: Build observed failure taxonomy
         run: python scripts/build_failure_taxonomy.py --campaign results/external_model_campaign_v14.json --out results/failure_taxonomy_v14.json --markdown-out results/failure_taxonomy_v14.md
