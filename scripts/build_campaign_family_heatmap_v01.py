@@ -23,6 +23,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--campaign", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--markdown-out")
     args = ap.parse_args()
 
     campaign = json.loads(Path(args.campaign).read_text(encoding="utf-8"))
@@ -85,7 +86,8 @@ def main() -> None:
         "",
         "Only observed campaign outcomes are shown. Empty or unobserved families are not treated as zero-failure evidence.",
     ]
-    md_path = Path(args.out).with_suffix(".md")
+    md_path = Path(args.markdown_out) if args.markdown_out else Path(args.out).with_suffix(".md")
+    md_path.parent.mkdir(parents=True, exist_ok=True)
     md_path.write_text("\n".join(md) + "\n", encoding="utf-8")
     print(json.dumps(heatmap, ensure_ascii=False, indent=2))
 
