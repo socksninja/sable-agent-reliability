@@ -1,0 +1,49 @@
+name: External receipt submission
+description: Submit a real agent/runtime receipt for independent SABLE verification
+title: "[External Receipt] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Submit only evidence produced by a real execution outside the SABLE producer workflow.
+        Never include API keys, credentials, private URLs, or private execution data.
+  - type: input
+    id: receipt_url
+    attributes:
+      label: Public raw receipt URL
+      description: Direct URL to the JSON receipt; SABLE will fetch it independently.
+      placeholder: https://raw.githubusercontent.com/...
+    validations:
+      required: true
+  - type: input
+    id: runtime
+    attributes:
+      label: Runtime / framework
+      placeholder: LangGraph, CrewAI, AutoGen, etc.
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Model identifier
+      placeholder: model name or provider/model ID
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Execution context
+      description: One or two sentences describing what the agent actually executed.
+      placeholder: Brief real-execution description
+    validations:
+      required: true
+  - type: checkboxes
+    id: authenticity
+    attributes:
+      label: Evidence declaration
+      options:
+        - label: This receipt came from a real execution outside the SABLE producer workflow.
+          required: true
+        - label: This submission contains no secrets or private execution data.
+          required: true
