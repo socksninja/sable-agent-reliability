@@ -27,7 +27,7 @@ env:
 jobs:
   local-qwen-140:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 360
     permissions:
       contents: read
     steps:
@@ -103,6 +103,7 @@ jobs:
             'api_key_present': True,
             'execution_mode': 'local_public_model',
             'runtime': 'Hugging Face Transformers Serve',
+            'workflow_timeout_minutes': 360,
           }
           Path('results/campaign_launch_diagnostics.json').write_text(json.dumps(launch,indent=2)+'\n')
           PY
