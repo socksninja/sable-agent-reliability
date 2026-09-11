@@ -1,0 +1,80 @@
+name: SABLE 10-minute external verification
+
+on:
+  workflow_call:
+    inputs:
+      agent_command:
+        description: Command that runs one real agent task and writes artifacts/submission-v09.jsonl
+        required: true
+        type: string
+      artifact_path:
+        description: Directory containing the generated raw submission/evidence
+        required: false
+        default: artifacts
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@v5
+
+      - name: Checkout SABLE verifier
+        uses: actions/checkout@v5
+        with:
+          repository: socksninja/sable-agent-reliability
+          path: .sable
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Run external agent
+        shell: bash
+        run: |
+          mkdir -p "${{ inputs.artifact_path }}"
+          ${{ inputs.agent_command }}
+
+      - name: Validate and normalize SABLE submission
+        shell: bash
+        run: |
+          test -s "${{ inputs.artifact_path }}/submission-v09.jsonl"
+          python .sable/trace_submit_v09.py \
+            --input "${{ inputs.artifact_path }}/submission-v09.jsonl" \
+            --output "${{ inputs.artifact_path }}/sable-trace-v05.jsonl"
+
+      - name: Build evidence manifest
+        shell: bash
+        env:
+          ARTIFACT_PATH: ${{ inputs.artifact_path }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          root = Path(os.environ['ARTIFACT_PATH'])
+          files = []
+          for p in sorted(root.rglob('*')):
+              if p.is_file():
+                  files.append({
+                      'path': str(p.relative_to(root)),
+                      'sha256': hashlib.sha256(p.read_bytes()).hexdigest(),
+                      'size': p.stat().st_size,
+                  })
+          (root / 'sable-evidence-manifest.json').write_text(
+              json.dumps({'schema_version':'sable.evidence_manifest.v0.1','files':files}, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
+
+      - name: Upload SABLE external evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: sable-external-evidence-${{ github.run_id }}
+          path: ${{ inputs.artifact_path }}
+          if-no-files-found: error

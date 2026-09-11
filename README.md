@@ -36,6 +36,17 @@ A deterministic fixture is available at `examples/submissions/third_party_refere
 
 The first runtime-level integration target is LangGraph; the acceptance criteria are documented in `docs/FIRST_THIRD_PARTY_INTEGRATION.md`. SABLE should not claim external validation until a live third-party trace has been captured and evaluated.
 
+## 10-minute external verification path
+
+The first external integration no longer needs to hand-build a v0.9 envelope. Copy `sable_capture_v09.py`, wrap one real tool call, and write `artifacts/submission-v09.jsonl`; the reusable GitHub workflow validates it, normalizes it, and uploads a machine-readable evidence artifact.
+
+- Collector: `sable_capture_v09.py`
+- Copy-run example: `examples/external_agent_10min.py`
+- Reusable workflow: `.github/workflows/external-verification-reusable.yml`
+- Guide: `docs/10_MIN_EXTERNAL_VERIFICATION.md`
+
+This removes integration friction but does not manufacture adoption: the quickstart fixture is explicitly not third-party evidence. A real external record still requires an independently maintained agent/runtime and an inspectable GitHub Actions run/artifact.
+
 ## v0.5 core
 
 The evaluation layer is independent of any model provider:
