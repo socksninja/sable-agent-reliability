@@ -1,0 +1,19 @@
+name: Independent RSTA-037 Public Evidence Verification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/verify_rsta037_public_receipt.py'
+      - '.github/workflows/verify-rsta037-public.yml'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run independent public receipt verifier
+        run: python3 scripts/verify_rsta037_public_receipt.py
