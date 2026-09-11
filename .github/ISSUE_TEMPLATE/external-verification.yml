@@ -1,0 +1,51 @@
+name: External verification
+
+description: Report one independently maintained agent execution for SABLE verification.
+title: "External run: "
+labels:
+  - external-verification
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This form is for a real execution from an independently maintained repository.
+        Do not submit SABLE's own starter/demo as external evidence.
+  - type: input
+    id: repository
+    attributes:
+      label: Agent repository
+      description: "GitHub repository URL for the independently maintained agent/runtime."
+      placeholder: "https://github.com/owner/repo"
+    validations:
+      required: true
+  - type: input
+    id: workflow-run
+    attributes:
+      label: GitHub Actions run URL
+      description: "Link to the run that executed the real agent task and uploaded the SABLE evidence artifact."
+      placeholder: "https://github.com/owner/repo/actions/runs/..."
+    validations:
+      required: true
+  - type: input
+    id: runtime
+    attributes:
+      label: Runtime / framework
+      placeholder: "LangGraph, CrewAI, custom runtime, etc."
+    validations:
+      required: true
+  - type: textarea
+    id: task
+    attributes:
+      label: What actually ran?
+      description: "One or two sentences describing the real task, tool call, and environment mutation/observation."
+      placeholder: "The agent ..."
+    validations:
+      required: true
+  - type: input
+    id: artifact
+    attributes:
+      label: Evidence artifact
+      description: "Optional direct artifact URL or artifact name if visible in the Actions run."
+      placeholder: "sable-external-evidence-..."
+    validations:
+      required: false
