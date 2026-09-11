@@ -9,14 +9,16 @@ existing agent/runtime calls.
 """
 from __future__ import annotations
 
-import json
 import subprocess
 import sys
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from sable_capture_v09 import SableCapture, write_envelope
 
-ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "artifacts"
 STATE = {"counter": 0}
 
