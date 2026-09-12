@@ -12,9 +12,6 @@ ERROR_LOST rather than success.
 
 Run:
     python3 experiments/ttr01_local_provider_repro.py
-
-Output:
-    artifacts/ttr01-local-provider-receipt.json
 """
 from __future__ import annotations
 
@@ -25,7 +22,7 @@ import json
 import threading
 import time
 import uuid
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -108,16 +105,11 @@ def run_child(host: str, port: int) -> ChildTerminal:
             provider_request_id="",
         )
     except Exception as exc:
-        provider_request_id = ""
-        if "X-Sable-Provider-Request-Id" in locals().get("response", {}).headers if False else False:
-            provider_request_id = response.getheader("X-Sable-Provider-Request-Id")
-        # Provider request id is obtained from the disposable server observation
-        # after the request completes; this keeps the child logic independent.
         return ChildTerminal(
             child_session_id=child_session_id,
             terminal_state="FAILED",
             child_error=str(exc),
-            provider_request_id=provider_request_id,
+            provider_request_id="",
         )
     finally:
         connection.close()
