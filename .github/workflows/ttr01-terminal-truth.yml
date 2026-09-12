@@ -1,0 +1,60 @@
+name: SABLE TTR-01 terminal truth
+
+on:
+  push:
+    paths:
+      - 'experiments/ttr01_local_provider_repro.py'
+      - 'tests/test_ttr01_local_provider.py'
+      - '.github/workflows/ttr01-terminal-truth.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ttr01:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run TTR-01 unit test
+        run: python -m unittest tests/test_ttr01_local_provider.py -v
+
+      - name: Run TTR-01 reproduction
+        run: python experiments/ttr01_local_provider_repro.py --output artifacts/ttr01-local-provider-receipt.json
+
+      - name: Enforce terminal-truth oracle
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          receipt = json.loads(Path('artifacts/ttr01-local-provider-receipt.json').read_text(encoding='utf-8'))
+          assert receipt['reproduction']['deterministic'] is True
+          assert receipt['reproduction']['not_benchmark_admitted'] is True
+          assert receipt['provider']['status_code'] == 500
+          assert receipt['child_terminal_state'] == 'FAILED'
+          assert receipt['parent_received_state'] == 'RESULT'
+          assert receipt['parent_received_payload'] == ''
+          assert receipt['oracle_result']['classification'] == 'ERROR_LOST'
+          assert receipt['oracle_result']['oracle_pass'] is True
+          print(json.dumps({
+              'classification': receipt['oracle_result']['classification'],
+              'oracle_pass': receipt['oracle_result']['oracle_pass'],
+              'parent_call_id': receipt['parent_call_id'],
+              'child_session_id': receipt['child_session_id'],
+              'provider_request_id': receipt['provider_request_id']
+          }, indent=2))
+          PY
+
+      - name: Upload reproducible receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-ttr01-terminal-truth-receipt
+          path: artifacts/ttr01-local-provider-receipt.json
+          if-no-files-found: error
