@@ -2,7 +2,7 @@
 
 > **Can an AI agent actually complete a task — and can we prove that it did?**
 
-SABLE is a model- and provider-independent evaluation system for tool-using AI agents. Instead of trusting the agent's final answer, SABLE verifies the **observable environment state** and records the execution evidence needed to explain success, failure, and silent failure.
+SABLE is a model- and provider-independent evaluation system for tool-using AI agents. Instead of trusting the agent’s final answer, SABLE verifies the **observable environment state** and records the execution evidence needed to explain success, failure, and silent failure.
 
 [GitHub](https://github.com/socksninja/sable-agent-reliability) · [External verification guide](docs/10_MIN_EXTERNAL_VERIFICATION.md) · [Submission quickstart](docs/EXTERNAL_SUBMISSION_QUICKSTART.md)
 
@@ -42,7 +42,7 @@ trajectory + failure taxonomy + evidence
 - **Replay integrity** — evidence that can be checked against recorded state hashes.
 - **Provider failures** — model/runtime/infrastructure failures are separated from agent behavior.
 
-## SABLE's core distinction
+## SABLE’s core distinction
 
 Most evaluations ask whether the model produced a good answer.
 
@@ -115,6 +115,28 @@ docs/10_MIN_EXTERNAL_VERIFICATION.md
 
 A fixture or structurally valid submission is **not** presented as evidence of real third-party adoption. SABLE only treats an external run as external evidence when the agent/runtime is independently maintained and the execution can be inspected.
 
+## Terminal-truth admission cases
+
+SABLE now maintains three minimal external-runtime case specifications covering a recurring reliability boundary:
+
+```text
+requested contract
+      ↓
+callable surface
+      ↓
+actual invocation
+      ↓
+observed state transition
+      ↓
+terminal outcome
+      ↓
+parent-visible result
+```
+
+`tasks/external_runtime_terminal_truth_v01.md` defines TTR-01 (child failure must not become parent success), TTR-02 (parent success requires terminal ownership of child work), and TTR-03 (requested tool contract must match observed invocation).
+
+These cases are **SPEC / NOT YET BENCHMARK-ADMITTED**. Upstream reports are external references only until SABLE independently reproduces them or obtains an inspectable machine-verifiable receipt. This prevents public case studies from being silently promoted into benchmark truth.
+
 ## Running the model-independent core
 
 No model API key is required for the core self-tests:
@@ -136,7 +158,7 @@ SABLE_BASE_URL=...
 SABLE_MODEL=...
 ```
 
-then run `run_sable.sh` or the GitHub Actions workflow's manual dispatch.
+then run `run_sable.sh` or the GitHub Actions workflow’s manual dispatch.
 
 Provider outages, quota failures, and model infrastructure errors are recorded separately from agent reliability so that the benchmark does not mistake an unavailable model for an unreliable agent.
 
@@ -172,7 +194,7 @@ See `RELIABILITY_SCORE.md` for the exact measurement convention.
 
 SABLE is an **open, experimental reliability-evaluation project**. The repository provides reproducible evaluation infrastructure and public evidence formats, but it does not claim that fixture data or a self-test proves general agent reliability.
 
-The next meaningful milestone is **independent external execution**: a real agent/runtime runs SABLE, produces inspectable evidence, and contributes a public Reliability Record.
+The next meaningful milestone is **independent external execution with terminal-truth evidence**: at least one TTR case is independently reproduced by a real agent/runtime, captured with inspectable child/parent provenance, and admitted only after the machine-verifiable oracle passes.
 
 ## Repository map
 
