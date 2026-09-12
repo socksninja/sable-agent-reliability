@@ -1,0 +1,27 @@
+name: TTR-01 self-test
+
+on:
+  push:
+    paths:
+      - "experiments/ttr01_local_provider_repro.py"
+      - "tests/test_ttr01_local_provider.py"
+      - ".github/workflows/ttr01-selftest.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ttr01:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run TTR-01 oracle self-test
+        run: python3 -m unittest tests/test_ttr01_local_provider.py -v
+      - name: Run TTR-01 reproduction
+        run: python3 experiments/ttr01_local_provider_repro.py --output artifacts/ttr01-local-provider-receipt.json
+      - name: Upload receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: ttr01-local-provider-receipt
+          path: artifacts/ttr01-local-provider-receipt.json
