@@ -9,6 +9,6 @@ on:
 
 jobs:
   sable:
-    uses: socksninja/sable-agent-reliability/.github/workflows/external-verification-reusable.yml@main
+    uses: socksninja/sable-agent-reliability/.github/workflows/external-verification-reusable.yml@466db3cd6607a2c97c8eed1e37c9b40c7844041b
     with:
       agent_command: python examples/external-submission-starter/run_one_sable_task.py
