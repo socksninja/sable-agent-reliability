@@ -28,6 +28,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: socksninja/sable-agent-reliability
+          ref: 8e8015f20b9c73f5ff9af56e28627c7ba5223f44
           path: .sable
 
       - name: Set up Python
