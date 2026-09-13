@@ -4,7 +4,7 @@
 
 SABLE is a model- and provider-independent evaluation system for tool-using AI agents. Instead of trusting the agent’s final answer, SABLE verifies the **observable environment state** and records the execution evidence needed to explain success, failure, and silent failure.
 
-[GitHub](https://github.com/socksninja/sable-agent-reliability) · [External verification guide](docs/10_MIN_EXTERNAL_VERIFICATION.md) · [Submission quickstart](docs/EXTERNAL_SUBMISSION_QUICKSTART.md) · [Strategy alignment](STRATEGY_ALIGNMENT_V01.md)
+[GitHub](https://github.com/socksninja/sable-agent-reliability) · [Evidence layer](EVIDENCE_LAYER.md) · [Reality Map](REALITY_MAP_V01.md) · [Failure Corpus](FAILURE_CORPUS_V01.md) · [External verification guide](docs/10_MIN_EXTERNAL_VERIFICATION.md) · [Submission quickstart](docs/EXTERNAL_SUBMISSION_QUICKSTART.md) · [Strategy alignment](STRATEGY_ALIGNMENT_V01.md)
 
 ## Why SABLE exists
 
@@ -138,6 +138,16 @@ parent-visible result
 TTR-06 adds a separate control-plane case: **stale evidence must not promote current execution state**. Its deterministic reproduction lives in `experiments/ttr06_stale_evidence_repro.py` with a dedicated test and CI workflow. It remains a SPEC / NOT YET BENCHMARK-ADMITTED case.
 
 These cases are **SPEC / NOT YET BENCHMARK-ADMITTED** until SABLE independently reproduces the external runtime failure boundary or obtains an inspectable machine-verifiable receipt. This prevents public case studies from being silently promoted into benchmark truth.
+
+## Reality-first public layer
+
+The project now maintains three connected public artifacts:
+
+- `EVIDENCE_LAYER.md` — the shortest route from SABLE’s mission to what is actually proven.
+- `REALITY_MAP_V01.md` — current cross-runtime / failure-boundary coverage and explicit gaps.
+- `FAILURE_CORPUS_V01.md` — the provenance and normalization contract for real reliability failures.
+
+These are deliberately subordinate to external reality. Public incidents guide investigation; inspectable executions determine evidence.
 
 ## Running the model-independent core
 
