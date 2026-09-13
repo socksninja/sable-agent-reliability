@@ -1,0 +1,47 @@
+name: SABLE-002 AgentScope upstream verification
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'experiments/agentscope_stream_retry/**'
+      - '.github/workflows/agentscope-upstream-sable-002.yml'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout SABLE
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Verify historical baseline reproduces duplication
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf agentscope-baseline
+          git clone --quiet https://github.com/agentscope-ai/agentscope-java.git agentscope-baseline
+          cd agentscope-baseline
+          git checkout --quiet 39cd304a7dc400eb3fb2a7daca750162e79bec05
+          cp ../experiments/agentscope_stream_retry/SableStreamRetryReproTest.java \
+             agentscope-core/src/test/java/io/agentscope/core/model/SableStreamRetryReproTest.java
+          mvn -q -pl agentscope-core -am -Dtest=SableStreamRetryReproTest -Dsurefire.failIfNoSpecifiedTests=false test
+
+      - name: Verify current fix candidate stops post-emission replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf agentscope-fix
+          git clone --quiet https://github.com/agentscope-ai/agentscope-java.git agentscope-fix
+          cd agentscope-fix
+          git fetch --quiet origin 826495a1237513c079cc7263caeeb5f6e9a23242
+          git checkout --quiet 826495a1237513c079cc7263caeeb5f6e9a23242
+          cp ../experiments/agentscope_stream_retry/SableStreamRetryFixedReproTest.java \
+             agentscope-core/src/test/java/io/agentscope/core/model/SableStreamRetryFixedReproTest.java
+          mvn -q -pl agentscope-core -am -Dtest=SableStreamRetryFixedReproTest -Dsurefire.failIfNoSpecifiedTests=false test
