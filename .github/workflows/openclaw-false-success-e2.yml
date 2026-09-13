@@ -62,3 +62,5 @@ jobs:
         with:
           name: sable-openclaw-false-success-e2
           path: /tmp/sable-receipt/openclaw-false-success-e2.json
+
+# Force a fresh push-triggered E2 run after harness fix.
