@@ -2,7 +2,7 @@
 
 > **Can an AI agent actually complete a task — and can we prove that it did?**
 
-SABLE is a model- and provider-independent evaluation system for tool-using AI agents. Instead of trusting the agent’s final answer, SABLE verifies the **observable environment state** and records the execution evidence needed to explain success, failure, and silent failure.
+SABLE is a model- and provider-independent evaluation system for tool-using AI agents. Instead of trusting the agent's final answer, SABLE verifies the **observable environment state** and records the execution evidence needed to explain success, failure, and silent failure.
 
 [GitHub](https://github.com/socksninja/sable-agent-reliability) · [Evidence layer](EVIDENCE_LAYER.md) · [Streaming reliability finding](STREAMING_RELIABILITY_FINDING_V01.md) · [Reality Map](REALITY_MAP_V01.md) · [Failure Corpus](FAILURE_CORPUS_V01.md) · [External verification guide](docs/10_MIN_EXTERNAL_VERIFICATION.md) · [Submission quickstart](docs/EXTERNAL_SUBMISSION_QUICKSTART.md) · [Strategy alignment](STRATEGY_ALIGNMENT_V01.md)
 
@@ -42,7 +42,7 @@ trajectory + failure taxonomy + evidence
 - **Replay integrity** — evidence that can be checked against recorded state hashes.
 - **Provider failures** — model/runtime/infrastructure failures are separated from agent behavior.
 
-## SABLE’s core distinction
+## SABLE's core distinction
 
 Most evaluations ask whether the model produced a good answer.
 
@@ -87,6 +87,7 @@ SABLE is designed to be independently checked rather than trusted by default.
 - **10-minute verification:** run an existing agent with a small adapter and submit a machine-readable evidence packet. See [docs/10_MIN_EXTERNAL_VERIFICATION.md](docs/10_MIN_EXTERNAL_VERIFICATION.md).
 - **Third-party submission:** publish a real runtime trace, tool calls, before/after state hashes, outcome claim, timestamp, collector identity, and integrity digest. See [docs/EXTERNAL_SUBMISSION_QUICKSTART.md](docs/EXTERNAL_SUBMISSION_QUICKSTART.md).
 - **Public reproduction challenge:** [SABLE-002 independent reproduction](https://github.com/socksninja/sable-agent-reliability/issues/48) asks for a concrete reproduce / not-reproduce / taxonomy-correction result.
+- **OpenClaw external cases:** [terminal-truth validation targets](docs/EXTERNAL_CASE_001_OPENCLAW_TERMINAL_TRUTH.md) cover OpenClaw incidents `#141474`, `#97616`, and `#144911`, with explicit evidence gaps and no adoption/reproduction claims.
 
 The goal is not to make a SABLE claim harder to question. The goal is to make it easier for someone else to disprove, reproduce, or strengthen it.
 
