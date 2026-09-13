@@ -1,0 +1,1 @@
+SABLE-002 CI proof trigger only. Test logic unchanged.
