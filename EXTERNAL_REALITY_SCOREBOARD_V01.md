@@ -1,4 +1,4 @@
-# SABLE — External Reality Scoreboard v0.1
+# SABLE — External Reality Scoreboard v0.2
 
 **Purpose:** keep external-world evidence ahead of internal engineering.
 
@@ -9,8 +9,33 @@
 | Target | Current state | Next valid signal | Action on signal |
 |---|---|---|---|
 | #97616 / ClawSweeper review | WAITING | maintainer/reviewer result, receipt, runtime evidence | verify → archive → update public record |
-| #144911 | RECEIPT REQUESTED | receipt / machine-readable evidence / maintainer confirmation | verify → archive → update public record |
+| #144911 / MCP init-timeout crash | RECEIPT REQUESTED | receipt / machine-readable evidence / maintainer confirmation | verify → archive → update public record |
 | #137332 | EXTERNAL DATA RECEIVED / VERIFY | complete receipt, reproducible runtime result, maintainer confirmation | verify/cross-check → archive → update public record |
+| #143334 / subagent completion-delivery mismatch | NEW TARGET | maintainer response or reproducible runtime evidence | request 1–3-case terminal-truth validation; then verify |
+| #101656 / detached subagent liveness + terminal-state mismatch | NEW TARGET | maintainer response or reproducible runtime evidence | request 1–3-case liveness/terminal-state validation; then verify |
+
+## External Runtime Target List — v1
+
+The following are **prospects, not adoption**. Their existence in this table never increments a reality counter.
+
+| Project / issue | Why it matters to SABLE | Best validation wedge | Status |
+|---|---|---|---|
+| OpenClaw #144911 | MCP initialization timeout causes cleanup failure and Gateway crash; explicit observable terminal boundary | reproduce timeout → verify expected contained state vs crash state | outreach target |
+| OpenClaw #143334 | task registry can say `succeeded` while completion delivery is pending/failed and requester is effectively deadlocked | compare authoritative task outcome, delivery state, requester state | outreach target |
+| OpenClaw #101656 | detached child can be running, waiting, failed, or dead while user-facing channel sees only silence; reported trajectory/state mismatch | verify liveness + terminal outcome from runtime state, not model report | outreach target |
+| OpenClaw #97616 | long-running tool/hook subprocess leak degrades runtime despite nominal health for a period | execute bounded workload → verify process/runtime state over time | outreach target |
+
+### Targeting rule
+
+Prioritize targets where:
+
+1. the failure is already public and concrete;
+2. the runtime state is observable without privileged production access;
+3. the claimed outcome can be independently checked;
+4. the result would demonstrate a reliability boundary SABLE already knows how to measure;
+5. the smallest useful experiment is ≤10–20 minutes.
+
+Do **not** ask for a generic "try my benchmark". Ask for one concrete failure-class validation against the runtime's own observable state.
 
 ## Reality counters
 
