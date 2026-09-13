@@ -4,7 +4,7 @@
 
 SABLE is a model- and provider-independent evaluation system for tool-using AI agents. Instead of trusting the agent’s final answer, SABLE verifies the **observable environment state** and records the execution evidence needed to explain success, failure, and silent failure.
 
-[GitHub](https://github.com/socksninja/sable-agent-reliability) · [External verification guide](docs/10_MIN_EXTERNAL_VERIFICATION.md) · [Submission quickstart](docs/EXTERNAL_SUBMISSION_QUICKSTART.md)
+[GitHub](https://github.com/socksninja/sable-agent-reliability) · [External verification guide](docs/10_MIN_EXTERNAL_VERIFICATION.md) · [Submission quickstart](docs/EXTERNAL_SUBMISSION_QUICKSTART.md) · [Strategy alignment](STRATEGY_ALIGNMENT_V01.md)
 
 ## Why SABLE exists
 
@@ -117,7 +117,7 @@ A fixture or structurally valid submission is **not** presented as evidence of r
 
 ## Terminal-truth admission cases
 
-SABLE now maintains three minimal external-runtime case specifications covering a recurring reliability boundary:
+SABLE maintains minimal external-runtime case specifications covering recurring reliability boundaries. The current admission set includes TTR-01 through TTR-03, while later externally sourced families remain SPEC / NOT YET BENCHMARK-ADMITTED until independently reproduced.
 
 ```text
 requested contract
@@ -135,7 +135,9 @@ parent-visible result
 
 `tasks/external_runtime_terminal_truth_v01.md` defines TTR-01 (child failure must not become parent success), TTR-02 (parent success requires terminal ownership of child work), and TTR-03 (requested tool contract must match observed invocation).
 
-These cases are **SPEC / NOT YET BENCHMARK-ADMITTED**. Upstream reports are external references only until SABLE independently reproduces them or obtains an inspectable machine-verifiable receipt. This prevents public case studies from being silently promoted into benchmark truth.
+TTR-06 adds a separate control-plane case: **stale evidence must not promote current execution state**. Its deterministic reproduction lives in `experiments/ttr06_stale_evidence_repro.py` with a dedicated test and CI workflow. It remains a SPEC / NOT YET BENCHMARK-ADMITTED case.
+
+These cases are **SPEC / NOT YET BENCHMARK-ADMITTED** until SABLE independently reproduces the external runtime failure boundary or obtains an inspectable machine-verifiable receipt. This prevents public case studies from being silently promoted into benchmark truth.
 
 ## Running the model-independent core
 
@@ -190,6 +192,12 @@ SABLE reports:
 
 See `RELIABILITY_SCORE.md` for the exact measurement convention.
 
+## Strategy and commercialization guardrails
+
+SABLE is intended to be a **neutral reliability/evidence layer**, complementary to agent runtimes, frameworks, model/API providers, and observability/eval platforms rather than a replacement for them. The near-term priority is external execution, independent reproduction, repeated use, and concrete design-partner/commercial pull; benchmark expansion follows those signals rather than preceding them.
+
+See `STRATEGY_ALIGNMENT_V01.md` for the final-objective, selection, commercial-complementarity, and anti-drift rules.
+
 ## Status
 
 SABLE is an **open, experimental reliability-evaluation project**. The repository provides reproducible evaluation infrastructure and public evidence formats, but it does not claim that fixture data or a self-test proves general agent reliability.
@@ -206,6 +214,7 @@ tasks/                               baseline + adversarial tasks
 schemas/                             trace + submission contracts
 records/                             public Reliability Records
 docs/                                protocols, admission, integration guides
+experiments/                         reproducible external-runtime case harnesses
 .github/workflows/                   reproducible evidence pipelines
 ```
 
