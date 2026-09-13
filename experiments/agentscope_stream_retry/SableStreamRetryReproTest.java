@@ -58,7 +58,9 @@ class SableStreamRetryReproTest {
     }
 
     private static ChatResponse chunk(String text) {
-        return ChatResponse.builder().content(List.of(TextBlock.builder().text(text).build())).build();
+        return ChatResponse.builder()
+                .content(List.of(TextBlock.builder().text(text).build()))
+                .build();
     }
 
     private String textOf(ChatResponse response) {
