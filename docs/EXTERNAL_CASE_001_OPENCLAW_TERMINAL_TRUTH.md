@@ -2,19 +2,21 @@
 
 **Status:** EXTERNAL OBSERVATION / NOT BENCHMARK-ADMITTED
 
-**Purpose:** convert a real public runtime failure report into a narrowly defined, independently reproducible SABLE validation target without claiming adoption or reproduction before evidence exists.
+**Purpose:** convert real public runtime failure reports into narrowly defined, independently reproducible SABLE validation targets without claiming adoption or reproduction before evidence exists.
 
-## External source
+## External sources
 
 - Runtime: OpenClaw
 - Primary incident: `openclaw/openclaw#144911`
-- Related external incidents: `#143334`, `#101656`, `#97616`
+- Collector/status incident: `openclaw/openclaw#141474`
+- Runtime degradation incident: `openclaw/openclaw#97616`
+- Related external incidents: `#143334`, `#101656`
 
-These are public reports from an independently maintained runtime. Their existence is external evidence of a reliability problem class, **not** evidence that SABLE has reproduced it.
+These are public reports from an independently maintained runtime. Their existence is external evidence of reliability problem classes, **not** evidence that SABLE has reproduced them.
 
-## Case hypothesis
+## Case A — MCP child timeout → parent runtime terminal truth
 
-For #144911, the externally reported sequence is:
+For `#144911`, the externally reported sequence is:
 
 ```text
 MCP child initialization
@@ -32,7 +34,7 @@ MCP server unavailable / timed out
 → Gateway remains alive
 ```
 
-The observed external report instead describes a process-level failure:
+The reported failure is instead:
 
 ```text
 initialize timeout
@@ -40,34 +42,68 @@ initialize timeout
 → main process exit(1)
 ```
 
-## SABLE question
+### SABLE question
 
 Can an external observer independently establish the runtime's **terminal state transition** after an MCP initialization timeout, without relying on the agent's final text or the incident author's interpretation?
 
-The validation target is therefore not "does OpenClaw have a bug?" but:
-
 > **Does a failed child operation produce the correct parent/runtime terminal state, and is that state observable and attributable?**
+
+## Case B — collector completion / status disagreement
+
+OpenClaw `#141474` reports a collector child that calls `sessions_yield` and leaves no collector completion record while different status surfaces disagree: `recent` reports `done`, `tasks` reports `running`, and the parent wait can remain pending. The repository's automated review says current source supports the orphaned yielded-collector shape, while noting that a fresh runtime reproduction has not been executed on the reviewed source. 
+
+### SABLE question
+
+Can one fresh collector execution produce a machine-checkable chain:
+
+```text
+collector run
+→ yield / terminal event
+→ completion-record state
+→ recent projection
+→ tasks projection
+→ agents_wait result
+```
+
+The result must be one of:
+
+- **reproduced** — the lifecycle/projection disagreement is observed;
+- **not reproduced** — terminal/completion surfaces converge; or
+- **taxonomy correction** — the observed behavior belongs to a different lifecycle boundary.
+
+This is a particularly strong SABLE target because the evidence gap is explicitly about **runtime truth versus status claims** rather than model quality.
+
+## Case C — zombie/resource degradation after partial repairs
+
+OpenClaw `#97616` remains an explicit cross-owner zombie/reaping umbrella. The September 13 automated review says there is still no high-confidence current-main reproduction and specifically requests one redacted `v2026.9.4`/current-main trace connecting a spawning owner, PID identity, exit observation, and independent post-exit state to a remaining defect.
+
+### SABLE question
+
+Can a current runtime run establish:
+
+```text
+tool/hook owner
+→ child PID identity
+→ child exit
+→ post-exit process state
+→ runtime health
+→ eventual terminal/degraded state
+```
+
+The acceptance result is **not** "the old issue is still true". It is whether a fresh execution closes the owner-to-observable-state evidence chain after the partial repairs.
 
 ## Proposed minimal validation
 
-1. Run an independently maintained OpenClaw version/configuration that can exercise the MCP child initialization path.
-2. Cause one bounded initialization timeout using a controlled MCP test server.
-3. Capture:
-   - child start;
-   - timeout event;
-   - cleanup attempt;
-   - parent/Gateway process state;
-   - terminal exit/recovery state;
-   - exact timestamps and run identity.
-4. Verify the oracle against runtime state rather than the model's or operator's textual claim.
-5. Record either:
-   - **contained failure** — timeout is surfaced while parent runtime remains operational; or
-   - **propagated runtime failure** — timeout causes parent runtime termination/degraded state.
+1. Run an independently maintained OpenClaw version/configuration that can exercise the selected path.
+2. Trigger one controlled failure condition.
+3. Capture the relevant runtime lifecycle events and exact timestamps.
+4. Capture observable state outside the agent's narrative channel.
+5. Verify the oracle against runtime state.
 6. Preserve the external run as inspectable evidence before any SABLE admission decision.
 
 ## Admission gate
 
-This case becomes benchmark-admitted only if an external runtime independently provides a machine-checkable receipt or reproducible run that closes:
+A case becomes benchmark-admitted only if an external runtime independently provides a machine-checkable receipt or reproducible run that closes:
 
 ```text
 independent runtime
@@ -78,49 +114,7 @@ independent runtime
 → SABLE oracle
 ```
 
-Until then, this document remains an external-case hypothesis and targeting artifact.
-
-## Adjacent SABLE terminal-truth mappings
-
-The same runtime family exposes additional validation wedges:
-
-### #143334 — parent/task/delivery disagreement
-
-Check that:
-
-```text
-task registry outcome
-↔ child terminal outcome
-↔ completion delivery state
-↔ requester-visible terminal state
-```
-
-A `succeeded` task must not become user-visible success when completion delivery is failed or the requester remains blocked.
-
-### #101656 — silent detached work
-
-Check that:
-
-```text
-runtime liveness
-↔ child terminal state
-↔ user-visible terminal notification
-```
-
-Silence must not be interpreted as success, failure, or continued progress without authoritative runtime evidence.
-
-### #97616 — long-run runtime degradation
-
-Check that:
-
-```text
-tool/hook execution
-→ resource/process state
-→ runtime health
-→ eventual terminal/degraded state
-```
-
-Nominal health must not mask accumulating process/resource failure when objective runtime state shows degradation.
+Until then, these documents remain external-case hypotheses and targeting artifacts.
 
 ## Evidence discipline
 
@@ -132,7 +126,7 @@ Do not count:
 - inferred OpenClaw usage as a run;
 - a benchmark fixture as a real-runtime receipt.
 
-The current SABLE external scoreboard must remain at zero until the evidence chain is independently closed.
+The current SABLE external scoreboard remains unchanged until the evidence chain is independently closed.
 
 ## Strategic value
 
