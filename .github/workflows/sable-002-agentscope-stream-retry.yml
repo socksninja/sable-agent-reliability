@@ -71,3 +71,5 @@ jobs:
         with:
           name: sable-002-agentscope-stream-retry-receipt
           path: artifacts/SABLE-002-receipt.json
+
+# Trigger-only comment: force a fresh SABLE-002 execution after the compile fix.
