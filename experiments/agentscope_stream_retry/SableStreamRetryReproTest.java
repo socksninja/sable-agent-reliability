@@ -3,6 +3,7 @@ package io.agentscope.core.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 
+import io.agentscope.core.message.TextBlock;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -57,7 +58,7 @@ class SableStreamRetryReproTest {
   }
 
   private static ChatResponse chunk(String text) {
-    return ChatResponse.builder().content(TextBlock.builder().text(text).build()).build();
+    return ChatResponse.builder().content(List.of(TextBlock.builder().text(text).build())).build();
   }
 
   private String textOf(ChatResponse response) {
