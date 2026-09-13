@@ -4,7 +4,7 @@
 
 SABLE is a model- and provider-independent evaluation system for tool-using AI agents. Instead of trusting the agent’s final answer, SABLE verifies the **observable environment state** and records the execution evidence needed to explain success, failure, and silent failure.
 
-[GitHub](https://github.com/socksninja/sable-agent-reliability) · [Evidence layer](EVIDENCE_LAYER.md) · [Reality Map](REALITY_MAP_V01.md) · [Failure Corpus](FAILURE_CORPUS_V01.md) · [External verification guide](docs/10_MIN_EXTERNAL_VERIFICATION.md) · [Submission quickstart](docs/EXTERNAL_SUBMISSION_QUICKSTART.md) · [Strategy alignment](STRATEGY_ALIGNMENT_V01.md)
+[GitHub](https://github.com/socksninja/sable-agent-reliability) · [Evidence layer](EVIDENCE_LAYER.md) · [Streaming reliability finding](STREAMING_RELIABILITY_FINDING_V01.md) · [Reality Map](REALITY_MAP_V01.md) · [Failure Corpus](FAILURE_CORPUS_V01.md) · [External verification guide](docs/10_MIN_EXTERNAL_VERIFICATION.md) · [Submission quickstart](docs/EXTERNAL_SUBMISSION_QUICKSTART.md) · [Strategy alignment](STRATEGY_ALIGNMENT_V01.md)
 
 ## Why SABLE exists
 
@@ -80,152 +80,8 @@ public model
 → versioned Reliability Record
 ```
 
-A **Reliability Record** is an auditable model/runtime snapshot rather than a marketing score. It keeps successful executions, rejected or failed tool actions, environment outcomes, native tool-call transport, provenance, and CI evidence together.
+## Published runtime reliability finding
 
-An example public record is:
+SABLE now publishes dynamically reproduced runtime failures as evidence records. The first combined finding covers two distinct streaming failure modes: silent zero-chunk completion and duplicate delivery after mid-stream retry.
 
-`records/qwen_qwen2_5_0_5b_instruct_reliability_2026-09-10.json`
-
-with evidence generated from GitHub Actions run `34513779679`.
-
-## External verification
-
-SABLE also provides a machine-validated path for independently run agents and runtimes:
-
-```text
-external agent/runtime
-→ capture
-→ GitHub Actions evidence
-→ Reliability Record / trace
-→ validation
-→ maintainer evidence review
-→ public record
-```
-
-The **10-minute external verification path** is intentionally small: wrap one real tool call, capture the execution, and let the reusable workflow validate and upload the resulting evidence artifact.
-
-Start here:
-
-```text
-sable_capture_v09.py
-examples/external_agent_10min.py
-.github/workflows/external-verification-reusable.yml
-docs/10_MIN_EXTERNAL_VERIFICATION.md
-```
-
-A fixture or structurally valid submission is **not** presented as evidence of real third-party adoption. SABLE only treats an external run as external evidence when the agent/runtime is independently maintained and the execution can be inspected.
-
-## Terminal-truth admission cases
-
-SABLE maintains minimal external-runtime case specifications covering recurring reliability boundaries. The current admission set includes TTR-01 through TTR-03, while later externally sourced families remain SPEC / NOT YET BENCHMARK-ADMITTED until independently reproduced.
-
-```text
-requested contract
-      ↓
-callable surface
-      ↓
-actual invocation
-      ↓
-observed state transition
-      ↓
-terminal outcome
-      ↓
-parent-visible result
-```
-
-`tasks/external_runtime_terminal_truth_v01.md` defines TTR-01 (child failure must not become parent success), TTR-02 (parent success requires terminal ownership of child work), and TTR-03 (requested tool contract must match observed invocation).
-
-TTR-06 adds a separate control-plane case: **stale evidence must not promote current execution state**. Its deterministic reproduction lives in `experiments/ttr06_stale_evidence_repro.py` with a dedicated test and CI workflow. It remains a SPEC / NOT YET BENCHMARK-ADMITTED case.
-
-These cases are **SPEC / NOT YET BENCHMARK-ADMITTED** until SABLE independently reproduces the external runtime failure boundary or obtains an inspectable machine-verifiable receipt. This prevents public case studies from being silently promoted into benchmark truth.
-
-## Reality-first public layer
-
-The project now maintains three connected public artifacts:
-
-- `EVIDENCE_LAYER.md` — the shortest route from SABLE’s mission to what is actually proven.
-- `REALITY_MAP_V01.md` — current cross-runtime / failure-boundary coverage and explicit gaps.
-- `FAILURE_CORPUS_V01.md` — the provenance and normalization contract for real reliability failures.
-
-These are deliberately subordinate to external reality. Public incidents guide investigation; inspectable executions determine evidence.
-
-## Running the model-independent core
-
-No model API key is required for the core self-tests:
-
-```bash
-python3 tasks/generate_adversarial.py
-python3 selftest_v05.py
-python3 selftest_ingest_v08.py
-python3 selftest_submission_v09.py
-```
-
-## Running a real model
-
-Real-model evaluation is an optional second layer. Configure:
-
-```bash
-SABLE_API_KEY=...
-SABLE_BASE_URL=...
-SABLE_MODEL=...
-```
-
-then run `run_sable.sh` or the GitHub Actions workflow’s manual dispatch.
-
-Provider outages, quota failures, and model infrastructure errors are recorded separately from agent reliability so that the benchmark does not mistake an unavailable model for an unreliable agent.
-
-## External submissions
-
-For the public v0.9 submission path, submit a UTF-8 JSONL file containing `sable.submission.v0.9` envelopes:
-
-```bash
-python3 trace_submit_v09.py \
-  --input submission.jsonl \
-  --output sable_traces_v05.jsonl
-```
-
-See:
-
-- `docs/EXTERNAL_SUBMISSION_QUICKSTART.md`
-- `docs/EXTERNAL_RELIABILITY_RECORD_SUBMISSION_V0.1.md`
-- `schemas/submission_v09.schema.json`
-- `schemas/reliability_record_submission_v01.schema.json`
-
-## Measurement
-
-SABLE reports:
-
-- **Reliability Score** — a 0–100 critical-failure score across wrong-state, overclaim, unauthorized-tool, incomplete, model, and provider-limit failures.
-- **Operational Score** — task pass rate after unavailable-model/provider rows are excluded.
-- **Failure rates** — explicit rates for unsafe actions, overclaims, wrong state, duplicate actions, tool errors, and provider limits.
-- **Family breakdown** — performance across recovery, idempotency, authorization, state drift, long-horizon, and other adversarial families.
-
-See `RELIABILITY_SCORE.md` for the exact measurement convention.
-
-## Strategy and commercialization guardrails
-
-SABLE is intended to be a **neutral reliability/evidence layer**, complementary to agent runtimes, frameworks, model/API providers, and observability/eval platforms rather than a replacement for them. The near-term priority is external execution, independent reproduction, repeated use, and concrete design-partner/commercial pull; benchmark expansion follows those signals rather than preceding them.
-
-See `STRATEGY_ALIGNMENT_V01.md` for the final-objective, selection, commercial-complementarity, and anti-drift rules.
-
-## Status
-
-SABLE is an **open, experimental reliability-evaluation project**. The repository provides reproducible evaluation infrastructure and public evidence formats, but it does not claim that fixture data or a self-test proves general agent reliability.
-
-The next meaningful milestone is **independent external execution with terminal-truth evidence**: at least one TTR case is independently reproduced by a real agent/runtime, captured with inspectable child/parent provenance, and admitted only after the machine-verifiable oracle passes.
-
-## Repository map
-
-```text
-sable_v05.py                         evaluator / replay
-reliability_score.py                 score + report generation
-sable_capture_v09.py                 external execution collector
-tasks/                               baseline + adversarial tasks
-schemas/                             trace + submission contracts
-records/                             public Reliability Records
-docs/                                protocols, admission, integration guides
-experiments/                         reproducible external-runtime case harnesses
-.github/workflows/                   reproducible evidence pipelines
-```
-
-**Principle:** AI can propose the action. **Reality must determine whether the action actually worked.**
+See [STREAMING_RELIABILITY_FINDING_V01.md](STREAMING_RELIABILITY_FINDING_V01.md) for the evidence, pinned runtime revision, external anchors, reproduction results, and explicit evidence boundaries.
