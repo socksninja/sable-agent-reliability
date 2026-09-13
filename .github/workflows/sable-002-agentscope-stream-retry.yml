@@ -5,6 +5,10 @@ on:
     paths:
       - "experiments/agentscope_stream_retry/SableStreamRetryReproTest.java"
       - ".github/workflows/sable-002-agentscope-stream-retry.yml"
+  pull_request:
+    paths:
+      - "experiments/agentscope_stream_retry/SableStreamRetryReproTest.java"
+      - ".github/workflows/sable-002-agentscope-stream-retry.yml"
   workflow_dispatch:
 
 permissions:
