@@ -1,0 +1,69 @@
+name: SABLE-002 AgentScope stream retry reproduction
+
+on:
+  push:
+    paths:
+      - "experiments/agentscope_stream_retry/SableStreamRetryReproTest.java"
+      - ".github/workflows/sable-002-agentscope-stream-retry.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout SABLE
+        uses: actions/checkout@v5
+
+      - name: Checkout AgentScope at cited main revision
+        uses: actions/checkout@v5
+        with:
+          repository: agentscope-ai/agentscope-java
+          ref: 39cd304a7dc400eb3fb2a7daca750162e79bec05
+          path: agentscope-java
+          fetch-depth: 1
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Inject SABLE reproduction test
+        run: |
+          mkdir -p agentscope-java/agentscope-core/src/test/java/io/agentscope/core/model
+          cp experiments/agentscope_stream_retry/SableStreamRetryReproTest.java \
+            agentscope-java/agentscope-core/src/test/java/io/agentscope/core/model/
+
+      - name: Run SABLE reproduction
+        working-directory: agentscope-java
+        run: |
+          mvn -q -pl agentscope-core -am \
+            -Dtest=SableStreamRetryReproTest \
+            -Dsurefire.failIfNoSpecifiedTests=false test
+
+      - name: Write machine-readable receipt
+        run: |
+          mkdir -p artifacts
+          cat > artifacts/SABLE-002-receipt.json <<'JSON'
+          {
+            "case_id": "SABLE-002",
+            "runtime": "AgentScope-Java",
+            "revision": "39cd304a7dc400eb3fb2a7daca750162e79bec05",
+            "failure_class": "mid_stream_retry_duplicate_delivery",
+            "boundary": "ModelUtils.applyTimeoutAndRetry",
+            "input": "Flux emits Hello + world, then a retryable IOException; maxAttempts=3",
+            "observed": "subscriptions=3; delivered chunks=[Hello, world, Hello, world, Hello, world]",
+            "expected": "already-emitted chunks must not be replayed after a mid-stream retry",
+            "evidence_level": "dynamic code-level reproduction"
+          }
+          JSON
+
+      - name: Upload receipt
+        uses: actions/upload-artifact@v7
+        with:
+          name: sable-002-agentscope-stream-retry-receipt
+          path: artifacts/SABLE-002-receipt.json
