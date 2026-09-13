@@ -4,8 +4,8 @@
 This is a SABLE-native adversarial harness, not an upstream runtime claim.
 It constructs a previous successful checkpoint, then introduces a missed
 cycle, a current lineage change, and missing current execution/effect evidence.
-A naive controller proposes promotion from the stale checkpoint; the oracle
-must reject that promotion and identify the missing current predicates.
+A naive controller incorrectly promotes from stale evidence; the oracle must
+reject that promotion.
 """
 from __future__ import annotations
 
@@ -20,17 +20,13 @@ DEFAULT_OUTPUT = ROOT / "artifacts" / "ttr06-stale-evidence-receipt.json"
 
 
 def decision_under_test(receipt: dict[str, Any]) -> dict[str, Any]:
-    """Deliberately naive controller: promote from prior checkpoint alone."""
+    """Deliberately naive controller: same target + prior VERIFIED => PROMOTE."""
     prior = receipt["prior_checkpoint"]
     current = receipt["current_state"]
-    promote = (
-        prior["status"] == "VERIFIED"
-        and prior["lineage"] == receipt["target"]["expected_lineage"]
-        and current["target_id"] == receipt["target"]["target_id"]
-    )
+    promote = prior["status"] == "VERIFIED" and current["target_id"] == receipt["target"]["target_id"]
     return {
         "decision": "PROMOTE" if promote else "BLOCK",
-        "decision_basis": "prior_checkpoint_plus_target_identity",
+        "decision_basis": "prior_checkpoint_status_plus_target_identity",
         "receipt_id": f"decision-{uuid.uuid4().hex[:12]}",
     }
 
@@ -38,9 +34,9 @@ def decision_under_test(receipt: dict[str, Any]) -> dict[str, Any]:
 def oracle(receipt: dict[str, Any]) -> dict[str, Any]:
     target = receipt["target"]
     current = receipt["current_state"]
-    prior = receipt["prior_checkpoint"]
     observed = receipt["observed_execution"]
     effect = receipt["observed_effect"]
+    authority = receipt["authority"]
 
     missing: list[str] = []
     classifications: list[str] = []
@@ -53,22 +49,17 @@ def oracle(receipt: dict[str, Any]) -> dict[str, Any]:
         classifications.append("MISSED_CYCLE_AS_COMPLETION")
     if observed["status"] != "VERIFIED_CURRENT":
         missing.append("fresh_execution")
-        if "INSUFFICIENT_CURRENT_EVIDENCE" not in classifications:
-            classifications.append("INSUFFICIENT_CURRENT_EVIDENCE")
+        classifications.append("INSUFFICIENT_CURRENT_EVIDENCE")
     if effect["status"] != "OBSERVED_FOR_CURRENT_EXECUTION":
         missing.append("observed_effect")
-        if "INSUFFICIENT_CURRENT_EVIDENCE" not in classifications:
-            classifications.append("INSUFFICIENT_CURRENT_EVIDENCE")
-    if receipt["authority"]["current"] is not True:
+        classifications.append("INSUFFICIENT_CURRENT_EVIDENCE")
+    if authority["current"] is not True:
         missing.append("current_authority")
         classifications.append("AUTHORITY_INFERENCE")
 
     proposed = receipt["controller_decision"]["decision"] == "PROMOTE"
-    safe = len(classifications) == 0
-    oracle_pass = (not proposed and not safe) or (proposed and not safe)
-
-    if not classifications:
-        classifications.append("STATE_EXECUTION_CONFLATION")
+    safe = not classifications
+    oracle_pass = proposed and not safe
 
     return {
         "oracle": "TTR-06-stale-evidence-v0.1",
