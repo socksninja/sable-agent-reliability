@@ -1,0 +1,56 @@
+name: OpenClaw false-success E2
+
+on:
+  push:
+    paths:
+      - 'experiments/openclaw_false_success_repro_v02.mjs'
+      - '.github/workflows/openclaw-false-success-e2.yml'
+  workflow_dispatch:
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone OpenClaw at affected revision
+        run: |
+          git clone --filter=blob:none https://github.com/openclaw/openclaw.git /tmp/openclaw
+          cd /tmp/openclaw
+          git checkout 0d0e2852b2542c4d128c34d8fc9a1edb2100e1d2
+
+      - name: Install runtime dependencies
+        working-directory: /tmp/openclaw
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
+
+      - name: Run SABLE reproduction
+        run: |
+          node experiments/openclaw_false_success_repro_v02.mjs
+
+      - name: Emit machine-readable receipt
+        if: always()
+        run: |
+          mkdir -p /tmp/sable-receipt
+          cat > /tmp/sable-receipt/openclaw-false-success-e2.json <<EOF
+          {
+            "record_id": "SABLE-FS-0002-E2",
+            "runtime": "OpenClaw",
+            "runtime_revision": "0d0e2852b2542c4d128c34d8fc9a1edb2100e1d2",
+            "sable_commit": "${GITHUB_SHA}",
+            "workflow_run_id": "${GITHUB_RUN_ID}",
+            "workflow_attempt": "${GITHUB_RUN_ATTEMPT}",
+            "reproduction": "experiments/openclaw_false_success_repro_v02.mjs",
+            "expected_unobserved_completion": "unknown",
+            "observed_completion_mapper_result": "succeeded"
+          }
+          EOF
+          cat /tmp/sable-receipt/openclaw-false-success-e2.json
+
+      - name: Upload receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-openclaw-false-success-e2
+          path: /tmp/sable-receipt/openclaw-false-success-e2.json
