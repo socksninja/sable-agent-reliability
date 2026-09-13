@@ -88,6 +88,7 @@ SABLE is designed to be independently checked rather than trusted by default.
 - **Third-party submission:** publish a real runtime trace, tool calls, before/after state hashes, outcome claim, timestamp, collector identity, and integrity digest. See [docs/EXTERNAL_SUBMISSION_QUICKSTART.md](docs/EXTERNAL_SUBMISSION_QUICKSTART.md).
 - **Public reproduction challenge:** [SABLE-002 independent reproduction](https://github.com/socksninja/sable-agent-reliability/issues/48) asks for a concrete reproduce / not-reproduce / taxonomy-correction result.
 - **OpenClaw external cases:** [terminal-truth validation targets](docs/EXTERNAL_CASE_001_OPENCLAW_TERMINAL_TRUTH.md) cover OpenClaw incidents `#141474`, `#97616`, and `#144911`, with explicit evidence gaps and no adoption/reproduction claims.
+- **Completion / deployment truth cases:** [External Case 002](docs/EXTERNAL_CASE_002_COMPLETION_TRUTH.md) records external reliability signals where hosted-green, installed-artifact, target-environment, battery, or repair status do not necessarily establish authoritative completion. These remain external observations until an independent SABLE admission gate is closed.
 
 The goal is not to make a SABLE claim harder to question. The goal is to make it easier for someone else to disprove, reproduce, or strengthen it.
 
@@ -102,6 +103,26 @@ A focused review can produce:
 3. a machine-readable evidence receipt suitable for engineering review.
 
 This can be done as an external design-partner engagement or paid reliability review. No access to proprietary data is required for a minimal reproduction when the failure can be reduced to a synthetic trace.
+
+## Completion truth / execution truth
+
+SABLE also tracks a broader reliability boundary: **when may an automated system legitimately say DONE?**
+
+For deployment-sensitive workflows, the evidence chain may need to be:
+
+```text
+code candidate
+→ test execution
+→ produced artifact
+→ published artifact identity
+→ installed artifact identity
+→ target environment
+→ runtime execution
+→ terminal state
+→ qualification result
+```
+
+A hosted green check, a repaired source tree, or a partial battery is not automatically the same thing as authoritative completion. SABLE treats each boundary as a separate evidence claim.
 
 ## Published runtime reliability finding
 
