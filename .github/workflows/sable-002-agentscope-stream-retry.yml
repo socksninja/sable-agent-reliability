@@ -74,3 +74,4 @@ jobs:
 
 # Trigger-only comment: force a fresh SABLE-002 execution after the compile fix.
 # PR-proof trigger: preserve test logic and create a pull-request execution surface.
+# Evidence gate: run the exact injected reproduction before any public claim.
