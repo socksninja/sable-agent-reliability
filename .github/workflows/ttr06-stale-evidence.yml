@@ -1,0 +1,61 @@
+name: SABLE TTR-06 stale evidence
+
+on:
+  push:
+    paths:
+      - 'experiments/ttr06_stale_evidence_repro.py'
+      - 'tests/test_ttr06_stale_evidence.py'
+      - '.github/workflows/ttr06-stale-evidence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ttr06:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run TTR-06 unit test
+        run: python -m unittest tests/test_ttr06_stale_evidence.py -v
+
+      - name: Run TTR-06 reproduction
+        run: python experiments/ttr06_stale_evidence_repro.py --output artifacts/ttr06-stale-evidence-receipt.json
+
+      - name: Enforce stale-evidence oracle
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          receipt = json.loads(Path('artifacts/ttr06-stale-evidence-receipt.json').read_text(encoding='utf-8'))
+          assert receipt['reproduction']['deterministic'] is True
+          assert receipt['reproduction']['not_benchmark_admitted'] is True
+          assert receipt['cycle']['missed'] is True
+          assert receipt['controller_decision']['decision'] == 'PROMOTE'
+          assert receipt['oracle_result']['controller_proposed_promotion'] is True
+          assert receipt['oracle_result']['promotion_allowed'] is False
+          assert receipt['oracle_result']['prior_checkpoint_usable_for_current_promotion'] is False
+          assert receipt['oracle_result']['oracle_pass'] is True
+          for classification in ('LINEAGE_MISMATCH', 'MISSED_CYCLE_AS_COMPLETION', 'AUTHORITY_INFERENCE'):
+              assert classification in receipt['oracle_result']['classifications']
+          print(json.dumps({
+              'classification': receipt['oracle_result']['classifications'],
+              'oracle_pass': receipt['oracle_result']['oracle_pass'],
+              'controller_decision': receipt['controller_decision']['decision'],
+              'missing_predicates': receipt['oracle_result']['missing_predicates'],
+          }, indent=2))
+          PY
+
+      - name: Upload TTR-06 receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-ttr06-stale-evidence-receipt
+          path: artifacts/ttr06-stale-evidence-receipt.json
+          if-no-files-found: error
