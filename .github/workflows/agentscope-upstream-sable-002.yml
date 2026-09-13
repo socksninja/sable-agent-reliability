@@ -30,7 +30,7 @@ jobs:
           git checkout --quiet 39cd304a7dc400eb3fb2a7daca750162e79bec05
           cp ../experiments/agentscope_stream_retry/SableStreamRetryReproTest.java \
              agentscope-core/src/test/java/io/agentscope/core/model/SableStreamRetryReproTest.java
-          mvn -q -pl agentscope-core -am -Dtest=SableStreamRetryReproTest -Dsurefire.failIfNoSpecifiedTests=false test
+          mvn -q -pl agentscope-core -am -Dspotless.check.skip=true -Dtest=SableStreamRetryReproTest -Dsurefire.failIfNoSpecifiedTests=false test
 
       - name: Verify current fix candidate stops post-emission replay
         shell: bash
@@ -43,4 +43,4 @@ jobs:
           git checkout --quiet 826495a1237513c079cc7263caeeb5f6e9a23242
           cp ../experiments/agentscope_stream_retry/SableStreamRetryFixedReproTest.java \
              agentscope-core/src/test/java/io/agentscope/core/model/SableStreamRetryFixedReproTest.java
-          mvn -q -pl agentscope-core -am -Dtest=SableStreamRetryFixedReproTest -Dsurefire.failIfNoSpecifiedTests=false test
+          mvn -q -pl agentscope-core -am -Dspotless.check.skip=true -Dtest=SableStreamRetryFixedReproTest -Dsurefire.failIfNoSpecifiedTests=false test
