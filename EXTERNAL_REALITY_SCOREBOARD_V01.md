@@ -14,6 +14,12 @@
 | #143334 / subagent completion-delivery mismatch | NEW TARGET | maintainer response or reproducible runtime evidence | request 1–3-case terminal-truth validation; then verify |
 | #101656 / detached subagent liveness + terminal-state mismatch | NEW TARGET | maintainer response or reproducible runtime evidence | request 1–3-case liveness/terminal-state validation; then verify |
 
+## Latest external observation
+
+| UTC date | Actor / project | Event | Evidence | Signal type | Verification | Next action |
+|---|---|---|---|---|---|---|
+| 2026-09-13 | OpenClaw public incident reports | Multiple public runtime incidents expose terminal-truth boundaries around child cleanup, subagent completion delivery, detached-task liveness, and long-running process degradation | `docs/EXTERNAL_CASE_001_OPENCLAW_TERMINAL_TRUTH.md` + public issues #144911/#143334/#101656/#97616 | externally observed problem class | not independently reproduced by SABLE | obtain one inspectable external runtime execution; do not count incident reports as SABLE adoption |
+
 ## External Runtime Target List — v1
 
 The following are **prospects, not adoption**. Their existence in this table never increments a reality counter.
