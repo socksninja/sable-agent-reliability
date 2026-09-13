@@ -31,8 +31,11 @@ jobs:
           pnpm install --frozen-lockfile
 
       - name: Run SABLE reproduction
+        working-directory: /tmp/openclaw
+        env:
+          OPENCLAW_ROOT: /tmp/openclaw
         run: |
-          node experiments/openclaw_false_success_repro_v02.mjs
+          pnpm exec tsx "$GITHUB_WORKSPACE/experiments/openclaw_false_success_repro_v02.mjs"
 
       - name: Emit machine-readable receipt
         if: always()
