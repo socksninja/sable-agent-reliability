@@ -1,0 +1,72 @@
+name: SABLE-001 AgentScope zero-chunk reproduction
+
+on:
+  push:
+    paths:
+      - "experiments/agentscope_zero_chunk/SableZeroChunkReproTest.java"
+      - "docs/evidence/SABLE-001-agentscope-zero-chunk-silent-success.md"
+      - ".github/workflows/agentscope-zero-chunk-repro.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout SABLE
+        uses: actions/checkout@v4
+
+      - name: Checkout AgentScope at cited main revision
+        uses: actions/checkout@v4
+        with:
+          repository: agentscope-ai/agentscope-java
+          ref: 39cd304a7dc400eb3fb2a7daca750162e79bec05
+          path: agentscope-java
+          fetch-depth: 1
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Inject SABLE reproduction test
+        run: |
+          mkdir -p agentscope-java/agentscope-core/src/test/java/io/agentscope/core/model
+          cp experiments/agentscope_zero_chunk/SableZeroChunkReproTest.java \
+            agentscope-java/agentscope-core/src/test/java/io/agentscope/core/model/
+
+      - name: Run SABLE reproduction
+        working-directory: agentscope-java
+        run: |
+          mvn -q -pl agentscope-core -am \
+            -Dtest=SableZeroChunkReproTest \
+            -Dsurefire.failIfNoSpecifiedTests=false test
+
+      - name: Write machine-readable receipt
+        if: always()
+        run: |
+          mkdir -p artifacts
+          cat > artifacts/SABLE-001-receipt.json <<'JSON'
+          {
+            "case_id": "SABLE-001",
+            "runtime": "AgentScope-Java",
+            "revision": "39cd304a7dc400eb3fb2a7daca750162e79bec05",
+            "failure_class": "silent_success_zero_chunk",
+            "boundary": "ModelUtils.applyTimeoutAndRetry",
+            "input": "Flux emits zero ChatResponse elements, equivalent to an HTTP 200 [DONE]-only stream after client filtering",
+            "observed": "empty stream completes normally; retryWhen receives no error signal and does not resubscribe",
+            "expected": "zero-emission should surface an explicit model failure so retry/fallback can engage",
+            "evidence_level": "dynamic code-level reproduction"
+          }
+          JSON
+
+      - name: Upload receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-001-agentscope-zero-chunk-receipt
+          path: artifacts/SABLE-001-receipt.json
