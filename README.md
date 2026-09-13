@@ -80,6 +80,28 @@ public model
 → versioned Reliability Record
 ```
 
+## External verification: use SABLE against your runtime
+
+SABLE is designed to be independently checked rather than trusted by default.
+
+- **10-minute verification:** run an existing agent with a small adapter and submit a machine-readable evidence packet. See [docs/10_MIN_EXTERNAL_VERIFICATION.md](docs/10_MIN_EXTERNAL_VERIFICATION.md).
+- **Third-party submission:** publish a real runtime trace, tool calls, before/after state hashes, outcome claim, timestamp, collector identity, and integrity digest. See [docs/EXTERNAL_SUBMISSION_QUICKSTART.md](docs/EXTERNAL_SUBMISSION_QUICKSTART.md).
+- **Public reproduction challenge:** [SABLE-002 independent reproduction](https://github.com/socksninja/sable-agent-reliability/issues/48) asks for a concrete reproduce / not-reproduce / taxonomy-correction result.
+
+The goal is not to make a SABLE claim harder to question. The goal is to make it easier for someone else to disprove, reproduce, or strengthen it.
+
+## Reliability reviews for real agent systems
+
+Teams with a concrete runtime failure, reliability incident, or uncertain execution claim can bring the real trace or minimal reproducer to SABLE.
+
+A focused review can produce:
+
+1. a minimal reproduction or non-reproduction result,
+2. a failure classification with explicit evidence boundaries, and
+3. a machine-readable evidence receipt suitable for engineering review.
+
+This can be done as an external design-partner engagement or paid reliability review. No access to proprietary data is required for a minimal reproduction when the failure can be reduced to a synthetic trace.
+
 ## Published runtime reliability finding
 
 SABLE now publishes dynamically reproduced runtime failures as evidence records. The first combined finding covers two distinct streaming failure modes: silent zero-chunk completion and duplicate delivery after mid-stream retry.
