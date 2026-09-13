@@ -1,0 +1,59 @@
+name: OpenClaw false-success reproduction
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "experiments/openclaw_false_success_repro_v02.mjs"
+      - ".github/workflows/openclaw-false-success-repro.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout SABLE
+        uses: actions/checkout@v4
+
+      - name: Checkout OpenClaw at evidence revision
+        uses: actions/checkout@v4
+        with:
+          repository: openclaw/openclaw
+          ref: 0d0e2852b2542c4d128c34d8fc9a1edb2100e1d2
+          path: openclaw
+          fetch-depth: 1
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install OpenClaw dependencies
+        working-directory: openclaw
+        run: npm ci
+
+      - name: Run SABLE reproduction
+        run: node experiments/openclaw_false_success_repro_v02.mjs
+
+      - name: Write reproduction receipt
+        run: |
+          mkdir -p artifacts
+          cat > artifacts/openclaw_false_success_receipt.json <<'JSON'
+          {
+            "case_id": "SABLE-FS-0002",
+            "runtime": "OpenClaw",
+            "openclaw_revision": "0d0e2852b2542c4d128c34d8fc9a1edb2100e1d2",
+            "harness": "experiments/openclaw_false_success_repro_v02.mjs",
+            "expected": "unknown",
+            "observed": "succeeded",
+            "interpretation": "Static completion-policy reproduction: an ok run with no required delivery is admitted as succeeded. This establishes the false-success mapping boundary, not a full live agent execution reproduction."
+          }
+          JSON
+
+      - name: Upload receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: openclaw-false-success-receipt
+          path: artifacts/openclaw_false_success_receipt.json
