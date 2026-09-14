@@ -1,0 +1,50 @@
+{
+  "schema_version": "sable.reliability_record.v0.1",
+  "record_id": "codex-44088-adapter-runtime-91af6a6",
+  "generated_at": "2026-09-14T16:06:46Z",
+  "benchmark": "Codex #44088 Windows pathlib adapter-runtime evidence",
+  "model": "Codex Desktop (operator invocation; provider identity not attested)",
+  "runtime": {
+    "server": "Codex Desktop Windows host via adapter-declared runtime identity",
+    "transport": "Python SableCapture adapter -> PowerShell/Python pathlib child process"
+  },
+  "n": 1,
+  "native_tool_call_rate": 1.0,
+  "task_success_rate": 1.0,
+  "task_successes": 1,
+  "model_errors": 0,
+  "environment_mutations": 2,
+  "task_results": [
+    {
+      "task_id": "codex-pathlib-62b2170a5baa42de8fb615386d32bfe7",
+      "task_success": true,
+      "tool_call_count": 1,
+      "native_tool_call": true,
+      "observed_environment": {
+        "before_state_hash": "66b0fe098c37d40a540b6e42ddc38d06073c0d378f4ab10489ea321a9e07918c",
+        "after_state_hash": "eca7301df436194069c2a64a66bf3ea1e084b1e56fc35e30d8071515f3f22cea",
+        "existing_file_modified": true,
+        "created_file_created": true,
+        "git_status_verified": true,
+        "project_scope": "temporary repository outside selected real project"
+      },
+      "agent_action_outcome": "Environment mutation independently reconstructed from saved bytes and Git status; upstream v0.9 validator accepted the saved trace."
+    }
+  ],
+  "provenance": {
+    "source": "GitHub Actions",
+    "run_id": 34866514927,
+    "job_id": 104051594776,
+    "repository": "zhangzexin/codex-44088-sable-evidence",
+    "commit": "91af6a603a152d1268ed6d191f1cfa715b0b0eb9",
+    "attestation_status": "validation_of_recorded_local_execution",
+    "provider_attestation": false,
+    "execution_timestamp_attestation": false,
+    "provenance_scope": "GitHub Actions validates a previously captured local Windows execution; it did not execute Codex Desktop"
+  },
+  "artifact": {
+    "name": "recorded-windows-sable-evidence",
+    "artifact_id": 10357271465,
+    "sha256": "9368c6da0f58eba6c336d01ce10aa364b02ae6e4ea7cc6409d10c91d2b30765d"
+  }
+}
