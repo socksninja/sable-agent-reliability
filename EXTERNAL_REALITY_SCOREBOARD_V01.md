@@ -15,11 +15,13 @@
 | #137332 | EXTERNAL DATA RECEIVED / VERIFY | complete receipt, reproducible runtime result, maintainer confirmation | verify/cross-check → archive → update public record |
 | #143334 / subagent completion-delivery mismatch | NEW TARGET | maintainer response or reproducible runtime evidence | request 1–3-case terminal-truth validation; then verify |
 | #101656 / detached subagent liveness + terminal-state mismatch | NEW TARGET | maintainer response or reproducible runtime evidence | request 1–3-case liveness/terminal-state validation; then verify |
+| Chase Sets #6732 / PR #7836 | EXTERNAL CASE / VERIFY | reproducible runtime execution with effect-state readback | reproduce one ambiguous concurrent cancellation case; compare terminal classification vs external state |
 
 ## Latest external observations
 
 | UTC date | Actor / project | Event | Evidence | Signal type | Verification | Next action |
 |---|---|---|---|---|---|---|
+| 2026-09-15 | Chase Sets / #6732 / PR #7836 | Public repair case for concurrent cancellation convergence; classifier distinguishes `[409,200]` / `[200,409]` from `[200,200]` and requires post-write reconciliation rather than completion-order inference | `EXTERNAL_CASE_CHASE_7836_EFFECT_CONVERGENCE_V01.md` + public PR #7836 | public incident / repair case | E0/E1; public control evidence, not SABLE reproduction | reproduce one bounded effect-convergence case with independent external-state readback |
 | 2026-09-14 | giskard09 / crewAI #5802 | Real crewAI 1.15.21 retry engine executed externally; persistent post-effect exception produced 6 independently read effects; same boundary with idempotency-ref-v1 guard produced 1 | `EXTERNAL_REPRODUCTION_CREWAI_5802.md` + external `receipt.json` | independent external execution | machine-readable receipt; fresh SQLite readback; live rerun; artifact anchored on Base | preserve evidence; seek maintainer-level response or repeat execution, not benchmark expansion |
 | 2026-09-13 | OpenClaw public incident reports | Multiple public runtime incidents expose terminal-truth boundaries around child cleanup, subagent completion delivery, detached-task liveness, and long-running process degradation | `docs/EXTERNAL_CASE_001_OPENCLAW_TERMINAL_TRUTH.md` + public issues #144911/#143334/#101656/#97616 | externally observed problem class | not independently reproduced by SABLE | obtain one inspectable external runtime execution; do not count incident reports as SABLE adoption |
 
@@ -35,6 +37,7 @@ The following are **prospects, not adoption**. Their existence in this table nev
 | OpenClaw #143334 | task registry can say `succeeded` while completion delivery is pending/failed and requester is effectively deadlocked | compare authoritative task outcome, delivery state, requester state | outreach target |
 | OpenClaw #101656 | detached child can be running, waiting, failed, or dead while user-facing channel sees only silence; reported trajectory/state mismatch | verify liveness + terminal outcome from runtime state, not model report | outreach target |
 | OpenClaw #97616 | long-running tool/hook subprocess leak degrades runtime despite nominal health for a period | execute bounded workload → verify process/runtime state over time | outreach target |
+| Chase Sets #6732 / PR #7836 | concurrent external-effect calls can return conflicting statuses while desired state still converges; completion order is not authoritative | reproduce `[409,200]` and `[200,409]` with an external-state oracle; require identical convergence semantics | newly added external case; not independently reproduced |
 
 ### Targeting rule
 
@@ -124,4 +127,4 @@ When a new event arrives, append one row with:
 
 Then update the counters above **only after verification**.
 
-_Last updated: 2026-09-14._
+_Last updated: 2026-09-15._
