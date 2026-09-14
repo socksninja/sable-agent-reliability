@@ -5,6 +5,10 @@ on:
     paths:
       - 'evidence/marsha-311-recorded-execution-v01.json'
       - '.github/workflows/verify-marsha-311-evidence.yml'
+  pull_request:
+    paths:
+      - 'evidence/marsha-311-recorded-execution-v01.json'
+      - '.github/workflows/verify-marsha-311-evidence.yml'
 
 permissions:
   contents: read
@@ -15,40 +19,25 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
-
       - name: Verify public source PR and recorded evidence
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python - <<'PY'
-          import json
-          import subprocess
+          import json, subprocess
           from pathlib import Path
-
           record = json.loads(Path('evidence/marsha-311-recorded-execution-v01.json').read_text())['recorded_execution']
-          pr = subprocess.check_output([
-              'gh','api','repos/ZedBiz44/ZedBiz-openclaw-ai-agents-vps1-vps2/pulls/337'
-          ], text=True)
-          pr = json.loads(pr)
+          pr = json.loads(subprocess.check_output(['gh','api','repos/ZedBiz44/ZedBiz-openclaw-ai-agents-vps1-vps2/pulls/337'], text=True))
           body = pr.get('body','')
-          required = [
-              '17,278 memories',
-              '584 documents',
-              'five banks',
-              'nine summaries',
-              'Marsha\'s real recall',
-              'full encrypted-backup restore passed',
-              'Backups are currently VPS1-local'
-          ]
+          required = ['17,278 memories','584 documents','five banks','nine summaries',"Marsha's real recall",'full encrypted-backup restore passed','Backups are currently VPS1-local']
           missing = [x for x in required if x not in body]
-          assert pr['state'] == 'open', pr['state']
-          assert pr['head']['sha'] == '534ad0570c479505f6acb0a8518a9ec9f72a7b5d', pr['head']['sha']
+          assert pr['state'] == 'open'
+          assert pr['head']['sha'] == '534ad0570c479505f6acb0a8518a9ec9f72a7b5d'
           assert not missing, missing
           assert record['agent_receipt']['agent_run_id'] == 'ea38eebb-6f1e-499c-9c3d-e73d5fa9fb3f'
           assert record['upstream_digest'].startswith('sha256:3edcb616')
           print('Recorded Marsha execution evidence matches public PR #337 and pinned source details.')
           PY
-
       - name: Build immutable evidence bundle
         run: |
           mkdir -p evidence-bundle
@@ -56,7 +45,6 @@ jobs:
           sha256sum evidence-bundle/record.json | tee evidence-bundle/record.json.sha256
           printf '%s\n' '${{ github.sha }}' > evidence-bundle/validation_commit.txt
           printf '%s\n' '${{ github.run_id }}' > evidence-bundle/validation_run_id.txt
-
       - name: Upload immutable evidence bundle
         uses: actions/upload-artifact@v7
         with:
