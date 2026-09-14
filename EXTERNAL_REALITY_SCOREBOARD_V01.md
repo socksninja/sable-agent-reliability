@@ -8,16 +8,19 @@
 
 | Target | Current state | Next valid signal | Action on signal |
 |---|---|---|---|
+| CrewAI #5802 | VERIFIED EXTERNAL REPRODUCTION | independent follow-up, runtime maintainer response, or repeat use | preserve receipt; pursue one bounded follow-up, no benchmark expansion |
+| Langfuse #17377 | OUTREACH / RESPONSE PENDING | maintainer reply or real execution receipt | offer one concrete cross-runtime evidence test |
 | #97616 / ClawSweeper review | WAITING | maintainer/reviewer result, receipt, runtime evidence | verify → archive → update public record |
 | #144911 / MCP init-timeout crash | RECEIPT REQUESTED | receipt / machine-readable evidence / maintainer confirmation | verify → archive → update public record |
 | #137332 | EXTERNAL DATA RECEIVED / VERIFY | complete receipt, reproducible runtime result, maintainer confirmation | verify/cross-check → archive → update public record |
 | #143334 / subagent completion-delivery mismatch | NEW TARGET | maintainer response or reproducible runtime evidence | request 1–3-case terminal-truth validation; then verify |
 | #101656 / detached subagent liveness + terminal-state mismatch | NEW TARGET | maintainer response or reproducible runtime evidence | request 1–3-case liveness/terminal-state validation; then verify |
 
-## Latest external observation
+## Latest external observations
 
 | UTC date | Actor / project | Event | Evidence | Signal type | Verification | Next action |
 |---|---|---|---|---|---|---|
+| 2026-09-14 | giskard09 / crewAI #5802 | Real crewAI 1.15.21 retry engine executed externally; persistent post-effect exception produced 6 independently read effects; same boundary with idempotency-ref-v1 guard produced 1 | `EXTERNAL_REPRODUCTION_CREWAI_5802.md` + external `receipt.json` | independent external execution | machine-readable receipt; fresh SQLite readback; live rerun; artifact anchored on Base | preserve evidence; seek maintainer-level response or repeat execution, not benchmark expansion |
 | 2026-09-13 | OpenClaw public incident reports | Multiple public runtime incidents expose terminal-truth boundaries around child cleanup, subagent completion delivery, detached-task liveness, and long-running process degradation | `docs/EXTERNAL_CASE_001_OPENCLAW_TERMINAL_TRUTH.md` + public issues #144911/#143334/#101656/#97616 | externally observed problem class | not independently reproduced by SABLE | obtain one inspectable external runtime execution; do not count incident reports as SABLE adoption |
 
 ## External Runtime Target List — v1
@@ -26,6 +29,8 @@ The following are **prospects, not adoption**. Their existence in this table nev
 
 | Project / issue | Why it matters to SABLE | Best validation wedge | Status |
 |---|---|---|---|
+| CrewAI #5802 | real retry-layer composition can amplify committed side effects before result registration | rerun one bounded real-runtime case and compare independent effect readback | evidence obtained; maintainer-level response pending |
+| Langfuse #17377 | existing trace/eval infrastructure creates a natural telemetry→evidence interoperability boundary | one real non-sensitive run + compact public receipt | outreach sent; response pending |
 | OpenClaw #144911 | MCP initialization timeout causes cleanup failure and Gateway crash; explicit observable terminal boundary | reproduce timeout → verify expected contained state vs crash state | outreach target |
 | OpenClaw #143334 | task registry can say `succeeded` while completion delivery is pending/failed and requester is effectively deadlocked | compare authoritative task outcome, delivery state, requester state | outreach target |
 | OpenClaw #101656 | detached child can be running, waiting, failed, or dead while user-facing channel sees only silence; reported trajectory/state mismatch | verify liveness + terminal outcome from runtime state, not model report | outreach target |
@@ -47,11 +52,11 @@ Do **not** ask for a generic "try my benchmark". Ask for one concrete failure-cl
 
 | Metric | Current | Rule |
 |---|---:|---|
-| External Runtime Users | 0 confirmed in this scoreboard | count only independently maintained external runtimes |
-| Third-party Runs | 0 formally admitted here | count only inspectable executions |
-| Verified Receipts | 0 formally admitted here | receipt must be independently attributable and checkable |
-| Maintainer Confirmations | 0 formally admitted here | confirmation must come from the external project owner/maintainer |
-| Machine-readable Evidence | 0 formally admitted here | artifact must be inspectable and linked to the run |
+| External Runtime Users | 1 confirmed | count only external actors who executed a real runtime under the evidence path |
+| Third-party Runs | 1 formally admitted | count only inspectable executions |
+| Verified Receipts | 1 formally admitted | receipt must be independently attributable and checkable |
+| Maintainer Confirmations | 0 formally admitted | confirmation must come from the external project owner/maintainer |
+| Machine-readable Evidence | 1 formally admitted | artifact must be inspectable and linked to the run |
 | Repeat Usage | 0 confirmed | same external actor/runtime uses SABLE evidence path again |
 | Inbound Requests | 0 confirmed | unsolicited request for evaluation, evidence, integration, or collaboration |
 | Revenue | 0 | cash actually received |
@@ -119,4 +124,4 @@ When a new event arrives, append one row with:
 
 Then update the counters above **only after verification**.
 
-_Last updated: 2026-09-13._
+_Last updated: 2026-09-14._
