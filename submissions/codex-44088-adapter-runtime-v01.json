@@ -1,7 +1,7 @@
 {
   "schema_version": "sable.reliability_record.v0.1",
   "record_id": "codex-44088-adapter-runtime-91af6a6",
-  "generated_at": "2026-09-15T00:00:00Z",
+  "generated_at": "2026-09-14T16:06:46Z",
   "benchmark": "Codex #44088 Windows pathlib adapter-runtime evidence",
   "model": "Codex Desktop (operator invocation; provider identity not attested)",
   "runtime": {
@@ -34,7 +34,7 @@
   "provenance": {
     "source": "GitHub Actions",
     "run_id": 34866514927,
-    "job_id": 0,
+    "job_id": 104051594776,
     "repository": "zhangzexin/codex-44088-sable-evidence",
     "commit": "91af6a603a152d1268ed6d191f1cfa715b0b0eb9",
     "attestation_status": "adapter_declared_runtime_identity_only",
@@ -42,8 +42,8 @@
     "execution_timestamp_attestation": false
   },
   "artifact": {
-    "name": "10357271465",
+    "name": "recorded-windows-sable-evidence",
     "artifact_id": 10357271465,
-    "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    "sha256": "9368c6da0f58eba6c336d01ce10aa364b02ae6e4ea7cc6409d10c91d2b30765d"
   }
 }
