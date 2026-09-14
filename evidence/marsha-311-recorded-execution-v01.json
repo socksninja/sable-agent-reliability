@@ -1,0 +1,17 @@
+{
+  "recorded_execution": {
+    "source_issue": "https://github.com/ZedBiz44/ZedBiz-openclaw-ai-agents-vps1-vps2/issues/311",
+    "source_pr": "https://github.com/ZedBiz44/ZedBiz-openclaw-ai-agents-vps1-vps2/pull/337",
+    "execution_date": "2026-09-14",
+    "runtime": "OpenClaw Marsha agent on VPS1 with Hindsight 0.10.0",
+    "provider_component": "zedbiz/hindsight:0.10.0-flashrank-20260914",
+    "upstream_digest": "sha256:3edcb6165cefdeaa6721dd0fce43cfd13b7a9c346ce0d2c5f4b4bf7bc3c8ac0b",
+    "database": "PostgreSQL 18.6/pgvector with fsync, full_page_writes and synchronous_commit enabled",
+    "migration_head": "f3a5b7c9d1e2",
+    "preserved_counts": {"memory_units":17278,"documents":584,"banks":5,"mental_models":9},
+    "agent_receipt": {"agent":"Marsha","agent_run_id":"ea38eebb-6f1e-499c-9c3d-e73d5fa9fb3f","turn_id":"01a0a109-1461-79e1-aeb9-e6998afa3f79","tool":"agent_knowledge_recall","results":23},
+    "backup_restore": {"artifact":"hindsight-20260914T174846Z.dump.enc","restore_verified":true,"restored_memory_units":17278,"restored_documents":584,"restored_models":9},
+    "limits": ["backup copies are VPS1-local only","no off-server disaster-recovery copy verified","production upgrade is verified but long-term load/performance is not established"],
+    "provenance_scope": "validation_of_recorded_local_vps_execution; this repository does not claim GitHub Actions executed the original production upgrade"
+  }
+}
