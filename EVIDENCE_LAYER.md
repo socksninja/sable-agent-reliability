@@ -14,6 +14,14 @@ SABLE has normalized inspectable executions from **LangGraph 1.2.11** and **Crew
 
 See [`CROSS_RUNTIME_EVIDENCE_MATRIX_V10.md`](CROSS_RUNTIME_EVIDENCE_MATRIX_V10.md).
 
+### Independent external runtime reproduction
+
+A third party has now run the UNGUARDED_RETRY case against the real, unmocked **CrewAI 1.15.21** retry engine and published a machine-readable receipt. The reproduction independently read side effects from fresh SQLite connections rather than trusting CrewAI's reported runtime outcome. The unguarded case produced six committed effects; the same failure point with an idempotency-ref-v1 guard produced one.
+
+A second independent CrewAI execution path in the same issue establishes a two-effect outer-retry case, giving adjacent coverage of the composed retry vectors rather than a single synthetic fixture.
+
+See [`EXTERNAL_REPRODUCTION_CREWAI_5802.md`](EXTERNAL_REPRODUCTION_CREWAI_5802.md).
+
 ### Externally observed reliability boundaries
 
 Public runtime incidents are being tracked as **external signals**, not converted into SABLE adoption claims. Current examples cover MCP initialization/cleanup failure, completion delivery mismatch, detached subagent liveness, and long-running subprocess degradation.
