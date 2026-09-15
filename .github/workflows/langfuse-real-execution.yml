@@ -1,0 +1,32 @@
+name: SABLE real Langfuse execution
+on:
+  push:
+    paths:
+      - 'integrations/langfuse/sable_langfuse_execution.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+jobs:
+  real-execution:
+    runs-on: ubuntu-latest
+    env:
+      LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+      LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+      LANGFUSE_BASE_URL: ${{ secrets.LANGFUSE_BASE_URL }}
+      SABLE_EXTERNAL_ISSUE: '63'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check 'langfuse>=4,<5'
+      - name: Run real execution
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python integrations/langfuse/sable_langfuse_execution.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sable-langfuse-reliability-record
+          path: artifacts/sable-langfuse-reliability-record.json
+          if-no-files-found: error
