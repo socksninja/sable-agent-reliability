@@ -1,0 +1,39 @@
+{
+  "schema": "sable.verification.execution-manifest.v1",
+  "status": "VERIFIED",
+  "source": {
+    "runtime": "crewai",
+    "experiment": "crewai_retry",
+    "receipt_id": "cp1_a7376a114c8eeb06eb7042039a8557b00630fde0cf946788d8be9a2cdd22541d"
+  },
+  "verification": {
+    "workflow_name": "Verify Crashpoint External Evidence",
+    "workflow_path": ".github/workflows/verify-crashpoint-external-evidence.yml",
+    "run_id": 34999721163,
+    "run_url": "https://github.com/socksninja/sable-agent-reliability/actions/runs/34999721163",
+    "run_event": "push",
+    "run_conclusion": "success",
+    "job_id": 104484821580,
+    "job_name": "verify",
+    "job_conclusion": "success",
+    "head_sha": "3183628f0c486da1c821af1cfbb6198c3fa6bfaa",
+    "artifact": {
+      "id": 10409002696,
+      "name": "crashpoint-external-verification",
+      "api_url": "https://api.github.com/repos/socksninja/sable-agent-reliability/actions/artifacts/10409002696",
+      "digest": "sha256:0e4affa98c81effc5987b654083d048f245ed6ab8e9db18e23cb5992b26c990c",
+      "expired": false
+    }
+  },
+  "result": {
+    "verifier_status": "PASS",
+    "verifier_output_sha256": "952b0bec67bf4054761dbe04cbec66a1f960afd92217a37a551fc387c5ae9618",
+    "cases": {
+      "clean": {"k": 30, "classification": "EXACTLY_ONCE", "effect_count": 1},
+      "pre_effect": {"k": 30, "classification": "EXACTLY_ONCE", "effect_count": 1},
+      "post_effect": {"k": 30, "classification": "DUPLICATED", "effect_count": 2}
+    },
+    "limitations_preserved": true
+  },
+  "claim": "This manifest binds the SABLE verifier result to a real GitHub Actions run, a successful job, the exact source commit, and a non-expired artifact with a GitHub-reported SHA-256 digest. It is an execution evidence record, not an RNCP receipt and not a claim of CrewAI endorsement."
+}
