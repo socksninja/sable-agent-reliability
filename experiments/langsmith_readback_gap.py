@@ -50,12 +50,17 @@ def main() -> None:
     update_accepted_at = now_iso()
 
     observations: list[dict] = []
+    api = client._get_langsmith_api_sync()
     for delay in READ_DELAYS_SECONDS:
         if delay:
             time.sleep(delay)
         observed_at = now_iso()
         try:
-            recorded = client.runs.retrieve(run_id, project_id=project_id)
+            recorded = api.runs.retrieve_v2(
+                run_id=str(run_id),
+                project_id=project_id,
+                selects=["ID"],
+            )
             observations.append(
                 {
                     "delay_seconds": delay,
