@@ -65,7 +65,12 @@ def replay_task(task: dict, row: dict) -> dict:
 
 def main() -> None:
     ap=argparse.ArgumentParser(); ap.add_argument("--tasks",required=True); ap.add_argument("--results",required=True); ap.add_argument("--report",required=True); ap.add_argument("--replay",action="store_true"); args=ap.parse_args()
-    tasks={t["task_id"]:t for t in json.loads(Path(args.tasks).read_text())}
+    raw_tasks=json.loads(Path(args.tasks).read_text())
+    if isinstance(raw_tasks, dict):
+        raw_tasks=[raw_tasks]
+    if not isinstance(raw_tasks, list):
+        raise TypeError("tasks JSON must be an object or array of objects")
+    tasks={t["task_id"]:t for t in raw_tasks}
     rows=[json.loads(line) for line in Path(args.results).read_text().splitlines() if line.strip()]
     report=evaluate(rows)
     if args.replay:

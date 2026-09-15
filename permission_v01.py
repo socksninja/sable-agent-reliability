@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 
-def decide(row: dict) -> dict:
+def decide(row: dict, report: dict | None = None) -> dict:
     env = row.get("environment", {})
     integrity = row.get("integrity", {})
     steps = row.get("steps", [])
@@ -26,7 +26,12 @@ def decide(row: dict) -> dict:
     if integrity.get("agent_controlled_tool_result") is not False:
         reasons.append("tool_result_control_not_excluded")
 
-    # Require every observed step to be successful and preserve a state hash transition.
+    if report is not None:
+        if report.get("pass_rate") != 1.0:
+            reasons.append("evaluation_not_fully_passed")
+        if report.get("replay_match_rate") != 1.0:
+            reasons.append("replay_not_fully_verified")
+
     for i, step in enumerate(steps, start=1):
         obs = step.get("observed_result", {})
         if obs.get("ok") is not True:
@@ -48,12 +53,25 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--report")
     args = parser.parse_args()
 
-    rows = [json.loads(line) for line in Path(args.input).read_text(encoding="utf-8").splitlines() if line.strip()]
-    decisions = [decide(row) for row in rows]
-    Path(args.output).write_text("\n".join(json.dumps(d, ensure_ascii=False, sort_keys=True) for d in decisions) + "\n", encoding="utf-8")
-    print(json.dumps({"count": len(decisions), "allow": sum(d["decision"] == "ALLOW" for d in decisions), "deny": sum(d["decision"] == "DENY" for d in decisions)}, indent=2))
+    rows = [
+        json.loads(line)
+        for line in Path(args.input).read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    report = json.loads(Path(args.report).read_text(encoding="utf-8")) if args.report else None
+    decisions = [decide(row, report) for row in rows]
+    Path(args.output).write_text(
+        "\n".join(json.dumps(d, ensure_ascii=False, sort_keys=True) for d in decisions) + "\n",
+        encoding="utf-8",
+    )
+    print(json.dumps({
+        "count": len(decisions),
+        "allow": sum(d["decision"] == "ALLOW" for d in decisions),
+        "deny": sum(d["decision"] == "DENY" for d in decisions),
+    }, indent=2))
 
 
 if __name__ == "__main__":
