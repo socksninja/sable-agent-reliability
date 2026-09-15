@@ -1,0 +1,80 @@
+name: Admit External Run Provenance
+
+on:
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  INTAKE_ISSUE: '70'
+
+jobs:
+  verify:
+    if: github.event.issue.number == 70 && contains(github.event.comment.body, 'run_url:')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Extract submission metadata
+        id: submission
+        shell: bash
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          python - <<'PY'
+          import os, re
+          body = os.environ['COMMENT_BODY']
+          def field(name):
+              m = re.search(rf'^\\s*{re.escape(name)}\\s*:\\s*(.+?)\\s*$', body, re.MULTILINE)
+              return m.group(1) if m else ''
+          run_url = field('run_url')
+          if not run_url:
+              raise SystemExit('missing run_url')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:
+              for key, value in [('run_url', run_url), ('runtime', field('runtime')), ('model', field('model')), ('execution_context', field('execution_context'))]:
+                  f.write(f'{key}<<EOF\\n{value}\\nEOF\\n')
+          PY
+
+      - name: Verify public run provenance
+        env:
+          RUN_URL: ${{ steps.submission.outputs.run_url }}
+          RUNTIME: ${{ steps.submission.outputs.runtime }}
+          MODEL: ${{ steps.submission.outputs.model }}
+          EXECUTION_CONTEXT: ${{ steps.submission.outputs.execution_context }}
+        run: |
+          python scripts/verify_external_run_provenance.py "$RUN_URL" \
+            --runtime "$RUNTIME" \
+            --model "$MODEL" \
+            --execution-context "$EXECUTION_CONTEXT" \
+            | tee external-run-provenance.json
+
+      - name: Upload machine-verifiable admission record
+        uses: actions/upload-artifact@v4
+        with:
+          name: external-run-provenance
+          path: external-run-provenance.json
+
+      - name: Publish verification result
+        uses: actions/github-script@v7
+        env:
+          RUN_URL: ${{ steps.submission.outputs.run_url }}
+        with:
+          script: |
+            const body = [
+              '### SABLE external-run provenance: PASS',
+              '',
+              `Run: ${process.env.RUN_URL}`,
+              '',
+              'SABLE independently verified the public workflow run, successful job provenance, and non-expired uploaded artifact metadata.',
+              'This verifies execution provenance and artifact reachability only; it does not by itself establish reliability semantics or production safety.',
+              '',
+              `Workflow execution: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            ].join('\\n');
+            await github.rest.issues.createComment({owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body});
