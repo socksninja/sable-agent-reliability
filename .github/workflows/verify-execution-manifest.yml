@@ -1,0 +1,33 @@
+name: Verify Execution Manifest
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "records/external/crashpoint/verification-execution-20260915.json"
+      - "scripts/verify_execution_manifest.py"
+      - ".github/workflows/verify-execution-manifest.yml"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  verify-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify execution manifest against GitHub
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python scripts/verify_execution_manifest.py records/external/crashpoint/verification-execution-20260915.json | tee execution-manifest-verification.json
+      - name: Upload machine verification
+        uses: actions/upload-artifact@v4
+        with:
+          name: crashpoint-execution-manifest-verification
+          path: execution-manifest-verification.json
