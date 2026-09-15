@@ -1,0 +1,31 @@
+{
+  "schema_version": "sable.reliability_record.v0.1",
+  "model": {"provider": "", "name": "", "version": ""},
+  "runtime": {"name": "", "version": ""},
+  "benchmark": {"name": "design-partner-one-run", "corpus_size": 1},
+  "native_tool_call_rate": 1.0,
+  "task_success_rate": 1.0,
+  "task_successes": 1,
+  "model_errors": 0,
+  "observed_environment_mutations": 1,
+  "provenance": {
+    "source": "GitHub Actions",
+    "repository": "",
+    "run_id": 0,
+    "job_id": 0,
+    "commit": "",
+    "artifact_name": "",
+    "artifact_id": 0,
+    "artifact_sha256": ""
+  },
+  "task_results": [
+    {
+      "task_id": "design-partner-01",
+      "expected_state": "",
+      "observed_state": "",
+      "tool_executed": true,
+      "native_transport": true,
+      "task_check_pass": true
+    }
+  ]
+}
