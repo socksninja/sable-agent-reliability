@@ -2,6 +2,11 @@ name: Verify Crashpoint External Evidence
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - "scripts/verify_crashpoint_receipt.py"
+      - "docs/EXTERNAL_EXPERIMENT_ADAPTER_CRASHPOINT_V01.md"
+      - ".github/workflows/verify-crashpoint-external-evidence.yml"
 
 jobs:
   verify:
