@@ -15,17 +15,25 @@ MARKER = f"SABLE-LANGFUSE-REAL-EXECUTION-V1:{RUN_ID}"
 
 
 def sha256_json(value):
-    payload = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    payload = json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode()
     return hashlib.sha256(payload).hexdigest()
 
 
 def gh_api(path, method="GET", body=None):
     token = os.environ["GITHUB_TOKEN"]
     cmd = [
-        "curl", "-fsS", "-X", method,
-        "-H", f"Authorization: Bearer {token}",
-        "-H", "Accept: application/vnd.github+json",
-        "-H", "X-GitHub-Api-Version: 2022-11-28",
+        "curl",
+        "-fsS",
+        "-X",
+        method,
+        "-H",
+        f"Authorization: Bearer {token}",
+        "-H",
+        "Accept: application/vnd.github+json",
+        "-H",
+        "X-GitHub-Api-Version: 2022-11-28",
     ]
     if body is not None:
         cmd += ["-H", "Content-Type: application/json", "-d", json.dumps(body)]
@@ -34,8 +42,12 @@ def gh_api(path, method="GET", body=None):
 
 
 def main():
-    if not os.environ.get("LANGFUSE_SECRET_KEY") or not os.environ.get("LANGFUSE_PUBLIC_KEY"):
-        raise RuntimeError("LANGFUSE credentials are not configured; refusing to create a non-Langfuse execution")
+    if not os.environ.get("LANGFUSE_SECRET_KEY") or not os.environ.get(
+        "LANGFUSE_PUBLIC_KEY"
+    ):
+        raise RuntimeError(
+            "LANGFUSE credentials are not configured; refusing to create a non-Langfuse execution"
+        )
 
     lf = get_client()
     started = datetime.now(timezone.utc)
@@ -49,7 +61,7 @@ def main():
     }
 
     with lf.start_as_current_observation(
-        as_type="span",
+        as_type="agent",
         name="sable-real-agent-execution",
         input={"task": "Perform one harmless externally readable tool action"},
         trace_context={"trace_id": trace_id},
@@ -57,7 +69,12 @@ def main():
         with propagate_attributes(
             trace_name="sable-real-agent-execution",
             session_id=f"github-actions:{RUN_ID}",
-            metadata={"runtime": "github-actions", "proof_layer": "sable", "commit": COMMIT},
+            metadata={
+                "runtime": "github-actions",
+                "proof_layer": "sable",
+                "commit": COMMIT,
+                "evidence_schema": "sable.reliability_record.v0.9",
+            },
             tags=["sable", "langfuse", "external-effect", "otel"],
         ):
             effect_text = (
@@ -67,8 +84,8 @@ def main():
                 "the Langfuse trace records the same execution."
             )
             with lf.start_as_current_observation(
-                as_type="span",
-                name="github-tool:create-issue-comment",
+                as_type="tool",
+                name="github-create-issue-comment",
                 input=tool_input,
             ) as tool_span:
                 created = gh_api(
@@ -78,7 +95,12 @@ def main():
                 )
                 comment_id = created["id"]
                 comment_url = created["html_url"]
-                tool_span.update(output={"comment_id": comment_id, "comment_url": comment_url})
+                tool_span.update(
+                    output={
+                        "comment_id": comment_id,
+                        "comment_url": comment_url,
+                    }
+                )
 
             observed = gh_api(f"/repos/{REPO}/issues/comments/{comment_id}")
             final_state = {
@@ -89,27 +111,31 @@ def main():
                 "user": observed["user"]["login"],
             }
             final_state_hash = sha256_json(final_state)
-            root.update(output={
-                "task_success": True,
-                "effect_verified": observed["body"] == effect_text,
-                "external_effect_id": str(comment_id),
-                "external_effect_url": comment_url,
-                "final_state_sha256": final_state_hash,
-            })
+            effect_verified = observed["body"] == effect_text
+            root.update(
+                output={
+                    "task_success": True,
+                    "effect_verified": effect_verified,
+                    "external_effect_id": str(comment_id),
+                    "external_effect_url": comment_url,
+                    "final_state_sha256": final_state_hash,
+                }
+            )
             root.set_trace_as_public()
 
+    trace_url = lf.get_trace_url(trace_id=trace_id)
     lf.flush()
     finished = datetime.now(timezone.utc)
     receipt = {
         "schema": "sable.reliability_record.v0.9",
-        "status": "EVIDENCE_REACHABLE",
+        "status": "EVIDENCE_REACHABLE" if effect_verified else "STRUCTURALLY_VALID",
         "runtime": "langfuse-python-sdk-v4",
         "telemetry": "OpenTelemetry-backed Langfuse SDK",
         "repository": REPO,
         "commit_sha": COMMIT,
         "github_actions_run_id": RUN_ID,
         "trace_id": trace_id,
-        "trace_url": lf.get_trace_url(trace_id=trace_id),
+        "trace_url": trace_url,
         "started_at": started.isoformat(),
         "finished_at": finished.isoformat(),
         "task_success": True,
@@ -126,7 +152,9 @@ def main():
     }
     out = Path("artifacts")
     out.mkdir(parents=True, exist_ok=True)
-    (out / "sable-langfuse-reliability-record.json").write_text(json.dumps(receipt, indent=2), encoding="utf-8")
+    (out / "sable-langfuse-reliability-record.json").write_text(
+        json.dumps(receipt, indent=2), encoding="utf-8"
+    )
     print(json.dumps(receipt, indent=2))
 
 
