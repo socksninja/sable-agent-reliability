@@ -45,4 +45,4 @@ jobs:
           path: artifacts/
           if-no-files-found: error
 
-# Triggered automatically on this push for live verification.
+# Retrigger live verification after granting the least-privilege issues:write token.
