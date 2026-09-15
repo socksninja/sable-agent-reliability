@@ -12,6 +12,21 @@
     "agent_receipt": {"agent":"Marsha","agent_run_id":"ea38eebb-6f1e-499c-9c3d-e73d5fa9fb3f","turn_id":"01a0a109-1461-79e1-aeb9-e6998afa3f79","tool":"agent_knowledge_recall","results":23},
     "backup_restore": {"artifact":"hindsight-20260914T174846Z.dump.enc","restore_verified":true,"restored_memory_units":17278,"restored_documents":584,"restored_models":9},
     "limits": ["backup copies are VPS1-local only","no off-server disaster-recovery copy verified","production upgrade is verified but long-term load/performance is not established"],
-    "provenance_scope": "validation_of_recorded_local_vps_execution; this repository does not claim GitHub Actions executed the original production upgrade"
+    "provenance_scope": "validation_of_recorded_local_vps_execution; this repository does not claim GitHub Actions executed the original production upgrade",
+    "auto_recall_activation": {
+      "execution_date": "2026-09-14",
+      "agents": [
+        {"agent":"Marsha","bank":"zedbiz-shared","run_id":"ee5b8cc5-b013-4768-9533-9288d1386a2d","injection_time_mdt":"12:22:43","turn_duration_ms":12348,"memory_injection_count":10,"recall_verified":true},
+        {"agent":"Maggie","bank":"zedbiz-shared","run_id":"3a330d5e-1a19-40a8-b852-fc97f1e6162d","injection_time_mdt":"12:23:26","turn_duration_ms":7368,"memory_injection_count":10,"recall_verified":true},
+        {"agent":"GohZed","bank":"ghl","run_id":"1bcfb742-a784-4704-aea5-90ae45bf6e7b","injection_time_mdt":"12:22:18","turn_duration_ms":10597,"memory_injection_count":10,"recall_verified":true}
+      ],
+      "config_delta": "plugins.entries.hindsight-openclaw.config.autoRecall: false -> true",
+      "config_change_scope": "only autoRecall changed; all other settings preserved; mode-0600 pre-change backups retained",
+      "gateway_route_verified": true,
+      "gateway_config_validation": true,
+      "failed_attempts_excluded": ["Marsha first turn during pending reload","embedded --local attempts rejected because Gateway owned the state directory"],
+      "synthetic_memory_insertion": false,
+      "provenance_scope": "validation_of_recorded_live_vps1_gateway_execution; this repository does not claim GitHub Actions executed the original recall turns"
+    }
   }
 }
