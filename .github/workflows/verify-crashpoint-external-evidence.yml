@@ -1,0 +1,23 @@
+name: Verify Crashpoint External Evidence
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify public Crashpoint receipt
+        run: |
+          python scripts/verify_crashpoint_receipt.py \
+            https://raw.githubusercontent.com/mstevens843/crashpoint/main/evidence/crewai_retry.json \
+            | tee crashpoint-verification.json
+      - name: Upload verification record
+        uses: actions/upload-artifact@v4
+        with:
+          name: crashpoint-external-verification
+          path: crashpoint-verification.json
