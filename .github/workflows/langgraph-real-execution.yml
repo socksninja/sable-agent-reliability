@@ -1,0 +1,36 @@
+name: SABLE real LangGraph execution
+
+on:
+  push:
+    paths:
+      - 'integrations/langgraph/sable_langgraph_execution.py'
+      - '.github/workflows/langgraph-real-execution.yml'
+
+jobs:
+  real-execution:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    env:
+      LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+      LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+      LANGFUSE_BASE_URL: ${{ secrets.LANGFUSE_BASE_URL }}
+      SABLE_EXTERNAL_ISSUE: "63"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install runtime
+        run: python -m pip install --disable-pip-version-check 'langfuse>=4,<5' 'langgraph>=0.6,<2'
+      - name: Run real LangGraph execution
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python integrations/langgraph/sable_langgraph_execution.py
+      - name: Upload Reliability Record
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-langgraph-reliability-record
+          path: artifacts/sable-langgraph-reliability-record.json
+          if-no-files-found: error
