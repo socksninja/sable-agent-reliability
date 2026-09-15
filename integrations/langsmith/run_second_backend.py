@@ -4,7 +4,9 @@ import hashlib
 import json
 import os
 import subprocess
+import time
 from pathlib import Path
+from uuid import uuid4
 
 
 def gh_api(path: str, method: str = "GET", body: dict | None = None):
@@ -37,12 +39,27 @@ def main() -> None:
     issue = int(os.environ.get("SABLE_EXTERNAL_ISSUE", "63"))
     repo = os.environ.get("GITHUB_REPOSITORY", "socksninja/sable-agent-reliability")
     marker = f"SABLE-LANGSMITH-SECOND-BACKEND:{os.environ.get('GITHUB_RUN_ID', 'local')}"
+    project = os.environ["LANGSMITH_PROJECT"]
 
     try:
         from langgraph.graph import END, START, StateGraph
+        from langsmith import Client
         from typing_extensions import TypedDict
     except ImportError as exc:
-        raise RuntimeError("langgraph is required for the LangSmith second-backend probe") from exc
+        raise RuntimeError("langgraph and langsmith are required for the LangSmith second-backend probe") from exc
+
+    # Explicit LangSmith run: this makes the observability evidence independently addressable
+    # instead of relying only on background auto-tracing.
+    langsmith_client = Client()
+    langsmith_run_id = uuid4()
+    langsmith_client.create_run(
+        id=langsmith_run_id,
+        name=marker,
+        run_type="chain",
+        inputs={"marker": marker, "runtime": "langgraph"},
+        project_name=project,
+        extra={"metadata": {"sable_workflow_run_id": os.environ.get("GITHUB_RUN_ID", "local")}},
+    )
 
     class State(TypedDict):
         marker: str
@@ -62,7 +79,16 @@ def main() -> None:
     graph.add_edge("external_effect", END)
     app = graph.compile()
 
-    result = app.invoke({"marker": marker, "comment_id": "", "task_success": False})
+    try:
+        result = app.invoke({"marker": marker, "comment_id": "", "task_success": False})
+    except Exception as exc:
+        langsmith_client.update_run(
+            langsmith_run_id,
+            error=str(exc),
+            end_time=int(time.time() * 1000),
+        )
+        raise
+
     comment_id = result["comment_id"]
     observed = gh_api(f"/repos/{repo}/issues/comments/{comment_id}")
     final_state = {
@@ -74,14 +100,36 @@ def main() -> None:
     }
     verified = observed["body"].startswith(marker)
     if not verified:
+        langsmith_client.update_run(
+            langsmith_run_id,
+            error="external effect verification failed",
+            end_time=int(time.time() * 1000),
+        )
         raise RuntimeError("external effect verification failed")
+
+    langsmith_client.update_run(
+        langsmith_run_id,
+        outputs={"task_success": True, "external_effect_id": comment_id},
+        end_time=int(time.time() * 1000),
+    )
+    recorded = langsmith_client.read_run(langsmith_run_id)
+    if recorded.id != langsmith_run_id:
+        raise RuntimeError("LangSmith run could not be independently read back")
+
+    try:
+        langsmith_run_url = langsmith_client.get_run_url(run_id=langsmith_run_id)
+    except Exception:
+        langsmith_run_url = None
 
     receipt = {
         "schema": "sable.reliability_record.v0.9",
         "status": "EVIDENCE_REACHABLE",
         "runtime": "langgraph",
         "observability_backend": "langsmith",
-        "langsmith_project": os.environ["LANGSMITH_PROJECT"],
+        "langsmith_project": project,
+        "langsmith_run_id": str(langsmith_run_id),
+        "langsmith_run_url": langsmith_run_url,
+        "langsmith_readback": True,
         "github_actions_run_id": os.environ.get("GITHUB_RUN_ID", "local"),
         "task_success": bool(result["task_success"]),
         "external_effect": {
@@ -91,7 +139,7 @@ def main() -> None:
             "effect_url": observed["html_url"],
             "final_state_sha256": sha256_json(final_state),
         },
-        "proof_claim": "LangGraph execution was traced with LangSmith and produced an independently readable GitHub effect.",
+        "proof_claim": "LangGraph execution was traced with LangSmith and the LangSmith run itself was independently read back, alongside an independently readable GitHub effect.",
     }
     out = Path("artifacts")
     out.mkdir(exist_ok=True)
