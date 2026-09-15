@@ -7,6 +7,10 @@ on:
       - 'integrations/langsmith/**'
       - '.github/workflows/langsmith-second-backend.yml'
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   langsmith-second-backend:
     runs-on: ubuntu-latest
