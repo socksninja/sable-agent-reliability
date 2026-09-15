@@ -11,7 +11,7 @@ REPO = os.environ.get("GITHUB_REPOSITORY", "socksninja/sable-agent-reliability")
 ISSUE_NUMBER = int(os.environ.get("SABLE_EXTERNAL_ISSUE", "63"))
 RUN_ID = os.environ.get("GITHUB_RUN_ID", "local")
 COMMIT = os.environ.get("GITHUB_SHA", "unknown")
-MARKER = f"SABLE-LANGFUSE-REAL-EXECUTION:{RUN_ID}"
+MARKER = f"SABLE-LANGFUSE-REAL-EXECUTION-V1:{RUN_ID}"
 
 
 def sha256_json(value):
