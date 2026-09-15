@@ -1,0 +1,35 @@
+name: SABLE LangSmith Readback Gap Experiment
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'experiments/langsmith_readback_gap.py'
+      - '.github/workflows/langsmith-readback-gap-experiment.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  readback-gap:
+    runs-on: ubuntu-latest
+    env:
+      LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+      LANGSMITH_PROJECT: ${{ secrets.LANGSMITH_PROJECT }}
+      GITHUB_RUN_ID: ${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install LangSmith
+        run: python -m pip install 'langsmith>=0.3.45,<1'
+      - name: Run readback gap experiment
+        run: python experiments/langsmith_readback_gap.py
+      - name: Upload experiment record
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: sable-langsmith-readback-gap-${{ github.run_id }}
+          path: artifacts/langsmith-readback-gap-experiment.json
+          if-no-files-found: error
