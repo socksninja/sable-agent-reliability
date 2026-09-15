@@ -2,6 +2,10 @@ name: SABLE LangSmith Second Backend Reality Test
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'integrations/langsmith/**'
+      - '.github/workflows/langsmith-second-backend.yml'
   pull_request:
     paths:
       - 'integrations/langsmith/**'
