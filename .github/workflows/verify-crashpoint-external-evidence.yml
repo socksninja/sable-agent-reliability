@@ -26,3 +26,5 @@ jobs:
         with:
           name: crashpoint-external-verification
           path: crashpoint-verification.json
+
+# Evidence-chain trigger: a scoped push should execute the verifier without changing its semantics.
