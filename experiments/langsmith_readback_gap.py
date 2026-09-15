@@ -21,6 +21,8 @@ def main() -> None:
     project = os.environ["LANGSMITH_PROJECT"]
     workflow_run_id = os.environ.get("GITHUB_RUN_ID", "local")
     client = Client()
+    project_record = client.read_project(project_name=project)
+    project_id = str(project_record.id)
     run_id = uuid4()
     name = f"SABLE-LANGSMITH-READBACK-GAP:{workflow_run_id}"
 
@@ -53,7 +55,7 @@ def main() -> None:
             time.sleep(delay)
         observed_at = now_iso()
         try:
-            recorded = client.runs.retrieve(run_id)
+            recorded = client.runs.retrieve(run_id, project_id=project_id)
             observations.append(
                 {
                     "delay_seconds": delay,
@@ -79,6 +81,7 @@ def main() -> None:
         "status": "PASS" if observations and observations[-1]["result"] == "READBACK_OK" else "READBACK_NOT_OBSERVED",
         "experiment": "langsmith_readback_gap_v0.1",
         "langsmith_project": project,
+        "langsmith_project_id": project_id,
         "langsmith_run_id": str(run_id),
         "langsmith_run_url": None,
         "workflow_run_id": workflow_run_id,
