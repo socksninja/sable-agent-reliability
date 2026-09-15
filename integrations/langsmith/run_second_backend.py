@@ -4,7 +4,7 @@ import hashlib
 import json
 import os
 import subprocess
-import time
+from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
@@ -28,6 +28,10 @@ def sha256_json(value: dict) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+def now_utc() -> datetime:
+    return datetime.now(timezone.utc)
+
+
 def main() -> None:
     required = ["LANGSMITH_API_KEY", "LANGSMITH_PROJECT", "GITHUB_TOKEN"]
     missing = [key for key in required if not os.environ.get(key)]
@@ -48,8 +52,7 @@ def main() -> None:
     except ImportError as exc:
         raise RuntimeError("langgraph and langsmith are required for the LangSmith second-backend probe") from exc
 
-    # Explicit LangSmith run: this makes the observability evidence independently addressable
-    # instead of relying only on background auto-tracing.
+    # Explicit LangSmith run: independently addressable observability evidence.
     langsmith_client = Client()
     langsmith_run_id = uuid4()
     langsmith_client.create_run(
@@ -82,11 +85,7 @@ def main() -> None:
     try:
         result = app.invoke({"marker": marker, "comment_id": "", "task_success": False})
     except Exception as exc:
-        langsmith_client.update_run(
-            langsmith_run_id,
-            error=str(exc),
-            end_time=int(time.time() * 1000),
-        )
+        langsmith_client.update_run(langsmith_run_id, error=str(exc), end_time=now_utc())
         raise
 
     comment_id = result["comment_id"]
@@ -103,14 +102,14 @@ def main() -> None:
         langsmith_client.update_run(
             langsmith_run_id,
             error="external effect verification failed",
-            end_time=int(time.time() * 1000),
+            end_time=now_utc(),
         )
         raise RuntimeError("external effect verification failed")
 
     langsmith_client.update_run(
         langsmith_run_id,
         outputs={"task_success": True, "external_effect_id": comment_id},
-        end_time=int(time.time() * 1000),
+        end_time=now_utc(),
     )
     recorded = langsmith_client.read_run(langsmith_run_id)
     if recorded.id != langsmith_run_id:
