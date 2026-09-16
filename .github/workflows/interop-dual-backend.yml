@@ -1,0 +1,45 @@
+name: SABLE Dual Backend Same-Execution Interop
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'integrations/interop/run_dual_backend.py'
+      - '.github/workflows/interop-dual-backend.yml'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  dual-backend:
+    runs-on: ubuntu-latest
+    env:
+      LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+      LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+      LANGFUSE_BASE_URL: ${{ secrets.LANGFUSE_BASE_URL }}
+      LANGSMITH_TRACING: true
+      LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+      LANGSMITH_PROJECT: ${{ secrets.LANGSMITH_PROJECT }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      GITHUB_RUN_ID: ${{ github.run_id }}
+      SABLE_EXTERNAL_ISSUE: '63'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install dual-backend runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'langgraph==1.2.11' 'langfuse>=4,<5' 'langsmith>=0.3.45,<1'
+      - name: Run same-execution dual-backend probe
+        run: python integrations/interop/run_dual_backend.py
+      - name: Upload dual-backend evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: sable-dual-backend-same-execution-${{ github.run_id }}
+          path: artifacts/
+          if-no-files-found: error
