@@ -4,7 +4,7 @@
 
 SABLE is a model- and provider-independent evaluation system for tool-using AI agents. Instead of trusting the agent's final answer, SABLE verifies the **observable environment state** and records the execution evidence needed to explain success, failure, and silent failure.
 
-[GitHub](https://github.com/socksninja/sable-agent-reliability) · [Evidence layer](EVIDENCE_LAYER.md) · [Streaming reliability finding](STREAMING_RELIABILITY_FINDING_V01.md) · [Reality Map](REALITY_MAP_V01.md) · [Failure Corpus](FAILURE_CORPUS_V01.md) · [External verification guide](docs/10_MIN_EXTERNAL_VERIFICATION.md) · [Submission quickstart](docs/EXTERNAL_SUBMISSION_QUICKSTART.md) · [Strategy alignment](STRATEGY_ALIGNMENT_V01.md) · [Paid Reliability Sprint](docs/RELIABILITY_REVIEW_OFFER_V01.md)
+[GitHub](https://github.com/socksninja/sable-agent-reliability) · [Evidence layer](EVIDENCE_LAYER.md) · [Streaming reliability finding](STREAMING_RELIABILITY_FINDING_V01.md) · [Reality Map](REALITY_MAP_V01.md) · [Failure Corpus](FAILURE_CORPUS_V01.md) · [External verification guide](docs/10_MIN_EXTERNAL_VERIFICATION.md) · [Submission quickstart](docs/EXTERNAL_SUBMISSION_QUICKSTART.md) · [Client case study](docs/CLIENT_CASE_STUDY_AGENT_RELIABILITY.md) · [Strategy alignment](STRATEGY_ALIGNMENT_V01.md) · [Paid Reliability Sprint](docs/RELIABILITY_REVIEW_OFFER_V01.md)
 
 ## Why SABLE exists
 
@@ -16,7 +16,7 @@ That creates a reliability question that a final text response cannot answer:
 
 SABLE treats the environment as the judge.
 
-```text
+```
 agent decision
       ↓
 structured tool call
@@ -70,7 +70,7 @@ The benchmark targets failure modes such as recovery, authorization, state drift
 
 SABLE supports a versioned public evidence loop for real model runs:
 
-```text
+```
 public model
 → structured tool call
 → SABLE Sandbox
@@ -104,13 +104,15 @@ A focused review can produce:
 
 This can be done as an external design-partner engagement or paid reliability review. No access to proprietary data is required for a minimal reproduction when the failure can be reduced to a synthetic trace.
 
+**Client-facing case study:** [AI Agent Reliability Review](docs/CLIENT_CASE_STUDY_AGENT_RELIABILITY.md)
+
 ## Completion truth / execution truth
 
 SABLE also tracks a broader reliability boundary: **when may an automated system legitimately say DONE?**
 
 For deployment-sensitive workflows, the evidence chain may need to be:
 
-```text
+```
 code candidate
 → test execution
 → produced artifact
