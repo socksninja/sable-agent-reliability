@@ -89,6 +89,7 @@ SABLE is designed to be independently checked rather than trusted by default.
 - **Public reproduction challenge:** [SABLE-002 independent reproduction](https://github.com/socksninja/sable-agent-reliability/issues/48) asks for a concrete reproduce / not-reproduce / taxonomy-correction result.
 - **OpenClaw external cases:** [terminal-truth validation targets](docs/EXTERNAL_CASE_001_OPENCLAW_TERMINAL_TRUTH.md) cover OpenClaw incidents `#141474`, `#97616`, and `#144911`, with explicit evidence gaps and no adoption/reproduction claims.
 - **Completion / deployment truth cases:** [External Case 002](docs/EXTERNAL_CASE_002_COMPLETION_TRUTH.md) records external reliability signals where hosted-green, installed-artifact, target-environment, battery, or repair status do not necessarily establish authoritative completion. These remain external observations until an independent SABLE admission gate is closed.
+- **External micro-audit:** [LangGraph Cloud #7417](docs/EXTERNAL_CASE_003_LANGGRAPH_7417_AUDIT.md) isolates the evidence boundary around long-tool replay, duplicate execution, and independent external-effect verification.
 
 The goal is not to make a SABLE claim harder to question. The goal is to make it easier for someone else to disprove, reproduce, or strengthen it.
 
