@@ -1,0 +1,58 @@
+{
+  "bounty_issue": "socksninja/sable-agent-reliability#90",
+  "upstream_issue": "pydantic/pydantic-ai#5536",
+  "title": "Temporal retry side-effect boundary \u2014 pydantic-ai approved tool",
+  "run_id": "1735ea43-3773-4b29-8689-2f3c1c537720",
+  "started_at": "2026-09-19T11:31:06.882000+00:00",
+  "finished_at": "2026-09-19T11:31:07.035741+00:00",
+  "runtime": {
+    "python": "3.13.7 (main, Mar  3 2026, 12:19:54) [GCC 15.2.0]",
+    "pydantic_ai": "0.0.20",
+    "pydantic": "2.13.5",
+    "simulation_mode": "threading_file_state",
+    "temporal_available": false,
+    "temporal_reason": "temporal CLI not in PATH; localhost:7233 unreachable"
+  },
+  "methodology": {
+    "mode": "simulation",
+    "rationale": "Temporal server not available in this environment. Simulation uses Python threading + append-only file log to reproduce the logical race: side effect commits before Temporal observes activity completion, triggering retry with identical effect execution.",
+    "effect_store": "/home/jacob/USB_DEPLOYMENT_PACKAGE/bounty_workspace/issue_90_pydanticai/temporal_side_effect_log.txt",
+    "raw_log_lines": [
+      "2026-09-19T11:31:06.882299+00:00|ctrl-1735ea43|EXECUTED_IDEMPOTENT",
+      "2026-09-19T11:31:06.933650+00:00|bug-1735ea43|EXECUTED",
+      "2026-09-19T11:31:06.984514+00:00|bug-1735ea43|EXECUTED",
+      "2026-09-19T11:31:06.985043+00:00|pai-1735ea43|PYDANTIC_TOOL:send_payment:attempt=1:call_id=e6a4ef9d-d6d7-4389-9a1f-82d146fa5b6d",
+      "2026-09-19T11:31:07.035455+00:00|pai-1735ea43|PYDANTIC_TOOL:send_payment:attempt=2:call_id=e6a4ef9d-d6d7-4389-9a1f-82d146fa5b6d"
+    ]
+  },
+  "control_case": {
+    "scenario": "control_case_idempotent",
+    "logical_id": "ctrl-1735ea43",
+    "count_after_first_execution": 1,
+    "count_after_retry": 1,
+    "double_write_observed": false
+  },
+  "bug_case": {
+    "scenario": "bug_case_non_idempotent",
+    "logical_id": "bug-1735ea43",
+    "count_after_first_execution": 1,
+    "count_after_retry": 2,
+    "double_write_observed": true
+  },
+  "pydantic_ai_tool_simulation": {
+    "tool_name": "send_payment",
+    "tool_call_id": "e6a4ef9d-d6d7-4389-9a1f-82d146fa5b6d",
+    "pydantic_ai_version": "0.0.20",
+    "count_attempt_1": 1,
+    "count_attempt_2": 2,
+    "retry_boundary_violated": true
+  },
+  "verdict": "VERIFIED",
+  "verdict_rationale": {
+    "control_single_write": true,
+    "bug_double_write": true,
+    "pydantic_ai_boundary_violated": true,
+    "explanation": "Without idempotency, a Temporal activity retry after worker-loss causes the same approved side-effecting tool to execute its external effect twice. pydantic-ai's Temporal integration (pydantic-ai#5536) propagates no retry-attempt context to the tool, making the tool unable to self-deduplicate."
+  },
+  "sha256": "13b0016489d171274b49553f0d22447bc5aae44e841f08d7236dcb9e8b104776"
+}

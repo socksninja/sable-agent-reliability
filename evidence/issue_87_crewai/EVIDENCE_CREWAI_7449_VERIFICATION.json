@@ -1,0 +1,35 @@
+{
+  "issue_id": "CREWAI_7449",
+  "bounty_issue": "socksninja/sable-agent-reliability#87",
+  "upstream_bug": "crewAIInc/crewAI#7449",
+  "verdict": "VERIFIED",
+  "verdict_detail": "Tool invoked 6 times with _max_parsing_attempts=3. Expected <= 3. Duplicate-effect retry boundary confirmed.",
+  "runtime": {
+    "python": "3.13.7 (main, Mar  3 2026, 12:19:54) [GCC 15.2.0]",
+    "crewai": "1.15.21",
+    "platform": "linux"
+  },
+  "control_case": {
+    "description": "Tool that succeeds \u2014 should be invoked exactly once",
+    "in_memory_count": 1,
+    "file_count": 1,
+    "pass": true
+  },
+  "bug_case": {
+    "description": "Tool that always raises \u2014 invoked >_max_parsing_attempts times if bug present",
+    "_max_parsing_attempts": 3,
+    "in_memory_count": 6,
+    "file_count": 6,
+    "subprocess_readback_count": 6,
+    "expected_if_buggy": 6
+  },
+  "analysis": {
+    "root_cause": "ToolUsage._use has an inner try/except around tool.invoke() that catches ANY exception (not just schema/parsing errors). When the tool raises, _use catches it and re-raises after logging. The outer attempt loop in ToolUsage.use() then catches that and increments the retry counter \u2014 but _use itself already tried once internally, doubling the actual invocations.",
+    "expected_calls": 3,
+    "actual_calls": 6,
+    "multiplication_factor": 2.0
+  },
+  "timestamp": "2026-09-19T11:30:33.259486Z",
+  "effect_log_path": "/tmp/crewai_7449_invocations_61887.log",
+  "sha256": "03b78e738c7b28607dd177df103b64cb7d911b7ab7e575d56bcdcafd32fe7d33"
+}
