@@ -1,14 +1,14 @@
-# SABLE Agent Reliability Sprint
+# SABLE Independent Reliability Verification
 
 ## A focused external test of whether an AI agent actually completes the task it claims to complete.
 
-**Pilot price:** US$50 fixed scope  
-**Typical turnaround:** one focused test cycle  
+**Current fixed price:** US$250 one-time  
+**Typical scope:** one focused verification cycle  
 **Best fit:** AI agents, tool-using workflows, LangGraph/LangChain systems, automation agents, and LLM applications with a concrete reliability question.
 
-### Start with almost no integration work
+### Start with one real incident
 
-The lowest-friction entry is a **public incident / existing trace**.
+The lowest-friction starting point is a **public incident / existing trace / minimal reproducer**.
 
 Send one line:
 
@@ -16,9 +16,7 @@ Send one line:
 URL | reliability question | public/private boundary
 ```
 
-The URL can be a GitHub issue/PR, trace, bug report, or minimal reproducer. We first map the observable evidence and identify the smallest missing proof. No benchmark migration, adoption decision, or production credentials are required.
-
-When a real execution is needed, the fixed-scope pilot starts from that same evidence boundary rather than from a generic integration project.
+The URL can be a GitHub issue/PR, trace, bug report, or minimal reproducer. We first map the observable evidence and identify the smallest useful verification.
 
 ### What we test
 
@@ -32,6 +30,7 @@ We take one concrete workflow and deliberately exercise failure-prone paths such
 - false success / premature completion
 - partial success
 - recovery after an execution error
+- replay / checkpoint correctness
 
 ### What you receive
 
@@ -39,7 +38,9 @@ We take one concrete workflow and deliberately exercise failure-prone paths such
 2. **Focused test matrix** — scenarios, expected state, observed state, verdict.
 3. **Raw execution evidence** — tool calls, relevant state transitions, and reproducible run information.
 4. **Failure report** — each finding classified by failure mode and evidence boundary.
-5. **One-page reliability summary** — what reproduced, what remained unknown, and the smallest engineering next step.
+5. **SHA-256 evidence digest** — integrity reference for the returned evidence bundle.
+6. **Scoped verdict** — VERIFIED, NOT VERIFIED, or EVIDENCE GAP.
+7. **One-page reliability summary** — what reproduced, what remained unknown, and the smallest engineering next step.
 
 ### The key difference
 
@@ -51,13 +52,11 @@ SABLE checks the observable execution state and separates:
 
 Unknown evidence stays **UNKNOWN**. A missing receipt, trace gap, or ambiguous external outcome is not silently converted into PASS.
 
-The goal is not a score that looks impressive. The goal is an engineering artifact another developer can reproduce and challenge.
+The goal is an engineering artifact another developer can reproduce and challenge.
 
 ### Minimal engagement
 
-You do not need to expose your whole production stack for a focused first test.
-
-For a minimal engagement, provide:
+For a focused first test, provide:
 
 - one concrete workflow or reduced reproducer,
 - the reliability question,
@@ -74,14 +73,16 @@ Repository: https://github.com/socksninja/sable-agent-reliability
 
 ### Scope boundary
 
-This pilot is an evaluation/reliability review, not a promise to fix an entire production system. If the first run identifies a concrete engineering defect, remediation can be scoped separately.
+This is an evaluation/reliability verification service, not a promise to fix an entire production system. It does not provide production-wide reliability certification, security certification, or a guarantee that unrelated failure modes do not exist.
 
-### Reply format
+### Payment
 
-For the fastest start, reply with:
+**US$250 fixed, one-time fee.**
 
-```
-URL | reliability question | public/private boundary
-```
+Payment is handled through PayPal. The active checkout link is supplied with the assignment/payment request.
 
-One real incident is enough to begin.
+For a smaller evidence-only first step, see [US$25 Evidence Snapshot](EVIDENCE_SNAPSHOT_USD25.md).
+
+## Public service page
+
+See [Independent Reliability Verification — US$250](INDEPENDENT_RELIABILITY_VERIFICATION_USD250.md).
