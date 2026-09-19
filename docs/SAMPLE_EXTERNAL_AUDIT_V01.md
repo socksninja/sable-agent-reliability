@@ -1,6 +1,6 @@
 # Sample External Agent Reliability Audit
 
-> Public sample only — this is **not** a paid client engagement and does not represent a customer result.
+> Public sample only — this is **not a paid client engagement** and does not represent a customer result.
 
 ## Buyer question
 
@@ -55,16 +55,19 @@ independent verification
 bounded verdict
 ```
 
-## What a paid audit adds
+## What the current US$250 verification adds
 
-A paid audit applies the same discipline to **your** workflow:
+A paid verification applies the same evidence discipline to **your** workflow:
 
 1. identify one reliability question;
 2. pin the relevant runtime/workflow boundary;
 3. run or reproduce one bounded case;
 4. independently verify the claimed outcome;
-5. return PASS / FAIL / UNKNOWN with the evidence boundary and limitations.
+5. return VERIFIED / NOT VERIFIED / EVIDENCE GAP with the evidence boundary and limitations;
+6. return the raw evidence reference and SHA-256 digest.
 
-**Fixed pilot price: US$99**
+**Current fixed price: US$250 one-time**
 
-Payment: https://www.paypal.com/ncp/payment/2URELJ9NE4ZBN
+See [Independent Reliability Verification — US$250](INDEPENDENT_RELIABILITY_VERIFICATION_USD250.md).
+
+> Historical note: this public sample was originally published during an earlier pilot period. Its old pilot price should not be used as the current service price.
