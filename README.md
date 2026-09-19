@@ -1,5 +1,7 @@
 # SABLE — Silent Agent Reliability Benchmark
 
+[![Powered by RustChain](https://img.shields.io/badge/Powered%20by-RustChain-orange)](https://rustchain.org)
+
 > **Can an AI agent actually complete a task — and can we prove that it did?**
 
 SABLE is a model- and provider-independent evaluation system for tool-using AI agents. Instead of trusting the agent's final answer, SABLE verifies the **observable environment state** and records the execution evidence needed to explain success, failure, and silent failure.
