@@ -6,6 +6,20 @@ SABLE is a model- and provider-independent evaluation system for tool-using AI a
 
 [GitHub](https://github.com/socksninja/sable-agent-reliability) · [Evidence layer](EVIDENCE_LAYER.md) · [Streaming reliability finding](STREAMING_RELIABILITY_FINDING_V01.md) · [Reality Map](REALITY_MAP_V01.md) · [Failure Corpus](FAILURE_CORPUS_V01.md) · [External verification guide](docs/10_MIN_EXTERNAL_VERIFICATION.md) · [Submission quickstart](docs/EXTERNAL_SUBMISSION_QUICKSTART.md) · [Client case study](docs/CLIENT_CASE_STUDY_AGENT_RELIABILITY.md) · [Strategy alignment](STRATEGY_ALIGNMENT_V01.md) · [Paid Reliability Sprint](docs/RELIABILITY_REVIEW_OFFER_V01.md)
 
+## Fixed-scope external reliability audit
+
+For teams with one concrete agent reliability question, I offer a bounded external audit:
+
+- one real agent workflow or minimal reproducer
+- one clearly defined reliability question
+- one bounded execution/reproduction
+- independently checked evidence
+- concise findings + evidence receipt
+
+**Pilot price: US$99 fixed.** No SABLE adoption, repository changes, or production credentials are required for the first pass when the workflow can be safely reduced to a bounded test.
+
+**Pay securely:** https://www.paypal.com/ncp/payment/2URELJ9NE4ZBN
+
 ## Why SABLE exists
 
 Agent systems are moving from generating answers to taking actions: calling tools, changing state, recovering from errors, and completing long-horizon tasks.
