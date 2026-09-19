@@ -1,0 +1,35 @@
+{
+  "bounty_issue": "socksninja/sable-agent-reliability#91",
+  "upstream_bug": "microsoft/agent-framework#8489",
+  "verdict": "VERIFIED",
+  "verdict_detail": "Predicate raised AttributeError; exception was silently swallowed by bare except in selection_func; message routed to Default (fallback) instead of raising an error. External file effect confirmed wrong-branch execution.",
+  "runtime": {
+    "python": "3.13.7 (main, Mar  3 2026, 12:19:54) [GCC 15.2.0]",
+    "agent_framework_core": "1.18.0",
+    "agent_framework_installed_version": "1.18.0"
+  },
+  "source_evidence": {
+    "bare_except_present": true,
+    "warning_log_present": true,
+    "exception_swallowed_not_reraised": true,
+    "source_snippet": "def selection_func(message: Any, targets: list[str]) -> list[str]:\n            for case in cases:\n                if isinstance(case, SwitchCaseEdgeGroupDefault):\n                    return [case.target_id]\n                try:\n                    if case.condition(message):\n                        return [case.target_id]\n                except Exception as exc:  # pragma: no cover - defensive logging\n                    logger.warning(\"Error evaluating condition for case %s: %s\", case.target_id"
+  },
+  "control_case": {
+    "high_count": 1,
+    "fallback_count": 0,
+    "high_file_written": true,
+    "fallback_file_written": false,
+    "exception_raised": null
+  },
+  "bug_case": {
+    "high_count": 0,
+    "fallback_count": 1,
+    "high_file_written": false,
+    "fallback_file_written": true,
+    "high_file_content": null,
+    "fallback_file_content": "{\"branch\": \"bug_fallback\", \"order_kind\": \"csv\"}",
+    "exception_raised": null
+  },
+  "expected_behavior": "AttributeError from predicate should surface to caller",
+  "actual_behavior": "Exception swallowed; message routed to Default branch silently"
+}

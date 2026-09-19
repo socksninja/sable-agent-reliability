@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "issue": {
+    "bounty_repo": "socksninja/sable-agent-reliability",
+    "bounty_issue": 89,
+    "upstream_ref": "openclaw/openclaw#136513"
+  },
+  "runtime": {
+    "python": "3.13.7 (main, Mar  3 2026, 12:19:54) [GCC 15.2.0]",
+    "platform": "Linux-6.17.0-41-generic-x86_64-with-glibc2.42",
+    "python_executable": "/home/jacob/USB_DEPLOYMENT_PACKAGE/bounty_workspace/issue_89_openclaw/venv/bin/python3"
+  },
+  "timestamp_utc": "2026-09-19T11:30:47.377435+00:00",
+  "install_probes": {
+    "openclaw": {
+      "package": "openclaw",
+      "returncode": 0,
+      "stdout": "Requirement already satisfied: openclaw in ./venv/lib/python3.13/site-packages (2.0.2)",
+      "stderr": ""
+    },
+    "open-claw": {
+      "package": "open-claw",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "ERROR: Could not find a version that satisfies the requirement open-claw (from versions: none)\nERROR: No matching distribution found for open-claw"
+    }
+  },
+  "installed_pypi_openclaw": {
+    "version": "2.0.2",
+    "import_result": {
+      "importable": true,
+      "version": "2.0.2",
+      "has_completion_api": false,
+      "has_delivery_ledger": false,
+      "symbols_found": [
+        "TYPE_CHECKING",
+        "__all__",
+        "__builtins__",
+        "__cached__",
+        "__doc__",
+        "__file__",
+        "__getattr__",
+        "__loader__",
+        "__name__",
+        "__package__",
+        "__path__",
+        "__spec__",
+        "__version__",
+        "annotations"
+      ],
+      "error": null
+    },
+    "pypi_metadata": {
+      "pypi_name": "openclaw",
+      "pypi_version": "2.0.2",
+      "pypi_summary": "Installer for the cmdop CLI \u2014 one binary that runs an AI agent on your machine",
+      "pypi_home_page": null,
+      "pypi_project_urls": {
+        "Documentation": "https://docs.cmdop.com",
+        "Download": "https://cmdop.com/download",
+        "Homepage": "https://cmdop.com",
+        "Source (organization)": "https://github.com/commandoperator"
+      },
+      "pypi_author": null,
+      "pypi_description_excerpt": "# openclaw\n\n![cmdop \u2014 messenger for AI agents](https://raw.githubusercontent.com/commandoperator/assets/b72b9ac6c796b958a038f684b323c7be49a49c9d/promo/social.webp)\n\n**Installer for the [cmdop](https://cmdop.com) CLI** \u2014 one binary that runs an AI agent on your machine and connects it to your fleet.\n\n```bash\npip install openclaw\nopenclaw\n```\n\nThat's it. `openclaw` detects your platform, downloads t"
+    },
+    "is_wrong_package": true,
+    "disclaimer_confirmed": true
+  },
+  "gap_analysis": {
+    "openclaw_on_pypi": true,
+    "openclaw_pypi_is_target_project": false,
+    "reason": "The PyPI package named 'openclaw' (v2.0.2) is an installer for the cmdop CLI product and explicitly states it is NOT affiliated with github.com/openclaw/openclaw. It has no completion, delivery-ledger, idempotency-key, or subagent APIs. 'open-claw' does not exist on PyPI. The real openclaw/openclaw GitHub project is private/internal with no public distribution.",
+    "cannot_pin_source_revision": true,
+    "cannot_instantiate_completion": true,
+    "cannot_replay_idempotency_key": true,
+    "cannot_observe_delivery_credit": true,
+    "cannot_observe_terminal_evidence": true
+  },
+  "control_case": {
+    "description": "N/A \u2014 target library unavailable for instantiation",
+    "result": null
+  },
+  "bug_case": {
+    "description": "N/A \u2014 target library unavailable; cannot hold completion pending or replay",
+    "result": null
+  },
+  "verdict": "EVIDENCE GAP",
+  "verdict_reason": "Independent verification cannot proceed because the actual openclaw/openclaw package is not available via any public Python package index. The PyPI 'openclaw' distribution is a wholly unrelated product. Without the target library we cannot pin the reported revision, create a real completion handoff, replay an idempotency key, or observe delivery-credit state transitions."
+}
