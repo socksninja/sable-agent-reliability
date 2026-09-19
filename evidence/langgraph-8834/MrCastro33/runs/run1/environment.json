@@ -1,0 +1,24 @@
+{
+  "captured_at": "2026-09-19T13:42:17.847900+00:00",
+  "langgraph_package_dir": "/Users/mac/Documents/Codex/2026-09-19/da-x20/work/verify/.venv/lib/python3.13/site-packages/langgraph",
+  "langgraph_source_sha256": {
+    "graph/state.py": "d8c8021a93a8fc895d62335a9482e50d51353343bf885901e6487611dcd0d212",
+    "pregel/_loop.py": "33150cf70fc08fd01affeae0345aa20569d2705704e3d209733d9c7b43dd5c0a",
+    "pregel/_runner.py": "316cf133c724163a18ef279322615588b3fa8b96e359289a7cadea90f0df7622",
+    "pregel/main.py": "02651dc9471b88f9299d12f6d836e67ad1114ad84498b9ae26df6cd75be8592c"
+  },
+  "machine": "arm64",
+  "package_versions": {
+    "langchain-core": "1.6.3",
+    "langgraph": "1.2.11",
+    "langgraph-checkpoint": "4.2.0",
+    "langgraph-checkpoint-sqlite": "3.1.1",
+    "pydantic": "2.13.5"
+  },
+  "pip_freeze": [],
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "processor": "arm",
+  "python_executable": "/Users/mac/Documents/Codex/2026-09-19/da-x20/work/verify/.venv/bin/python",
+  "python_version": "3.13.14 (main, Jun 23 2026, 15:20:43) [Clang 22.1.3 ]",
+  "sqlite3_library_version": "3.53.1"
+}

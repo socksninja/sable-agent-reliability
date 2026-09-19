@@ -1,0 +1,1 @@
+{"case_id": "route_sqlite", "checkpoint_values": {"value": 1}, "sink_effect_rows": 0}

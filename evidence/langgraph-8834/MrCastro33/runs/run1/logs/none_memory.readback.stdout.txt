@@ -1,0 +1,1 @@
+{"case_id": "none_memory", "checkpoint_values": null, "sink_effect_rows": 1}

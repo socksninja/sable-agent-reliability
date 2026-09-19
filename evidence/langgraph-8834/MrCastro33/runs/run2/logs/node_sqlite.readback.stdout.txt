@@ -1,0 +1,1 @@
+{"case_id": "node_sqlite", "checkpoint_values": {"value": 2}, "sink_effect_rows": 1}

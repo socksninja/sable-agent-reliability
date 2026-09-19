@@ -1,0 +1,62 @@
+{
+  "calls_after_first": {
+    "node": 1,
+    "route": 1,
+    "sink": 1
+  },
+  "calls_after_resume": {
+    "node": 1,
+    "route": 1,
+    "sink": 1
+  },
+  "case_id": "none_memory",
+  "checkpoint_db": null,
+  "effects_db": "/Users/mac/Documents/Codex/2026-09-19/da-x20/work/verify/artifacts/databases/effects_fe06486c-134b-4eba-a47b-584cd2563623.db",
+  "failure_location": "none",
+  "finished_at": "2026-09-19T13:42:23.354882+00:00",
+  "first_invocation": {
+    "raised": false,
+    "result": {
+      "value": 2
+    }
+  },
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "python": "3.13.14 (main, Jun 23 2026, 15:20:43) [Clang 22.1.3 ]",
+  "resume": {
+    "raised": false,
+    "result": {
+      "value": 2
+    }
+  },
+  "run_id": "fe06486c-134b-4eba-a47b-584cd2563623",
+  "saver": "memory",
+  "started_at": "2026-09-19T13:42:23.337813+00:00",
+  "state_after_resume": {
+    "checkpoint_id": "1f1b42ff-182d-6e3a-8002-e03f75a3759b",
+    "metadata": {
+      "parents": {},
+      "source": "loop",
+      "step": 2
+    },
+    "next": [],
+    "tasks": [],
+    "values": {
+      "value": 2
+    }
+  },
+  "state_before_resume": {
+    "checkpoint_id": "1f1b42ff-182d-6e3a-8002-e03f75a3759b",
+    "metadata": {
+      "parents": {},
+      "source": "loop",
+      "step": 2
+    },
+    "next": [],
+    "tasks": [],
+    "values": {
+      "value": 2
+    }
+  },
+  "status": "ok",
+  "thread_id": "none_memory"
+}

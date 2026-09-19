@@ -1,0 +1,69 @@
+{
+  "calls_after_first": {
+    "node": 1,
+    "route": 0,
+    "sink": 0
+  },
+  "calls_after_resume": {
+    "node": 2,
+    "route": 1,
+    "sink": 1
+  },
+  "case_id": "node_sqlite",
+  "checkpoint_db": "/Users/mac/Documents/Codex/2026-09-19/da-x20/work/verify/artifacts_run2/databases/checkpoints_node_sqlite_28f3f714-89a9-47f6-9962-88ca9c0ac748.db",
+  "effects_db": "/Users/mac/Documents/Codex/2026-09-19/da-x20/work/verify/artifacts_run2/databases/effects_28f3f714-89a9-47f6-9962-88ca9c0ac748.db",
+  "failure_location": "node",
+  "finished_at": "2026-09-19T13:42:46.552665+00:00",
+  "first_invocation": {
+    "error": "temporary node failure",
+    "error_type": "ValueError",
+    "raised": true
+  },
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "python": "3.13.14 (main, Jun 23 2026, 15:20:43) [Clang 22.1.3 ]",
+  "resume": {
+    "raised": false,
+    "result": {
+      "value": 2
+    }
+  },
+  "run_id": "28f3f714-89a9-47f6-9962-88ca9c0ac748",
+  "saver": "sqlite",
+  "started_at": "2026-09-19T13:42:46.532761+00:00",
+  "state_after_resume": {
+    "checkpoint_id": "1f1b42ff-f568-6642-8002-291d9733b2d1",
+    "metadata": {
+      "parents": {},
+      "source": "loop",
+      "step": 2
+    },
+    "next": [],
+    "tasks": [],
+    "values": {
+      "value": 2
+    }
+  },
+  "state_before_resume": {
+    "checkpoint_id": "1f1b42ff-f562-6828-8000-e07a84db8848",
+    "metadata": {
+      "parents": {},
+      "source": "loop",
+      "step": 0
+    },
+    "next": [
+      "node"
+    ],
+    "tasks": [
+      {
+        "error": "\"ValueError('temporary node failure')\"",
+        "interrupts": [],
+        "name": "node"
+      }
+    ],
+    "values": {
+      "value": 0
+    }
+  },
+  "status": "ok",
+  "thread_id": "node_sqlite"
+}

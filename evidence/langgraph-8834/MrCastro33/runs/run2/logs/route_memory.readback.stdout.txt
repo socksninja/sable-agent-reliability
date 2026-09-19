@@ -1,0 +1,1 @@
+{"case_id": "route_memory", "checkpoint_values": null, "sink_effect_rows": 0}
