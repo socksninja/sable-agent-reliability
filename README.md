@@ -6,21 +6,31 @@
 
 SABLE is a model- and provider-independent evaluation system for tool-using AI agents. Instead of trusting the agent's final answer, SABLE verifies the **observable environment state** and records the execution evidence needed to explain success, failure, and silent failure.
 
-[GitHub](https://github.com/socksninja/sable-agent-reliability) · [Evidence layer](EVIDENCE_LAYER.md) · [Streaming reliability finding](STREAMING_RELIABILITY_FINDING_V01.md) · [Reality Map](REALITY_MAP_V01.md) · [Failure Corpus](FAILURE_CORPUS_V01.md) · [External verification guide](docs/10_MIN_EXTERNAL_VERIFICATION.md) · [Submission quickstart](docs/EXTERNAL_SUBMISSION_QUICKSTART.md) · [Client case study](docs/CLIENT_CASE_STUDY_AGENT_RELIABILITY.md) · [Sample external audit](docs/SAMPLE_EXTERNAL_AUDIT_V01.md) · [Strategy alignment](STRATEGY_ALIGNMENT_V01.md) · [Paid Reliability Sprint](docs/RELIABILITY_REVIEW_OFFER_V01.md)
+[GitHub](https://github.com/socksninja/sable-agent-reliability) · [Evidence layer](EVIDENCE_LAYER.md) · [Streaming reliability finding](STREAMING_RELIABILITY_FINDING_V01.md) · [Reality Map](REALITY_MAP_V01.md) · [Failure Corpus](FAILURE_CORPUS_V01.md) · [External verification guide](docs/10_MIN_EXTERNAL_VERIFICATION.md) · [Submission quickstart](docs/EXTERNAL_SUBMISSION_QUICKSTART.md) · [Client case study](docs/CLIENT_CASE_STUDY_AGENT_RELIABILITY.md) · [Sample external audit](docs/SAMPLE_EXTERNAL_AUDIT_V01.md) · [Strategy alignment](STRATEGY_ALIGNMENT_V01.md) · [Independent Reliability Verification — US$250](docs/INDEPENDENT_RELIABILITY_VERIFICATION_USD250.md)
 
-## Fixed-scope external reliability audit
+## Current paid service: Independent Reliability Verification — US$250
 
-For teams with one concrete agent reliability question, I offer a bounded external audit:
+For one concrete agent reliability question, SABLE offers a bounded independent verification:
 
-- one real agent workflow or minimal reproducer
-- one clearly defined reliability question
-- one bounded execution/reproduction
-- independently checked evidence
-- concise findings + evidence receipt
+- one concrete reliability claim
+- one pinned runtime/source boundary
+- one bounded reproduction or verification cycle
+- independently checked outcome
+- raw evidence package + SHA-256 digest
+- scoped **VERIFIED / NOT VERIFIED / EVIDENCE GAP** verdict
+- concise findings report
 
-**Pilot price: US$99 fixed.** No SABLE adoption, repository changes, or production credentials are required for the first pass when the workflow can be safely reduced to a bounded test.
+**Fixed price: US$250 one-time.**
 
-**Pay securely:** https://www.paypal.com/ncp/payment/2URELJ9NE4ZBN
+[View the public service page](docs/INDEPENDENT_RELIABILITY_VERIFICATION_USD250.md)
+
+The engagement does not require SABLE adoption, repository changes, production credentials, or framework patching when the claim can be safely reduced to a bounded test.
+
+### Lower-friction entry
+
+For an existing trace, receipt, issue, or other evidence bundle, the **US$25 Evidence Snapshot** is available as a smaller first step.
+
+See [docs/EVIDENCE_SNAPSHOT_USD25.md](docs/EVIDENCE_SNAPSHOT_USD25.md).
 
 ## Why SABLE exists
 
@@ -124,6 +134,8 @@ A focused review can produce:
 3. a machine-readable evidence receipt suitable for engineering review.
 
 This can be done as an external design-partner engagement or paid reliability review. No access to proprietary data is required for a minimal reproduction when the failure can be reduced to a synthetic trace.
+
+**Current fixed-scope service:** [Independent Reliability Verification — US$250](docs/INDEPENDENT_RELIABILITY_VERIFICATION_USD250.md)
 
 **Client-facing case study:** [AI Agent Reliability Review](docs/CLIENT_CASE_STUDY_AGENT_RELIABILITY.md)
 
