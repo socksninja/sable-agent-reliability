@@ -1,0 +1,62 @@
+{
+  "bounty_issue": "socksninja/sable-agent-reliability#88",
+  "upstream_bug": "microsoft/agent-framework#8292",
+  "timestamp": "2026-09-19T11:32:20.585345+00:00",
+  "runtime": {
+    "python": "3.13.7 (main, Mar  3 2026, 12:19:54) [GCC 15.2.0]",
+    "package": "agent-framework-core",
+    "pinned_version": "1.18.0",
+    "installed_version": "1.18.0"
+  },
+  "verdict": "VERIFIED",
+  "verdict_explanation": "Bug confirmed in agent-framework-core==1.18.0: After checkpoint replay with swapped step-cache entries, branch_A received 'result_for_B' (expected 'result_for_A') and branch_B received 'result_for_A' (expected 'result_for_B'). No exception was raised. The framework's cache lookup uses only a monotonic call counter (step_name, call_index) with no per-branch input binding guard, so swapped cache entries cause silent wrong results.",
+  "experiment": {
+    "control_case": {
+      "description": "Initial run \u2014 both branches execute live, no cache",
+      "branch_A_result": "result_for_A",
+      "branch_B_result": "result_for_B",
+      "correct": true,
+      "live_step_calls": 2,
+      "call_log": [
+        {
+          "input_value": "A",
+          "returned_result": "result_for_A"
+        },
+        {
+          "input_value": "B",
+          "returned_result": "result_for_B"
+        }
+      ]
+    },
+    "checkpoint": {
+      "id": "eb0391fb-4107-45f7-a17a-b26614b51e98",
+      "step_cache": {
+        "process_branch::0": "result_for_A",
+        "process_branch::1": "result_for_B"
+      }
+    },
+    "bug_case": {
+      "description": "Replay from tampered checkpoint (step_cache entries 0\u21941 swapped). Branch_A (counter=0) will consume the value stored at index 0 in the tampered cache \u2014 which is now B's result. No exception expected.",
+      "tampered_step_cache": {
+        "process_branch::1": "result_for_A",
+        "process_branch::0": "result_for_B"
+      },
+      "branch_A_result": "result_for_B",
+      "branch_B_result": "result_for_A",
+      "expected_A": "result_for_A",
+      "expected_B": "result_for_B",
+      "results_swapped": true,
+      "silent_wrong_result": true,
+      "live_step_calls": 0,
+      "call_log": []
+    },
+    "normal_replay": {
+      "description": "Replay from original (unmodified) checkpoint",
+      "branch_A_result": "result_for_A",
+      "branch_B_result": "result_for_B",
+      "correct": true,
+      "live_step_calls": 0
+    }
+  },
+  "sha256": "bdb7a3ac424fc8025823b970942a77b27848d4b2b2b53abbc1f5df39be572ca6"
+}
