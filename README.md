@@ -4,7 +4,7 @@
 
 SABLE is a model- and provider-independent evaluation system for tool-using AI agents. Instead of trusting the agent's final answer, SABLE verifies the **observable environment state** and records the execution evidence needed to explain success, failure, and silent failure.
 
-[GitHub](https://github.com/socksninja/sable-agent-reliability) · [Evidence layer](EVIDENCE_LAYER.md) · [Streaming reliability finding](STREAMING_RELIABILITY_FINDING_V01.md) · [Reality Map](REALITY_MAP_V01.md) · [Failure Corpus](FAILURE_CORPUS_V01.md) · [External verification guide](docs/10_MIN_EXTERNAL_VERIFICATION.md) · [Submission quickstart](docs/EXTERNAL_SUBMISSION_QUICKSTART.md) · [Client case study](docs/CLIENT_CASE_STUDY_AGENT_RELIABILITY.md) · [Strategy alignment](STRATEGY_ALIGNMENT_V01.md) · [Paid Reliability Sprint](docs/RELIABILITY_REVIEW_OFFER_V01.md)
+[GitHub](https://github.com/socksninja/sable-agent-reliability) · [Evidence layer](EVIDENCE_LAYER.md) · [Streaming reliability finding](STREAMING_RELIABILITY_FINDING_V01.md) · [Reality Map](REALITY_MAP_V01.md) · [Failure Corpus](FAILURE_CORPUS_V01.md) · [External verification guide](docs/10_MIN_EXTERNAL_VERIFICATION.md) · [Submission quickstart](docs/EXTERNAL_SUBMISSION_QUICKSTART.md) · [Client case study](docs/CLIENT_CASE_STUDY_AGENT_RELIABILITY.md) · [Sample external audit](docs/SAMPLE_EXTERNAL_AUDIT_V01.md) · [Strategy alignment](STRATEGY_ALIGNMENT_V01.md) · [Paid Reliability Sprint](docs/RELIABILITY_REVIEW_OFFER_V01.md)
 
 ## Fixed-scope external reliability audit
 
