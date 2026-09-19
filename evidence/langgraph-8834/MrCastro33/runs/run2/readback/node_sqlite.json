@@ -1,0 +1,74 @@
+{
+  "case_id": "node_sqlite",
+  "checkpoint": {
+    "checkpoint_db_exists": true,
+    "checkpoint_id": "1f1b42ff-f568-6642-8002-291d9733b2d1",
+    "history": [
+      {
+        "checkpoint_id": "1f1b42ff-f568-6642-8002-291d9733b2d1",
+        "next": [],
+        "source": "loop",
+        "step": 2,
+        "values": {
+          "value": 2
+        }
+      },
+      {
+        "checkpoint_id": "1f1b42ff-f565-6f8c-8001-556d52fa2f68",
+        "next": [
+          "sink"
+        ],
+        "source": "loop",
+        "step": 1,
+        "values": {
+          "value": 1
+        }
+      },
+      {
+        "checkpoint_id": "1f1b42ff-f562-6828-8000-e07a84db8848",
+        "next": [
+          "node"
+        ],
+        "source": "loop",
+        "step": 0,
+        "values": {
+          "value": 0
+        }
+      },
+      {
+        "checkpoint_id": "1f1b42ff-f560-6fc8-bfff-8b389ec07287",
+        "next": [
+          "__start__"
+        ],
+        "source": "input",
+        "step": -1,
+        "values": {}
+      }
+    ],
+    "history_len": 4,
+    "next": [],
+    "values": {
+      "value": 2
+    }
+  },
+  "effects": {
+    "effects_db_exists": true,
+    "observed_value": 2,
+    "rows": [
+      {
+        "case_id": "node_sqlite",
+        "id": 2,
+        "node": "sink",
+        "run_id": "28f3f714-89a9-47f6-9962-88ca9c0ac748",
+        "ts": "2026-09-19T13:42:46.551201+00:00",
+        "value": 2
+      }
+    ],
+    "sink_effect_rows": 1,
+    "total_rows_all_cases": 2
+  },
+  "read_at": "2026-09-19T13:42:46.914588+00:00",
+  "reader_pid": 5080,
+  "reader_python": "3.13.14 (main, Jun 23 2026, 15:20:43) [Clang 22.1.3 ]",
+  "thread_id": "node_sqlite"
+}

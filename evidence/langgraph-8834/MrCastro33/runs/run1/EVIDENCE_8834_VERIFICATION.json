@@ -1,0 +1,241 @@
+{
+  "bounty_issue": "https://github.com/socksninja/sable-agent-reliability/issues/86",
+  "cases": [
+    {
+      "case_artifact": "cases/route_memory.json",
+      "case_id": "route_memory",
+      "external_observed_value": null,
+      "external_shows_sink_effect": false,
+      "external_sink_effect_rows": 0,
+      "failure_location": "route",
+      "first_error": "temporary route failure",
+      "first_invocation_raised": true,
+      "fresh_process_checkpoint_values": null,
+      "in_process_calls": {
+        "node": 1,
+        "route": 1,
+        "sink": 0
+      },
+      "pending_after_resume": [],
+      "pending_before_resume": [],
+      "readback_artifact": "readback/route_memory.json",
+      "readback_exit_code": 0,
+      "response_matches_external_readback": true,
+      "resume_raised": false,
+      "resume_returned_value": 1,
+      "run_exit_code": 0,
+      "runtime_claims_completed": true,
+      "runtime_reports_sink_effect": false,
+      "saver": "memory",
+      "silent_completion": true,
+      "sink_calls": 0
+    },
+    {
+      "case_artifact": "cases/route_sqlite.json",
+      "case_id": "route_sqlite",
+      "external_observed_value": null,
+      "external_shows_sink_effect": false,
+      "external_sink_effect_rows": 0,
+      "failure_location": "route",
+      "first_error": "temporary route failure",
+      "first_invocation_raised": true,
+      "fresh_process_checkpoint_values": {
+        "value": 1
+      },
+      "in_process_calls": {
+        "node": 1,
+        "route": 1,
+        "sink": 0
+      },
+      "pending_after_resume": [],
+      "pending_before_resume": [],
+      "readback_artifact": "readback/route_sqlite.json",
+      "readback_exit_code": 0,
+      "response_matches_external_readback": true,
+      "resume_raised": false,
+      "resume_returned_value": 1,
+      "run_exit_code": 0,
+      "runtime_claims_completed": true,
+      "runtime_reports_sink_effect": false,
+      "saver": "sqlite",
+      "silent_completion": true,
+      "sink_calls": 0
+    },
+    {
+      "case_artifact": "cases/node_memory.json",
+      "case_id": "node_memory",
+      "external_observed_value": 2,
+      "external_shows_sink_effect": true,
+      "external_sink_effect_rows": 1,
+      "failure_location": "node",
+      "first_error": "temporary node failure",
+      "first_invocation_raised": true,
+      "fresh_process_checkpoint_values": null,
+      "in_process_calls": {
+        "node": 2,
+        "route": 1,
+        "sink": 1
+      },
+      "pending_after_resume": [],
+      "pending_before_resume": [
+        "node"
+      ],
+      "readback_artifact": "readback/node_memory.json",
+      "readback_exit_code": 0,
+      "response_matches_external_readback": true,
+      "resume_raised": false,
+      "resume_returned_value": 2,
+      "run_exit_code": 0,
+      "runtime_claims_completed": true,
+      "runtime_reports_sink_effect": true,
+      "saver": "memory",
+      "silent_completion": false,
+      "sink_calls": 1
+    },
+    {
+      "case_artifact": "cases/node_sqlite.json",
+      "case_id": "node_sqlite",
+      "external_observed_value": 2,
+      "external_shows_sink_effect": true,
+      "external_sink_effect_rows": 1,
+      "failure_location": "node",
+      "first_error": "temporary node failure",
+      "first_invocation_raised": true,
+      "fresh_process_checkpoint_values": {
+        "value": 2
+      },
+      "in_process_calls": {
+        "node": 2,
+        "route": 1,
+        "sink": 1
+      },
+      "pending_after_resume": [],
+      "pending_before_resume": [
+        "node"
+      ],
+      "readback_artifact": "readback/node_sqlite.json",
+      "readback_exit_code": 0,
+      "response_matches_external_readback": true,
+      "resume_raised": false,
+      "resume_returned_value": 2,
+      "run_exit_code": 0,
+      "runtime_claims_completed": true,
+      "runtime_reports_sink_effect": true,
+      "saver": "sqlite",
+      "silent_completion": false,
+      "sink_calls": 1
+    },
+    {
+      "case_artifact": "cases/none_memory.json",
+      "case_id": "none_memory",
+      "external_observed_value": 2,
+      "external_shows_sink_effect": true,
+      "external_sink_effect_rows": 1,
+      "failure_location": "none",
+      "first_error": null,
+      "first_invocation_raised": false,
+      "fresh_process_checkpoint_values": null,
+      "in_process_calls": {
+        "node": 1,
+        "route": 1,
+        "sink": 1
+      },
+      "pending_after_resume": [],
+      "pending_before_resume": [],
+      "readback_artifact": "readback/none_memory.json",
+      "readback_exit_code": 0,
+      "response_matches_external_readback": true,
+      "resume_raised": false,
+      "resume_returned_value": 2,
+      "run_exit_code": 0,
+      "runtime_claims_completed": true,
+      "runtime_reports_sink_effect": true,
+      "saver": "memory",
+      "silent_completion": false,
+      "sink_calls": 1
+    },
+    {
+      "case_artifact": "cases/none_sqlite.json",
+      "case_id": "none_sqlite",
+      "external_observed_value": 2,
+      "external_shows_sink_effect": true,
+      "external_sink_effect_rows": 1,
+      "failure_location": "none",
+      "first_error": null,
+      "first_invocation_raised": false,
+      "fresh_process_checkpoint_values": {
+        "value": 2
+      },
+      "in_process_calls": {
+        "node": 1,
+        "route": 1,
+        "sink": 1
+      },
+      "pending_after_resume": [],
+      "pending_before_resume": [],
+      "readback_artifact": "readback/none_sqlite.json",
+      "readback_exit_code": 0,
+      "response_matches_external_readback": true,
+      "resume_raised": false,
+      "resume_returned_value": 2,
+      "run_exit_code": 0,
+      "runtime_claims_completed": true,
+      "runtime_reports_sink_effect": true,
+      "saver": "sqlite",
+      "silent_completion": false,
+      "sink_calls": 1
+    }
+  ],
+  "environment": {
+    "captured_at": "2026-09-19T13:42:17.847900+00:00",
+    "langgraph_package_dir": "/Users/mac/Documents/Codex/2026-09-19/da-x20/work/verify/.venv/lib/python3.13/site-packages/langgraph",
+    "langgraph_source_sha256": {
+      "graph/state.py": "d8c8021a93a8fc895d62335a9482e50d51353343bf885901e6487611dcd0d212",
+      "pregel/_loop.py": "33150cf70fc08fd01affeae0345aa20569d2705704e3d209733d9c7b43dd5c0a",
+      "pregel/_runner.py": "316cf133c724163a18ef279322615588b3fa8b96e359289a7cadea90f0df7622",
+      "pregel/main.py": "02651dc9471b88f9299d12f6d836e67ad1114ad84498b9ae26df6cd75be8592c"
+    },
+    "machine": "arm64",
+    "package_versions": {
+      "langchain-core": "1.6.3",
+      "langgraph": "1.2.11",
+      "langgraph-checkpoint": "4.2.0",
+      "langgraph-checkpoint-sqlite": "3.1.1",
+      "pydantic": "2.13.5"
+    },
+    "pip_freeze": [],
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "processor": "arm",
+    "python_executable": "/Users/mac/Documents/Codex/2026-09-19/da-x20/work/verify/.venv/bin/python",
+    "python_version": "3.13.14 (main, Jun 23 2026, 15:20:43) [Clang 22.1.3 ]",
+    "sqlite3_library_version": "3.53.1"
+  },
+  "evidence_question": "Does the resumed runtime response agree with a fresh external readback of the downstream effect?",
+  "execution": "Codex (OpenAI GPT-6 agent), locally executed",
+  "findings": {
+    "answer_to_evidence_question": "Yes. In every case the resumed response and the fresh external readback agree about whether the downstream sink ran. The defect is not a response/state divergence: after a conditional-router exception the runtime returns normally with an empty pending-task list while the selected downstream node never ran, so a normal return is not evidence of completion.",
+    "observer_validated_by_controls": true,
+    "response_and_external_readback_agree_in_all_cases": true,
+    "router_failure_reproduced_on_all_savers": true
+  },
+  "generated_at": "2026-09-19T13:42:24.531396+00:00",
+  "method": {
+    "controls": "node-failure and no-failure controls prove the observer detects a real sink effect",
+    "durable_effect": "the sink node, and only the sink node, commits one row to a separate local SQLite effects database",
+    "isolation": "each case runs in its own OS process with its own thread_id and its own checkpoint database",
+    "readback": "a separate process, which never executes graph nodes, re-opens the effects database read-only and re-opens the persisted checkpoint"
+  },
+  "run_id": "fe06486c-134b-4eba-a47b-584cd2563623",
+  "schema": "sable-evidence/1",
+  "scope_limits": [
+    "Synchronous StateGraph.invoke only; async execution was not tested.",
+    "InMemorySaver and SqliteSaver only; no other persistence backend was tested.",
+    "Single-node linear graph with one conditional edge; subgraphs, parallel branches, interrupts and retry policies were not tested.",
+    "No production workload, no frequency or impact estimate in production.",
+    "Single machine, single OS and Python build as recorded in environment.json.",
+    "LangGraph source was not modified and no patch is proposed."
+  ],
+  "target_issue": "https://github.com/langchain-ai/langgraph/issues/8834",
+  "verdict": "VERIFIED",
+  "verifier": "MrCastro33"
+}

@@ -1,0 +1,1 @@
+{"calls": {"node": 1, "route": 1, "sink": 0}, "case_id": "route_sqlite", "resume": {"raised": false, "result": {"value": 1}}, "status": "ok"}
