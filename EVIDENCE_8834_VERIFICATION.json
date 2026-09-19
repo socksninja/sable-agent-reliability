@@ -1,0 +1,104 @@
+{
+  "evidence_sha256": "e45f16e602965c10b392122e54502df776e1fa406bf7c44d585dad4193f2564d",
+  "runtime": {
+    "langgraph": "1.2.11",
+    "langgraph_checkpoint_sqlite": "3.1.1",
+    "platform": "Linux-6.17.0-41-generic-x86_64-with-glibc2.42",
+    "python": "3.13.7 (main, Mar  3 2026, 12:19:54) [GCC 15.2.0]",
+    "timestamp_utc": "2026-09-19T11:25:48.425877+00:00"
+  },
+  "verdicts": [
+    {
+      "detail": "[InMemorySaver / failure=node] Node retry worked. Sink ran (calls={'node': 2, 'route': 1, 'sink': 1}). Final value=2. Control case passes.",
+      "raw": {
+        "calls": {
+          "node": 2,
+          "route": 1,
+          "sink": 1
+        },
+        "failure_location": "node",
+        "first_error": "temporary node failure",
+        "pending_after_resume": [],
+        "pending_before_resume": [
+          "node"
+        ],
+        "post_resume_state_value": 2,
+        "result_value": 2,
+        "resume_result": {
+          "value": 2
+        },
+        "saver": "InMemorySaver",
+        "sink_executed": true
+      },
+      "verdict": "CONTROL_PASS"
+    },
+    {
+      "detail": "[SqliteSaver / failure=node] Node retry worked. Sink ran (calls={'node': 2, 'route': 1, 'sink': 1}). Final value=2. Control case passes.",
+      "raw": {
+        "calls": {
+          "node": 2,
+          "route": 1,
+          "sink": 1
+        },
+        "failure_location": "node",
+        "first_error": "temporary node failure",
+        "pending_after_resume": [],
+        "pending_before_resume": [
+          "node"
+        ],
+        "post_resume_state_value": 2,
+        "result_value": 2,
+        "resume_result": {
+          "value": 2
+        },
+        "saver": "SqliteSaver",
+        "sink_executed": true
+      },
+      "verdict": "CONTROL_PASS"
+    },
+    {
+      "detail": "[InMemorySaver / failure=route] Router raised on first call. Resume returned value=1 (no sink, no re-route). Downstream node 'sink' never executed (calls={'node': 1, 'route': 1, 'sink': 0}). External readback post-resume: value=1. Runtime response and readback AGREE that sink was skipped. Bug CONFIRMED: resume silently skipped the pending router+sink path.",
+      "raw": {
+        "calls": {
+          "node": 1,
+          "route": 1,
+          "sink": 0
+        },
+        "failure_location": "route",
+        "first_error": "temporary route failure",
+        "pending_after_resume": [],
+        "pending_before_resume": [],
+        "post_resume_state_value": 1,
+        "result_value": 1,
+        "resume_result": {
+          "value": 1
+        },
+        "saver": "InMemorySaver",
+        "sink_executed": false
+      },
+      "verdict": "VERIFIED"
+    },
+    {
+      "detail": "[SqliteSaver / failure=route] Router raised on first call. Resume returned value=1 (no sink, no re-route). Downstream node 'sink' never executed (calls={'node': 1, 'route': 1, 'sink': 0}). External readback post-resume: value=1. Runtime response and readback AGREE that sink was skipped. Bug CONFIRMED: resume silently skipped the pending router+sink path.",
+      "raw": {
+        "calls": {
+          "node": 1,
+          "route": 1,
+          "sink": 0
+        },
+        "failure_location": "route",
+        "first_error": "temporary route failure",
+        "pending_after_resume": [],
+        "pending_before_resume": [],
+        "post_resume_state_value": 1,
+        "result_value": 1,
+        "resume_result": {
+          "value": 1
+        },
+        "saver": "SqliteSaver",
+        "sink_executed": false
+      },
+      "verdict": "VERIFIED"
+    }
+  ]
+}
