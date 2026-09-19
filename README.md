@@ -107,6 +107,10 @@ SABLE is designed to be independently checked rather than trusted by default.
 
 The goal is not to make a SABLE claim harder to question. The goal is to make it easier for someone else to disprove, reproduce, or strengthen it.
 
+### Third-party scope review
+
+An external reviewer checked the LangGraph mapping used in [#85](https://github.com/langchain-ai/langgraph/pull/85) against its published v4 receipt and reported that the recorded identities, hashes, runtime result, three checkpoints, and one observed effect agree with the source. The reviewer also confirmed the evidence boundary: Crashpoint independently executed the experiment from SABLE, while the fresh observer was a separate local process — not an independent organization, separate host, or independent rerun. The reviewer further agreed that missing v0.9 fields should remain missing, and that `EXACTLY_ONCE` is scoped to this one non-crash run rather than treated as a general delivery guarantee. [Review comment](https://github.com/langchain-ai/langgraph/issues/8764#issuecomment-5737144522).
+
 ## Reliability reviews for real agent systems
 
 Teams with a concrete runtime failure, reliability incident, or uncertain execution claim can bring the real trace or minimal reproducer to SABLE.
