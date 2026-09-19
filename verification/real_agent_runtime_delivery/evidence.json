@@ -1,0 +1,30 @@
+{
+  "bounty_pilot": "socksninja/sable-agent-reliability#84",
+  "related_open_call": "socksninja/sable-agent-reliability#63",
+  "session_id": "antigravity-delivery-20260919-omi14698",
+  "action_id": "agent-delivery-08b5d6d5-omi14698",
+  "agent_runtime": "Antigravity Autonomous Agent Runtime / Python 3.12",
+  "agent_identity": "Agent-Gamma (@Tsai-etc)",
+  "target_repository": "BasedHardware/omi",
+  "target_pull_request": "https://github.com/BasedHardware/omi/pull/14698",
+  "target_commit_sha": "08b5d6d59b956c53603d49f9e4fbcd1cabec74a5",
+  "target_tree_sha": "b618e71bb6b41d025df64256fdb25abda896f726",
+  "workflow_status": "completed",
+  "fresh_process_pid": 3052,
+  "effects_count": 3,
+  "effects_sha256": "cd178370882efc59442cccded6c6986932637bd86c9fbc64c64e65c0ca945029",
+  "external_state_sha256": "29512bb181958838d73b238191e9dbbfc22a74648c4f6f9bc588c1e424432822",
+  "external_verification_details": {
+    "source": "live_github_api",
+    "remote_pr_state": "open",
+    "remote_pr_head_sha": "08b5d6d59b956c53603d49f9e4fbcd1cabec74a5",
+    "remote_commit_author": "Tsai-etc",
+    "remote_commit_sha": "08b5d6d59b956c53603d49f9e4fbcd1cabec74a5",
+    "remote_tree_sha": "b618e71bb6b41d025df64256fdb25abda896f726",
+    "remote_changed_files": [
+      "plugins/omi-wikipedia-app/test_main.py"
+    ]
+  },
+  "verdict": "VERIFIED",
+  "boundary": "VERIFIED iff independent out-of-band readback from external authoritative source (GitHub API) confirms target PR, commit SHA, tree SHA, and author match agent declared mutations."
+}
