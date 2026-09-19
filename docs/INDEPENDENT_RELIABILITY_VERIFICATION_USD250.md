@@ -132,7 +132,9 @@ The first engagement remains bounded to the stated claim and evidence boundary.
 
 **US$250 fixed, one-time fee.**
 
-Payment is handled through PayPal. The active checkout link is supplied with the assignment/payment request.
+**PayPal checkout:** https://www.paypal.com/ncp/payment/6L9443X6A3JL6
+
+The checkout link above is the payment link supplied for this service.
 
 ---
 
