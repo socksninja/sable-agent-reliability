@@ -1,0 +1,23 @@
+{
+  "bounty": "socksninja/sable-agent-reliability#90",
+  "target": "pydantic/pydantic-ai#5536",
+  "action_id": "pydantic-temporal-de3dc4bd-5de5-40dd-aee6-67dbaddaf8b1",
+  "workflow_status": "failed_after_retry",
+  "fresh_process_pid": 24092,
+  "effect_count_for_action": 2,
+  "records": [
+    {
+      "action_id": "pydantic-temporal-de3dc4bd-5de5-40dd-aee6-67dbaddaf8b1",
+      "effect": "local-jsonl-append",
+      "pid": 13812
+    },
+    {
+      "action_id": "pydantic-temporal-de3dc4bd-5de5-40dd-aee6-67dbaddaf8b1",
+      "effect": "local-jsonl-append",
+      "pid": 13812
+    }
+  ],
+  "effects_sha256": "25cb92db97f3f4be9734072f9e8df29294bb5996f0299091053f48a06081bcd0",
+  "verdict": "VERIFIED",
+  "boundary": "VERIFIED iff the workflow exhausts retry after the first committed effect and fresh readback finds >=2 effects for one logical action ID."
+}

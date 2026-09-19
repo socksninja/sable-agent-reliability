@@ -1,0 +1,12 @@
+{
+  "bounty": "socksninja/sable-agent-reliability#90",
+  "target": "pydantic/pydantic-ai#5536",
+  "action_id": "pydantic-temporal-de3dc4bd-5de5-40dd-aee6-67dbaddaf8b1",
+  "pydantic_ai": "2.46.0",
+  "temporalio": "1.33.0",
+  "method": "PydanticAI Agent + Temporal activity timeout/retry",
+  "effect": "append one JSON object to effects/effects.jsonl before timeout",
+  "workflow_status": "failed_after_retry",
+  "workflow_exception": "WorkflowFailureError",
+  "workflow_exception_text": "Workflow execution failed"
+}
