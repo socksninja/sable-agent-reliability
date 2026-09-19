@@ -1,0 +1,13 @@
+{
+  "bounty": "socksninja/sable-agent-reliability#87",
+  "target": "crewAIInc/crewAI#7449",
+  "action_id": "crewai-retry-duplicate-c2028e95-9f2f-4734-96c7-a9f553db4dd4",
+  "crewai_version": "1.15.21",
+  "python_version": "3.11.4",
+  "configured_max_parsing_attempts": 3,
+  "runtime_reported_run_attempts": 4,
+  "python_invocations_observed": 6,
+  "effects_committed_to_disk": 6,
+  "effects_sha256": "2d6e6b8be45d189cdf6e4a133fb434fb7273126003b7649cc35fe9f7ba33034a",
+  "execution_output_preview": "\nI encountered an error while trying to use the tool. This was the error: simulated execution failure after effect on call 6.\n Tool failing_side_effect_tool accepts these inputs: Tool Name: failing_si"
+}
